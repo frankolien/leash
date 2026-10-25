@@ -1,13 +1,13 @@
 "use client";
 
-// The hero's glass block: Leash's mark as an object, a clear block holding a smaller solid one, the
-// agent inside its limits. The film is drawn into the same WebGL scene on a plane behind the block,
+// The hero's glass mark: Leash's tether as an object, a clear ring (the limit) with a dark bead
+// (the agent) drifting inside it and never reaching the edge. The film is drawn into the same WebGL scene on a plane behind the block,
 // so the glass refracts the actual footage. If WebGL is unavailable this renders nothing and the
 // plain video underneath shows instead.
 
 import { useEffect, useRef } from "react";
 
-export default function GlassBlock({ video, onReady }: { video: React.RefObject<HTMLVideoElement | null>; onReady: (ok: boolean) => void }) {
+export default function GlassMark({ video, onReady }: { video: React.RefObject<HTMLVideoElement | null>; onReady: (ok: boolean) => void }) {
   const host = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,7 +19,6 @@ export default function GlassBlock({ video, onReady }: { video: React.RefObject<
 
     (async () => {
       const THREE = await import("three");
-      const { RoundedBoxGeometry } = await import("three/addons/geometries/RoundedBoxGeometry.js");
       const { RoomEnvironment } = await import("three/addons/environments/RoomEnvironment.js");
       if (disposed) return;
 
@@ -54,16 +53,20 @@ export default function GlassBlock({ video, onReady }: { video: React.RefObject<
 
       const block = new THREE.Group();
       scene.add(block);
+      const RING = 1.15;
+      const TUBE = 0.34;
+      const BEAD = 0.36;
+      // How far the bead may wander from the centre and still clear the ring's inner edge.
+      const FREE = RING - TUBE - BEAD - 0.06;
       const glass = new THREE.Mesh(
-        new RoundedBoxGeometry(2, 2, 2, 8, 0.26),
-        new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.06, transmission: 1, thickness: 1.6, ior: 1.42, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.8, attenuationColor: new THREE.Color("#dfeee6"), attenuationDistance: 6 }),
+        new THREE.TorusGeometry(RING, TUBE, 48, 160),
+        new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.05, transmission: 1, thickness: 1.2, ior: 1.45, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 0.9, attenuationColor: new THREE.Color("#e3f0e8"), attenuationDistance: 5 }),
       );
       block.add(glass);
       const core = new THREE.Mesh(
-        new RoundedBoxGeometry(0.78, 0.78, 0.78, 6, 0.12),
-        new THREE.MeshPhysicalMaterial({ color: 0x15201a, metalness: 0.2, roughness: 0.32, clearcoat: 0.6, envMapIntensity: 0.9 }),
+        new THREE.SphereGeometry(BEAD, 48, 32),
+        new THREE.MeshPhysicalMaterial({ color: 0x15201a, metalness: 0.25, roughness: 0.28, clearcoat: 0.7, envMapIntensity: 0.9 }),
       );
-      core.position.set(0.38, -0.38, 0.1);
       block.add(core);
 
       const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -96,7 +99,7 @@ export default function GlassBlock({ video, onReady }: { video: React.RefObject<
         filmPlane.scale.set(scale, scale / filmAspect, 1);
         // Smaller and higher on a phone so the caption keeps the lower half.
         const narrow = w < 700;
-        block.scale.setScalar(narrow ? 0.6 : Math.min(0.84, w / 1700 + 0.2));
+        block.scale.setScalar(narrow ? 0.66 : Math.min(0.95, w / 1600 + 0.25));
         baseY = narrow ? 0.95 : 0.78;
         block.position.set(narrow ? 0 : 0.35, baseY, 0);
       };
@@ -106,7 +109,10 @@ export default function GlassBlock({ video, onReady }: { video: React.RefObject<
         const t = calm ? 0 : (now - start) / 1000;
         pointer.x += (pointer.tx - pointer.x) * 0.04;
         pointer.y += (pointer.ty - pointer.y) * 0.04;
-        block.rotation.set(0.42 + Math.sin(t * 0.35) * 0.06 + pointer.y * 0.12, -0.62 + t * 0.12 + pointer.x * 0.2, 0.06);
+        // Mostly facing the viewer so it reads as the mark, with a slow sway that shows its depth.
+        block.rotation.set(0.32 + Math.sin(t * 0.3) * 0.16 + pointer.y * 0.18, -0.38 + Math.sin(t * 0.22) * 0.3 + pointer.x * 0.25, Math.sin(t * 0.17) * 0.08);
+        const r = FREE * (0.55 + 0.45 * Math.sin(t * 0.41));
+        core.position.set(Math.cos(t * 0.53) * r, Math.sin(t * 0.71) * r, 0);
         block.position.y = baseY + Math.sin(t * 0.8) * 0.06;
         renderer.render(scene, camera);
         if (visible && !disposed) frame = requestAnimationFrame(render);

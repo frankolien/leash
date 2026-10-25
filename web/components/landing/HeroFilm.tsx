@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, SquareTerminal } from "lucide-react";
 import { siClaude, siCursor, siGithubcopilot, siGooglegemini } from "simple-icons";
-import GlassBlock from "./GlassBlock";
+import GlassMark from "./GlassMark";
 import { FILM, agentAt, type AgentName } from "./film";
 import styles from "./film.module.css";
 
@@ -37,7 +37,7 @@ export function Film({ onTime }: { onTime: (seconds: number) => void }) {
   return (
     <div className={styles.film}>
       <video ref={video} className={styles.video} data-hidden={glass === true} src={FILM.src} poster={FILM.poster} muted loop playsInline autoPlay preload="auto" crossOrigin="anonymous" />
-      <GlassBlock video={video} onReady={onReady} />
+      <GlassMark video={video} onReady={onReady} />
       <div className={styles.scrim} aria-hidden="true" />
     </div>
   );

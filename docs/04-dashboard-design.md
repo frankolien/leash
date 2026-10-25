@@ -34,7 +34,7 @@ buttons.
 0. Film: the first screen is a full-bleed film of five candid scenes (taxi, cafe, crosswalk,
    platform, market) generated with Higgsfield Seedance 2.0 from Soul stills, cut with crossfades into
    a 22.6s silent loop (`web/public/film/`, 1080p and 720p). Leash's mark floats in it as a glass
-   block, drawn in three.js with the film on a plane behind it so the glass refracts the footage. The
+   ring, drawn in three.js with the film on a plane behind it so the glass refracts the footage. The
    caption names the agent on screen, "Now your Claude can pay. Only what you allow.", and the name
    changes on each cut. Without WebGL the plain video shows. Modelled on PayBox's hero.
 1. Handoff: one scroll gesture plays a timed, reversible transition (PRYDD's handoff, ported in
@@ -87,3 +87,17 @@ landing header.
 
 Generated with Higgsfield (Soul 2.0 for the editorial set, GPT Image 2 where text had to be avoided)
 and kept in `web/public/people/`. Screens face away so no generated text appears.
+
+## Mark
+
+The tether: a bold ring, the limit the owner sets, with a solid dot inside it, off centre, the agent.
+It is free to move and never reaches the ring. It also reads as a dial, the control that sets a cap.
+Chosen against the field: PayBox uses a cube, Phantom a ghost, NEAR its N; the earlier square in a
+square sat too close to PayBox's cube. Two closed shapes, so it holds at 16px on light and dark.
+
+- `web/public/mark.svg`: the mark alone, used as a CSS mask so it takes the text colour.
+- `web/public/icon.svg` and `apple-icon.png`: white mark on a #0b0b0b rounded square, for tabs and
+  home screens.
+- In the film it is a glass ring with a dark bead that drifts inside it and never touches the edge
+  (`web/components/landing/GlassMark.tsx`).
+

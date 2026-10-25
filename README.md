@@ -65,7 +65,7 @@ Every step below is one command and says what you should see. The AI judges can 
 | `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `insights` (today's spend, the week, request facts, recipients), `types` |
 | `web/hooks/` | `useSnapshot` (polling), `useWallet` (session and the one way to write), `useNames`, `useToast`, `useActiveSection`, `useHeroHandoff` (the timed scroll handoff) |
 | `web/components/site/` | The header, footer and the drifting ground every page shares |
-| `web/components/landing/` | The landing page: `FilmSequence` (the film closing into `DashboardScene`), `HeroFilm` and `GlassBlock`, `Stories`, `HowItHolds` and `Wireframe`, `WorksWith`, `Closing`, `SetupDialog` |
+| `web/components/landing/` | The landing page: `FilmSequence` (the film closing into `DashboardScene`), `HeroFilm` and `GlassMark`, `Stories`, `HowItHolds` and `Wireframe`, `WorksWith`, `Closing`, `SetupDialog` |
 | `web/components/dashboard/` | The owner's app: `Sidebar`, `PageHeader` and six views (`views.ts`): `BalanceHero` and `SpendCard`, `ApprovalCard` and `ProposalCard`, `AgentsCard`, `AgentList` and `ConnectCard`, `ActivityCard`, `RecipientsView`, `SettingsView`, composed in `Dashboard` |
 | `web/components/setup/` | The agent setup steps and dialog, shared by the landing and the dashboard |
 | `web/components/charts/` | `SpendChart`, shared by the dashboard and the landing preview |

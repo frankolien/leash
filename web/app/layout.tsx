@@ -9,7 +9,7 @@ const mono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"], weight: [
 export const metadata: Metadata = {
   title: { default: "Leash", template: "%s · Leash" },
   description: "Your agent can pay now, only what you allow. Daily caps, approvals and a key you can revoke, enforced on NEAR.",
-  icons: { icon: "/mark.svg" },
+  icons: { icon: "/icon.svg", apple: "/apple-icon.png" },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#f5f6f3" };
