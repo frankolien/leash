@@ -1,8 +1,8 @@
-.film { position: relative; height: 100svh; min-height: 620px; overflow: hidden; background: #1a1c1b; color: #fff; isolation: isolate; }
+.film { position: absolute; inset: 0; overflow: hidden; background: #1a1c1b; isolation: isolate; }
 .video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .video[data-hidden="true"] { opacity: 0; }
 .scrim { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(10, 12, 11, .38) 0%, transparent 22%, transparent 52%, rgba(10, 12, 11, .62) 100%); }
-.overlay { position: absolute; inset: auto 0 0; max-width: calc(var(--shell) + var(--gutter) * 2); margin: 0 auto; padding: 0 var(--gutter) 56px; display: grid; grid-template-columns: minmax(0, 8.5fr) minmax(0, 3.5fr); gap: 48px; align-items: end; }
+.overlay { position: absolute; inset: auto 0 0; z-index: 2; color: #fff; max-width: calc(var(--shell) + var(--gutter) * 2); margin: 0 auto; padding: 0 var(--gutter) 56px; display: grid; grid-template-columns: minmax(0, 8.5fr) minmax(0, 3.5fr); gap: 48px; align-items: end; }
 .caption { margin: 0; font-size: clamp(40px, 4.9vw, 80px); color: #fff; text-shadow: 0 2px 30px rgba(0, 0, 0, .25); }
 .line { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .24em; }
 .agent { display: inline-flex; }

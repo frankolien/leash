@@ -37,9 +37,10 @@ buttons.
    block, drawn in three.js with the film on a plane behind it so the glass refracts the footage. The
    caption names the agent on screen, "Now your Claude can pay. Only what you allow.", and the name
    changes on each cut. Without WebGL the plain video shows. Modelled on PayBox's hero.
-1. One payment, start to finish: the claim, then a photograph with the moment played over it in four beats: Maya asks her
-   agent, Leash stops it at the cap, her phone asks her, it is paid once. A rail names the beats and
-   lets the reader step through them. Reduced motion shows the last beat.
+1. Handoff: one scroll gesture plays a timed, reversible transition (PRYDD's handoff, ported in
+   `web/hooks/useHeroHandoff.ts` with Lenis): the whole film scales down and closes into the vault
+   panel, and the limit and approval panels slide in beside it, in PRYDD's three-panel layout.
+   Reduced motion and screens under 600px tall get both scenes without the handoff.
 2. Stories: an endless strip of people and the instruction each gave their agent, with the limit
    that holds it. Pauses on hover; a scrollable strip under reduced motion.
 3. How it holds: four numbered steps, each with a turning wireframe drawn on a 2D canvas.

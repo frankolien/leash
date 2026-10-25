@@ -3,15 +3,14 @@
 // The landing page, top to bottom: the moment it works, what people use it for, how it holds,
 // what it works with, the owner's side, questions, and the way in.
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { SquareTerminal } from "lucide-react";
 import { siClaude, siCursor } from "simple-icons";
 import SiteFooter from "@/components/site/SiteFooter";
 import SiteHeader from "@/components/site/SiteHeader";
 import Atmosphere from "@/components/site/Atmosphere";
 import { Invitation, Questions } from "./Closing";
-import Hero from "./Hero";
-import HeroFilm from "./HeroFilm";
+import FilmSequence from "./FilmSequence";
 import HowItHolds from "./HowItHolds";
 import SetupDialog from "./SetupDialog";
 import Stories from "./Stories";
@@ -27,12 +26,14 @@ const ICONS: Record<Agent, React.ReactNode> = {
 
 export default function Landing() {
   const [setup, setSetup] = useState<Agent | null>(null);
+  const [onFilm, setOnFilm] = useState(true);
+  const handleFilm = useCallback((over: boolean) => setOnFilm(over), []);
   return (
     <>
       <Atmosphere />
       <a href="#how" className="skip">Skip to how it works</a>
       <SiteHeader
-        overFilm
+        light={onFilm}
         right={
           <>
             {(Object.keys(AGENTS) as Agent[]).map((a) => (
@@ -43,8 +44,7 @@ export default function Landing() {
         }
       />
       <main>
-        <HeroFilm />
-        <Hero />
+        <FilmSequence onFilm={handleFilm} />
         <Stories />
         <HowItHolds />
         <WorksWith />
