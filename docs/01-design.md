@@ -112,6 +112,31 @@ The CLI is for the owner: `leash init`, `leash deposit <usdc>`, `leash grant --d
    `leash log` and approves; it lands.
 4. `leash revoke`. Any further call fails at the protocol before it reaches the contract.
 
+## Compared with PayBox
+
+MoonPay's PayBox (29 July 2026) is the closest product: a non-custodial vault an agent spends from, with
+a spending cap, a per-transaction ceiling, a token allowlist, an "always ask" mode beside an
+autonomous one, passkey approval for changes, revocation, and one MCP endpoint for Claude and ChatGPT.
+Keys are split by MPC across MoonPay's enclaves ([MoonPay support](https://support.moonpay.com/en/articles/669779-paybox-store-credentials-once-let-ai-agents-pay-securely),
+[Unite.AI](https://www.unite.ai/moonpays-paybox-lets-ai-agents-spend-without-taking-custody/),
+[devrels.xyz](https://devrels.xyz/articles/paybox-mcp-wallet-for-ai-agents)). It proves the demand and
+sets the bar for the feature list.
+
+Where Leash differs, and why that is the point:
+
+| | PayBox | Leash |
+| --- | --- | --- |
+| Who enforces the limit | MoonPay's servers and enclaves | The NEAR protocol (the key cannot call anything else) and a contract anyone can read |
+| What revocation is | A request to MoonPay | Deleting a key from your own account; the chain refuses the next call |
+| Who you trust | MoonPay, plus a MoonPay account | Nobody new; your account, your contract |
+| Where the record lives | MoonPay's log | On chain, every refusal included, readable by anyone |
+| Over the limit | Denied, or "always ask" for everything | Parked as a request the owner decides, without turning every payment into a prompt |
+| Code | Closed | Open, deployable by anyone, same contract on testnet and mainnet |
+
+The one-line answer to "why not PayBox": PayBox asks you to trust MoonPay's limit; Leash lets you verify
+the limit in the explorer and revoke it at the protocol. The hackathon's own track asked for exactly
+that: "function call keys, TEE attestation", which is also the stretch below.
+
 ## Stretch, from day 8
 
 Countersign: a market or payment runs only if a model in NEAR AI Cloud's TEE signed off on the exact
