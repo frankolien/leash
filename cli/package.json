@@ -1,0 +1,20 @@
+{
+  "name": "leash-cli",
+  "version": "0.1.0",
+  "description": "Owner's CLI for Leash: deploy, fund, grant agent keys, approve, revoke",
+  "type": "module",
+  "bin": { "leash": "dist/index.js" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "near-api-js": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}
