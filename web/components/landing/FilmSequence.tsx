@@ -1,21 +1,20 @@
 "use client";
 
 // The opening sequence. The film fills the first screen; one scroll gesture plays a timed handoff
-// in which the film closes into the vault panel and the two side panels slide in beside it. A
-// reverse gesture plays it back. Reduced motion and short screens get both scenes without the
-// handoff.
+// in which the film closes into the Leash dashboard window. A reverse gesture plays it back.
+// Reduced motion and short screens get both scenes without the handoff.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useHeroHandoff } from "@/hooks/useHeroHandoff";
 import { Film, FilmCaption } from "./HeroFilm";
-import { ApproveCard, LimitCard, PanelsHeading, VaultCard } from "./Panels";
+import { DashboardScene } from "./DashboardScene";
 import styles from "./sequence.module.css";
 
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 const portion = (v: number, a: number, b: number) => clamp((v - a) / (b - a));
 
-/// Where the film lands: the vault panel's centre offset from the stage centre, the scale that fits
+/// Where the film lands: the dashboard window's centre offset from the stage centre, the scale that fits
 /// the stage onto the panel, and the panel's size in the film's own unscaled coordinates.
 type Landing = { dx: number; dy: number; scale: number; w: number; h: number; W: number; H: number };
 
@@ -31,6 +30,19 @@ function useCalm() {
   return calm;
 }
 
+function Heading() {
+  return (
+    <div className={styles.heading}>
+      <span>Everything your agents may spend. One place.</span>
+      <h2 className="display">You hold the leash.</h2>
+    </div>
+  );
+}
+
+function Note() {
+  return <p className={styles.note}>An illustrative look inside Leash. <a href="/frankolien.testnet">Open the live testnet dashboard</a></p>;
+}
+
 function Handoff({ onFilm }: { onFilm: (over: boolean) => void }) {
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -41,8 +53,8 @@ function Handoff({ onFilm }: { onFilm: (over: boolean) => void }) {
   useHeroHandoff(section, stage);
   const { scrollYProgress: p } = useScroll({ target: section, offset: ["start start", "end end"] });
 
-  // The whole film (footage, glass and caption) scales down onto the vault panel while its frame
-  // is clipped to the panel's shape, so it reads as one picture closing into the card.
+  // The whole film (footage, glass and caption) scales down onto the dashboard window while its
+  // frame is clipped to the window's shape, so it reads as one picture closing into the app.
   const contraction = (v: number) => portion(v, 0.06, 0.58);
   const filmTransform = useTransform(() => {
     const c = contraction(p.get());
@@ -54,16 +66,15 @@ function Handoff({ onFilm }: { onFilm: (over: boolean) => void }) {
     const t = target.get();
     const x = ((t.W - t.w / t.scale) / 2) * c;
     const y = ((t.H - t.h / t.scale) / 2) * c;
-    return `inset(${y}px ${x}px ${y}px ${x}px round ${(16 / t.scale) * c}px)`;
+    return `inset(${y}px ${x}px ${y}px ${x}px round ${(18 / t.scale) * c}px)`;
   });
   const filmOpacity = useTransform(p, [0, 0.5, 0.7, 1], [1, 1, 0, 0]);
   const captionOpacity = useTransform(p, [0, 0.04, 0.18, 1], [1, 1, 0, 0]);
   const captionY = useTransform(p, (v) => `translateY(${-28 * portion(v, 0.06, 0.24)}px)`);
   const headingOpacity = useTransform(p, [0, 0.45, 0.62, 1], [0, 0, 1, 1]);
-  const vaultOpacity = useTransform(p, [0, 0.48, 0.68, 1], [0, 0, 1, 1]);
-  const sideOpacity = useTransform(p, [0, 0.55, 0.82, 1], [0, 0, 1, 1]);
-  const leftX = useTransform(p, (v) => `translate3d(${36 * (1 - portion(v, 0.52, 0.84))}%, 0, 0)`);
-  const rightX = useTransform(p, (v) => `translate3d(${-36 * (1 - portion(v, 0.52, 0.84))}%, 0, 0)`);
+  const windowOpacity = useTransform(p, [0, 0.46, 0.66, 1], [0, 0, 1, 1]);
+  const windowLift = useTransform(p, (v) => `translateY(${18 * (1 - portion(v, 0.5, 0.8))}px)`);
+  const noteOpacity = useTransform(p, [0, 0.6, 0.85, 1], [0, 0, 1, 1]);
 
   useEffect(() => {
     const host = stage.current;
@@ -99,13 +110,11 @@ function Handoff({ onFilm }: { onFilm: (over: boolean) => void }) {
     <section ref={section} className={styles.sequence} aria-label="Leash">
       <div ref={stage} className={styles.stage}>
         <div className={styles.products} aria-hidden={!settled} inert={!settled}>
-          <motion.div style={{ opacity: headingOpacity }}><PanelsHeading /></motion.div>
-          <div className={styles.row}>
-            <motion.div className={styles.side} style={{ opacity: sideOpacity, transform: leftX }}><LimitCard /></motion.div>
-            <div ref={centre} className={styles.vault}><motion.div style={{ opacity: vaultOpacity }}><VaultCard /></motion.div></div>
-            <motion.div className={styles.side} style={{ opacity: sideOpacity, transform: rightX }}><ApproveCard /></motion.div>
+          <motion.div style={{ opacity: headingOpacity }}><Heading /></motion.div>
+          <div ref={centre} className={styles.frame}>
+            <motion.div className={styles.fill} style={{ opacity: windowOpacity, transform: windowLift }}><DashboardScene /></motion.div>
           </div>
-          <motion.p className={styles.note} style={{ opacity: sideOpacity }}>An illustrative look inside Leash. The live one runs on NEAR testnet.</motion.p>
+          <motion.div style={{ opacity: noteOpacity }}><Note /></motion.div>
         </div>
         <motion.div className={styles.filmLayer} style={{ clipPath: clip, transform: filmTransform, opacity: filmOpacity }}>
           <Film onTime={onTime} />
@@ -131,12 +140,9 @@ function Still({ onFilm }: { onFilm: (over: boolean) => void }) {
     <>
       <section className={styles.stillFilm}><Film onTime={onTime} /><div className={styles.captionLayer}><FilmCaption seconds={seconds} /></div></section>
       <section className={styles.stillProducts}>
-        <PanelsHeading />
-        <div className={styles.row}>
-          <div className={styles.side}><LimitCard /></div>
-          <div className={styles.vault}><VaultCard /></div>
-          <div className={styles.side}><ApproveCard /></div>
-        </div>
+        <Heading />
+        <div className={styles.frame}><DashboardScene /></div>
+        <Note />
       </section>
     </>
   );

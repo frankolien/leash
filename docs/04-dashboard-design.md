@@ -38,14 +38,14 @@ buttons.
    caption names the agent on screen, "Now your Claude can pay. Only what you allow.", and the name
    changes on each cut. Without WebGL the plain video shows. Modelled on PayBox's hero.
 1. Handoff: one scroll gesture plays a timed, reversible transition (PRYDD's handoff, ported in
-   `web/hooks/useHeroHandoff.ts` with Lenis): the whole film scales down and closes into the vault
-   panel, and the limit and approval panels slide in beside it, in PRYDD's three-panel layout.
+   `web/hooks/useHeroHandoff.ts` with Lenis): the whole film scales down and closes into the Leash
+   dashboard as an app window: sidebar, the vault with the week's spending chart, the payment
+   waiting on the owner with the facts that decide it, each agent's budget, and the activity feed.
    Reduced motion and screens under 600px tall get both scenes without the handoff.
 2. Stories: an endless strip of people and the instruction each gave their agent, with the limit
    that holds it. Pauses on hover; a scrollable strip under reduced motion.
 3. How it holds: four numbered steps, each with a turning wireframe drawn on a 2D canvas.
 4. Works with: a wall of the MCP clients that can hold a key, plus NEAR and Circle.
-5. The dashboard's own pieces over a desk photograph.
 6. Questions, then the way in over a photograph, then the footer.
 
 The header shortcuts for Claude Code, Codex and Cursor open the real setup steps with copy buttons.

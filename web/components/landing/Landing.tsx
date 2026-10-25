@@ -15,7 +15,6 @@ import HowItHolds from "./HowItHolds";
 import SetupDialog from "./SetupDialog";
 import Stories from "./Stories";
 import WorksWith from "./WorksWith";
-import YourSide from "./YourSide";
 import { AGENTS, type Agent } from "./setup";
 
 const ICONS: Record<Agent, React.ReactNode> = {
@@ -48,7 +47,6 @@ export default function Landing() {
         <Stories />
         <HowItHolds />
         <WorksWith />
-        <YourSide />
         <Questions />
         <Invitation />
       </main>

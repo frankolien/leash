@@ -24,39 +24,6 @@
 .tiles svg.brand { fill: currentColor; }
 .tiles span { font-size: 13px; color: var(--muted); text-align: center; padding: 0 8px; }
 
-/* The owner's side */
-.side { padding: 152px 0 0; }
-.sideGrid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 64px; align-items: center; }
-.sideCopy { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
-.sideCopy h2 { margin: 0; font-size: clamp(36px, 4vw, 60px); }
-.sideCopy p { margin: 0; color: var(--ink-2); font-size: 18px; }
-.sideCopy ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
-.sideCopy li { padding-left: 22px; position: relative; font-size: 16px; }
-.sideCopy li::before { content: ""; position: absolute; left: 0; top: .62em; width: 10px; height: 1px; background: var(--ink); }
-.desk { position: relative; aspect-ratio: 4 / 3.4; border-radius: 6px; overflow: hidden; background: #d8d4cb; box-shadow: var(--shadow-card); }
-.desk > img { width: 100%; height: 100%; object-fit: cover; }
-.vaultCard, .agentCard, .requestCard { position: absolute; padding: 18px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow-float); }
-.small { display: block; color: var(--muted); font-size: 13px; }
-.vaultCard { top: 7%; left: 6%; width: 42%; }
-.vaultCard strong { display: block; margin: 8px 0 6px; font-size: clamp(36px, 3.6vw, 52px); font-weight: 500; font-stretch: 90%; letter-spacing: -.045em; line-height: 1; }
-.vaultCard strong span { font-size: .5em; }
-.agentCard { top: 30%; right: 6%; width: 44%; }
-.agentHead { display: flex; align-items: center; gap: 10px; }
-.agentHead strong { display: block; font-size: 15px; font-weight: 600; }
-.agentHead span:not(.initial) { display: block; color: var(--muted); font-size: 12px; }
-.initial { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #e9ece7; font-weight: 600; font-size: 14px; }
-.budget { display: flex; align-items: baseline; gap: 8px; margin-top: 16px; }
-.budget strong { font-size: 26px; font-weight: 500; letter-spacing: -.04em; }
-.budget span { color: var(--muted); font-size: 13px; }
-.bar { height: 4px; margin-top: 10px; border-radius: 99px; background: #eceee9; overflow: hidden; }
-.bar span { display: block; height: 100%; background: var(--ink); border-radius: inherit; }
-.requestCard { bottom: 7%; left: 10%; width: 50%; }
-.requestCard strong { display: block; margin-top: 6px; font-size: 26px; font-weight: 500; letter-spacing: -.035em; }
-.requestCard em { font-style: normal; color: var(--muted); font-size: 14px; letter-spacing: 0; font-weight: 400; }
-.decide { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; margin-top: 14px; }
-.decide span { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; border-radius: 999px; background: rgba(17, 19, 18, .06); font-size: 14px; font-weight: 500; }
-.decide .yes { background: var(--ink); color: var(--paper); }
-
 /* Questions */
 .faq { padding: 152px 0 152px; }
 .faqGrid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 64px; align-items: start; }
@@ -87,22 +54,17 @@
   .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
-  .lead, .sideGrid, .faqGrid, .inviteInner { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .how, .works, .side { padding-top: 104px; }
+  .lead, .faqGrid, .inviteInner { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .how, .works { padding-top: 104px; }
   .faq { padding: 104px 0; }
-  .sideGrid { gap: 40px; }
 }
 @media (max-width: 600px) {
-  .lead p, .sideCopy p { font-size: 16px; }
+  .lead p { font-size: 16px; }
   .steps { grid-template-columns: minmax(0, 1fr); }
   .steps p { min-height: 0; }
   .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .tiles svg { width: 28px; height: 28px; }
   .tiles span { font-size: 11px; }
-  .desk { aspect-ratio: 4 / 5; }
-  .vaultCard { width: 60%; }
-  .agentCard { top: 33%; width: 70%; }
-  .requestCard { left: 6%; width: 80%; }
   .faqList summary { font-size: 17px; }
   .faqList p { font-size: 15px; padding-right: 0; }
   .invite { min-height: 100svh; }

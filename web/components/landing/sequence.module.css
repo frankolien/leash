@@ -1,6 +1,5 @@
-/* The opening sequence. A 240svh runway with a sticky full-height stage; the panels sit in the
-   stage from the start and the film closes onto the vault panel above them. Panel geometry follows
-   PRYDD's three-panel scene. */
+/* The opening sequence. A 240svh runway with a sticky full-height stage; the dashboard window sits
+   in the stage from the start and the film closes onto it. */
 
 .sequence { position: relative; height: 240svh; }
 .stage { position: sticky; top: 0; height: 100svh; min-height: 620px; overflow: hidden; }
@@ -8,59 +7,24 @@
 .captionLayer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 .captionLayer > * { pointer-events: auto; }
 
-.products { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; justify-content: center; padding: 110px 5vw 80px; }
-.heading { margin: 0 auto 36px; text-align: center; }
-.heading > span { display: block; margin-bottom: 18px; color: var(--muted); font-size: 15px; }
-.heading h2 { margin: 0; font-size: clamp(36px, 3.4vw, 52px); }
-.row { display: grid; grid-template-columns: 1fr 1.2fr 1fr; align-items: center; gap: 22px; width: 100%; max-width: 1060px; margin: 0 auto; }
-.side, .vault { position: relative; min-width: 0; background: var(--card); border-radius: 16px; box-shadow: 0 0 0 1px rgba(17, 19, 18, .04), 0 10px 34px -10px rgba(17, 19, 18, .14); }
-.side { min-height: 270px; padding: 32px 26px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-.vault { padding: 32px 28px; }
-.cardTitle { display: block; margin-bottom: 26px; font-size: 16px; font-weight: 500; letter-spacing: -.015em; }
-.flow { display: flex; align-items: center; gap: 16px; margin: 18px 0 24px; color: var(--ink); }
-.soft { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 18px; background: #f2f3f0; }
-.dark { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: var(--ink); color: var(--paper); font-size: 20px; font-weight: 500; letter-spacing: -.03em; }
-.small { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--ink-2); }
-.label { display: block; color: var(--muted); font-size: 12px; }
-.balance { display: block; margin-top: 4px; font-size: clamp(40px, 3.6vw, 54px); font-weight: 500; font-stretch: 90%; line-height: 1.1; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
-.balance > span { font-size: .5em; letter-spacing: -.02em; }
-.rows { margin-top: 20px; border-top: 1px solid var(--hairline); }
-.rows > div { display: flex; align-items: center; gap: 12px; padding: 15px 0; font-size: 13px; }
-.rows > div + div { border-top: 1px solid var(--hairline); }
-.rows span:not(.claude) { flex: 1; min-width: 0; font-weight: 500; }
-.rows small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 400; }
-.rows b { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.avatar { width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; object-fit: cover; object-position: 55% 30%; }
-.claude { display: grid; place-items: center; flex-shrink: 0; border-radius: 50%; background: var(--ink); color: #f3f4f1; }
-.who { margin: 12px 0 18px; font-size: 16px; font-weight: 600; }
-.pill { display: flex; align-items: center; justify-content: space-between; gap: 18px; width: 100%; max-width: 190px; padding: 6px 7px 6px 18px; border-radius: 999px; background: #f2f3f0; font-size: 18px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.check { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--ink); color: var(--paper); }
-.note { margin-top: 36px; color: var(--muted); font-size: 11px; letter-spacing: .02em; text-align: center; }
+.products { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(var(--header-height) + 12px) var(--gutter) 28px; }
+.heading { margin: 0 auto 22px; text-align: center; }
+.heading > span { display: block; margin-bottom: 10px; color: var(--muted); font-size: 14px; }
+.heading h2 { margin: 0; font-size: clamp(32px, 3vw, 46px); }
+.frame { position: relative; width: min(1180px, 100%); height: clamp(460px, calc(100svh - var(--header-height) - 190px), 700px); }
+.fill { width: 100%; height: 100%; }
+.note { margin: 16px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+.note a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
 
 .stillFilm { position: relative; height: 100svh; min-height: 560px; }
-.stillProducts { padding: 112px 5vw 40px; }
+.stillProducts { display: flex; flex-direction: column; align-items: center; padding: 112px var(--gutter) 40px; }
+.stillProducts .frame { height: 640px; }
 
 @media (max-width: 760px) {
   .sequence { height: 250svh; }
-  .products { padding: 84px 16px 60px; }
-  .heading { margin-bottom: 26px; }
-  .heading > span { font-size: 12px; margin-bottom: 10px; }
-  .heading h2 { font-size: 32px; }
-  .row { grid-template-columns: 1fr 1fr; align-items: stretch; gap: 10px; max-width: 460px; }
-  .vault { grid-column: 1 / -1; grid-row: 1; padding: 20px; }
-  .side { min-height: 0; padding: 18px 12px; }
-  .cardTitle { margin-bottom: 12px; font-size: 13px; }
-  .flow { gap: 8px; margin: 8px 0 14px; }
-  .soft, .dark { width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }
-  .dark { border-radius: 50%; }
-  .soft svg { width: 20px; height: 20px; }
-  .small { font-size: 10px; }
-  .balance { font-size: 36px; }
-  .rows { margin-top: 12px; }
-  .rows > div { padding: 10px 0; font-size: 12px; }
-  .who { margin: 8px 0 10px; font-size: 13px; }
-  .pill { padding: 4px 4px 4px 12px; font-size: 14px; }
-  .check { width: 28px; height: 28px; }
-  .check svg { width: 15px; height: 15px; }
-  .note { margin-top: 20px; font-size: 10px; }
+  .heading { margin-bottom: 14px; }
+  .heading > span { font-size: 12px; margin-bottom: 6px; }
+  .heading h2 { font-size: 28px; }
+  .frame { height: calc(100svh - var(--header-height) - 150px); min-height: 440px; }
+  .stillProducts .frame { height: auto; }
 }
