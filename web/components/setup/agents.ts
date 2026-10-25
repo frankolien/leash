@@ -36,12 +36,21 @@ export const AGENTS: Record<Agent, { label: string; key: string; config: { where
   },
 };
 
-export function steps(agent: Agent) {
+export type Step = { title: string; where: string; code?: string; link?: { href: string; label: string } };
+
+/// The way in for most people: sign in, fund, create the agent in the dashboard, paste the config.
+export function steps(agent: Agent): Step[] {
   const a = AGENTS[agent];
   return [
-    { title: "Create your vault and fund it", where: "In your terminal", code: "leash init\nleash deposit 10" },
-    { title: `Give ${a.label} a key with limits`, where: "In your terminal", code: `leash grant --name ${a.key} --daily 3 --per-payment 2 \\\n  --to vendor.near` },
-    { title: `Add Leash to ${a.label}`, ...a.config },
-    { title: "Ask it to pay", where: `In ${a.label}`, code: `"Pay vendor.near $1 for API credits."\n\nUnder $2 it pays. Above, it waits for you here.` },
+    { title: "Sign in to Leash", where: "With Google, Apple, email or a NEAR wallet. Your account is made for you.", link: { href: "/app", label: "Sign in" } },
+    { title: "Add money", where: "Send USDC on NEAR to your account, then move it into your vault from the dashboard." },
+    { title: `Create ${a.label} as an agent`, where: `In the dashboard: New agent, ${a.label}, your limits. Save the key file to ~/.leash/${a.key}.json.` },
+    { title: `Add Leash to ${a.label}`, ...mcpConfig(agent, `~/.leash/${a.key}.json`) },
+    { title: "Ask it to pay", where: `In ${a.label}`, code: `"Pay vendor.near $1 for API credits."\n\nUnder its limit it pays. Above, it waits for you.` },
   ];
+}
+
+/// The same, from a terminal, for people who already run the NEAR CLI.
+export function terminalSteps(agent: Agent): string {
+  return `leash init --owner you.near\nleash deposit 10\nleash grant --name ${AGENTS[agent].key} --daily 3 --per-payment 2`;
 }

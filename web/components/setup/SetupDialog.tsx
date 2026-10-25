@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, X } from "lucide-react";
-import { AGENTS, steps, type Agent } from "./agents";
+import { AGENTS, steps, terminalSteps, type Agent } from "./agents";
 import styles from "./setup.module.css";
 
 function CopyCode({ code }: { code: string }) {
@@ -57,11 +57,16 @@ export default function SetupDialog({ agent, onClose, onSwitch }: { agent: Agent
                 <div>
                   <h3>{s.title}</h3>
                   <span className={styles.where}>{s.where}</span>
-                  <CopyCode code={s.code} />
+                  {s.code && <CopyCode code={s.code} />}
+                  {s.link && <a className={styles.stepLink} href={s.link.href}>{s.link.label}</a>}
                 </div>
               </li>
             ))}
           </ol>
+          <details className={styles.terminal}>
+            <summary>Prefer the terminal?</summary>
+            <CopyCode code={terminalSteps(agent)} />
+          </details>
           <p className={styles.foot}>The key file stays on your machine. It can only call pay, request and ask for more on your vault, and revoking it deletes the key on chain.</p>
         </div>
       )}

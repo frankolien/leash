@@ -19,3 +19,6 @@
 .code button { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: var(--card); color: var(--muted); box-shadow: 0 1px 2px rgba(17, 19, 18, .1); }
 .foot { margin: 8px 0 0; padding-top: 18px; border-top: 1px solid var(--hairline); color: var(--muted); font-size: 14px; }
 @media (max-width: 600px) { .body { padding: 22px; } .head h2 { font-size: 28px; } .steps li { grid-template-columns: minmax(0, 1fr); } }
+.stepLink { display: inline-flex; align-items: center; margin-top: 10px; min-height: 38px; padding: 0 16px; border-radius: 999px; background: var(--ink); color: var(--paper); font-size: 14px; font-weight: 500; }
+.terminal { margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--hairline); }
+.terminal summary { cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 500; }

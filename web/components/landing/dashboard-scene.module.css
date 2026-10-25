@@ -1,13 +1,13 @@
-/* The dashboard window the film closes into. A real app layout: sidebar, a header, and a grid of
-   vault, approval, agents and activity. Sized to fit the sticky stage under the heading. */
+/* The dashboard window the film closes into, in the real dashboard's dark palette: sidebar, a
+   header, and a grid of vault, approval, agents and activity. Sized to fit the sticky stage. */
 
-.window { position: relative; display: grid; grid-template-columns: 208px minmax(0, 1fr); width: 100%; height: 100%; overflow: hidden; border-radius: 18px; background: #fbfbfa; box-shadow: 0 0 0 1px rgba(17, 19, 18, .06), 0 40px 80px -32px rgba(17, 19, 18, .28); text-align: left; font-size: 13px; color: var(--ink); }
-.sidebar { display: flex; flex-direction: column; gap: 22px; padding: 22px 14px; border-right: 1px solid var(--hairline); background: #f4f5f2; }
+.window { --ink: #fff; --muted: #858585; --faint: #6a6a6a; --hairline: #2b2b2b; --line: #2b2b2b; --card: #171717; --paper: #000; --danger: #f2726b; --raised: #242424; --chart-ground: #171717; --chart-label: #858585; position: relative; display: grid; grid-template-columns: 208px minmax(0, 1fr); width: 100%; height: 100%; overflow: hidden; border-radius: 18px; background: #0b0b0b; box-shadow: 0 0 0 1px #242424, 0 40px 80px -32px rgba(17, 19, 18, .28); text-align: left; font-size: 13px; color: var(--ink); font-family: var(--font-app), sans-serif; }
+.sidebar { border-right-color: #2b2b2b !important; display: flex; flex-direction: column; gap: 22px; padding: 22px 14px; border-right: 1px solid var(--hairline); background: #0b0b0b; }
 .brand { font-size: 19px; padding: 0 8px; }
 .brand :global(.mark) { width: 20px; height: 20px; }
 .sidebar nav { display: flex; flex-direction: column; gap: 2px; }
 .sidebar nav span { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; color: var(--muted); font-weight: 500; }
-.sidebar nav span[data-on] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(17, 19, 18, .06); }
+.sidebar nav span[data-on] { background: #242424; color: var(--ink); }
 .sidebar nav em { margin-left: auto; min-width: 20px; padding: 1px 6px; border-radius: 99px; background: var(--ink); color: var(--paper); font-style: normal; font-size: 11px; text-align: center; }
 .account { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; background: var(--card); }
 .account img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; object-position: 55% 30%; }
@@ -19,12 +19,12 @@
 .top strong { display: block; margin-top: 2px; font-size: 20px; font-weight: 500; font-stretch: 90%; letter-spacing: -.025em; }
 .topActions, .decide { display: flex; gap: 8px; }
 .ghost, .ink { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 13px; border-radius: 99px; font-weight: 500; white-space: nowrap; }
-.ghost { background: rgba(17, 19, 18, .06); }
+.ghost { background: #242424; }
 .ink { background: var(--ink); color: var(--paper); }
 .muted { color: var(--muted); font-size: 12px; }
 .sub { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
 
-.card { min-height: 0; min-width: 0; overflow: hidden; padding: 16px 18px; border-radius: 14px; background: var(--card); box-shadow: 0 0 0 1px rgba(17, 19, 18, .05), 0 6px 16px -10px rgba(17, 19, 18, .18); }
+.card { min-height: 0; min-width: 0; overflow: hidden; padding: 16px 18px; border-radius: 14px; background: var(--card); box-shadow: none; }
 .cardHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .cardHead strong { font-size: 14px; font-weight: 600; }
 
@@ -37,16 +37,17 @@
 .today b { color: var(--ink); font-size: 14px; font-weight: 600; }
 
 .approval { grid-row: 2 / 4; grid-column: 2; display: flex; flex-direction: column; }
-.who { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
-.agentIcon { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: #f3f4f1; }
+.who { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; }
+.approval .cardHead { flex-wrap: wrap; row-gap: 8px; }
+.agentIcon { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #242424; color: #fff; }
 .reason { padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); font-size: 11px; font-weight: 500; white-space: nowrap; }
 .amount { display: block; margin-top: 14px; font-size: 44px; font-weight: 500; font-stretch: 88%; line-height: 1; letter-spacing: -.05em; }
 .facts { margin: 14px 0 0; }
 .facts > div { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid var(--hairline); font-size: 12px; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; font-weight: 500; }
-.memo { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: #f3f4f1; font-size: 12px; }
-.timer { height: 4px; margin: 10px 0 6px; border-radius: 99px; background: #eceee9; overflow: hidden; }
+.memo { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: #242424; color: #d6d6d6; font-size: 12px; }
+.timer { height: 4px; margin: 10px 0 6px; border-radius: 99px; background: #242424; overflow: hidden; }
 .timer span { display: block; height: 100%; background: var(--ink); }
 .decide { margin-top: auto; padding-top: 14px; }
 .decide > span { flex: 1; height: 36px; }
@@ -55,12 +56,12 @@
 .agents { grid-column: 1; }
 .agentRow { display: grid; grid-template-columns: auto minmax(0, 1.35fr) minmax(0, .9fr) auto; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--hairline); }
 .agentRow[data-off] { color: var(--muted); }
-.agentRow[data-off] .agentIcon { background: #d9dbd6; color: #7b7f7c; }
+.agentRow[data-off] .agentIcon { background: #242424; color: #858585; }
 .agentName { font-weight: 600; min-width: 0; }
 .agentName small { display: block; color: var(--muted); font-weight: 400; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .budget { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }
 .budget b { color: var(--ink); font-weight: 600; }
-.bar { height: 4px; border-radius: 99px; background: #eceee9; overflow: hidden; }
+.bar { height: 4px; border-radius: 99px; background: #242424; overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--ink); }
 .state { font-size: 12px; font-weight: 500; }
 .agentRow[data-off] .state { color: var(--danger); }
