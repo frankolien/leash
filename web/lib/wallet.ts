@@ -5,7 +5,7 @@
 
 import { NearConnector } from "@hot-labs/near-connect";
 import { actions } from "near-api-js";
-import type { Network } from "./leash";
+import type { Network } from "./types";
 
 export type Wallet = Awaited<ReturnType<NearConnector["wallet"]>>;
 

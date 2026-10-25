@@ -45,7 +45,26 @@ Every step below is one command and says what you should see. The AI judges can 
 | `contract/` | The Leash contract, Rust with near-sdk 5. `cargo test` runs the policy tests. |
 | `mcp/` | MCP server any agent can use: preflight, pay, request, status. |
 | `cli/` | Owner's CLI: init, deposit, grant, revoke, pause, approve, log. |
+| `web/` | The owner's dashboard: Next.js, no server, reads the chain over RPC, writes through the owner's wallet. |
 | `docs/` | Design and decisions. |
+
+## Code map
+
+| Where | What |
+| --- | --- |
+| `contract/src/lib.rs` | State, init, the event emitter |
+| `contract/src/types.rs` | Every struct the API speaks, and the storage keys |
+| `contract/src/owner.rs` | What the owner's key may do: policies, kill switch, decisions, vault |
+| `contract/src/agent.rs` | What an agent key may do: pay, request, ask for more |
+| `contract/src/token.rs` | The NEP-141 callback and the settlement of every transfer |
+| `contract/src/views.rs` | The read side |
+| `contract/src/internals.rs` | The policy check, the ledger moves, the log, the storage billing |
+| `contract/tests/` | Sandbox tests against a real node with a mock USDC |
+| `mcp/src/index.ts` | The six tools and the one envelope |
+| `cli/src/index.ts` | The owner's commands |
+| `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `types` |
+| `web/hooks/` | `useSnapshot` (polling), `useWallet` (session and the one way to write), `useNames`, `useToast` |
+| `web/components/` | One file per section: `Bar`, `Balance`, `RequestCard`, `ProposalCard`, `AgentTile`, `NewAgent`, `Activity`, composed in `Dashboard` |
 
 ## Status
 
@@ -56,5 +75,5 @@ Every step below is one command and says what you should see. The AI judges can 
 - [x] Owner-paid storage accounting, measured on testnet
 - [x] Sandbox integration tests through near-workspaces: the six steps, the refund path, the storage rule
 - [x] Parked requests expire; agents can ask for more and read their own history; one result envelope
-- [ ] Dashboard
+- [x] Dashboard, read-only for anyone by account, writes through the owner's wallet
 - [ ] Mainnet
