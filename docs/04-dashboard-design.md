@@ -65,9 +65,10 @@ The overview fits one screen, in the layout of the landing preview: a header wit
 money, the vault and its seven-day chart across the top, agents and activity side by side
 underneath. An agent's request for a wider limit sits under its row in Agents.
 
-A payment above a limit arrives as a pop-up over whatever page is open: the live poll brings it in,
-approving or denying shows the next, "Decide later" snoozes the queue behind an "N waiting" button
-in the header, and the tab title carries the count. Cards scroll inside themselves; below 1180px wide or 720px tall the overview stacks.
+A payment above a limit opens a panel on the right of the app, on whatever page is open, and only
+while one is waiting: the live poll brings it in, the page narrows to make room, approving or
+denying shows the next, closing it snoozes the queue behind an "N waiting" button in the header, and
+the tab title carries the count. Without room for a third column it floats over the right edge. Cards scroll inside themselves; below 1180px wide or 720px tall the overview stacks.
 
 | PayBox | Leash |
 | --- | --- |

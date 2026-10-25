@@ -21,7 +21,7 @@ import AgentList from "./AgentList";
 import AgentsCard from "./AgentsCard";
 import AmountDialog, { type AmountAsk } from "./AmountDialog";
 import ApprovalCard from "./ApprovalCard";
-import ApprovalPopup, { useApprovalQueue } from "./ApprovalPopup";
+import ApprovalPanel, { useApprovalQueue } from "./ApprovalPanel";
 import ConnectCard from "./ConnectCard";
 import PageHeader from "./PageHeader";
 import ProposalCard from "./ProposalCard";
@@ -117,7 +117,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
           <header className={styles.ovHead}>
             <div><span className={styles.muted}>{new Date(now).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span><h1>{greeting(now)}</h1></div>
             <div className={styles.ovActions}>
-              {queue.pending.length > 0 && <button className={styles.waitingPill} onClick={queue.reopen}><span className={styles.pulse} aria-hidden="true" />{queue.pending.length} waiting</button>}
+              {queue.pending.length > 0 && !queue.next && <button className={styles.waitingPill} onClick={queue.reopen}><span className={styles.pulse} aria-hidden="true" />{queue.pending.length} waiting</button>}
               {snap.paused
                 ? <button className={styles.dark} onClick={resume} disabled={busy !== null || !wallet.isOwner}><Play size={16} /> Resume</button>
                 : <button className={styles.dark} onClick={pause} disabled={busy !== null || !wallet.isOwner} title="Stops every agent key at once"><Pause size={16} /> Pause all</button>}
@@ -170,7 +170,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   }
 
   return (
-    <div className={styles.app}>
+    <div className={styles.app} data-panel={snap && queue.next ? "" : undefined}>
       <Sidebar
         view={view}
         waiting={waiting}
@@ -204,7 +204,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         {!snap && !error && <Skeleton />}
         {page}
       </main>
-      {snap && <ApprovalPopup request={queue.next} total={queue.pending.length} agents={snap.agents} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onLater={queue.later} />}
+      {snap && queue.next && <ApprovalPanel request={queue.next} total={queue.pending.length} agents={snap.agents} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onClose={queue.later} />}
       <AmountDialog ask={ask} onClose={() => setAsk(null)} />
       <SetupDialog agent={setup} onClose={() => setSetup(null)} onSwitch={setSetup} />
       {toast && <div className={styles.toast} data-bad={toast.bad || undefined} role="status">{toast.text}</div>}
