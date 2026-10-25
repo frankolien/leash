@@ -73,12 +73,21 @@ fn storage_credit_falls_with_bytes_added_and_returns_when_they_go() {
     // and the measured path in the sandbox test.
     let mut leash = Leash::new();
     ctx_with_deposit(owner(), owner_key(), 1, STORAGE_CREDIT);
-    leash.deposit_storage();
+    leash.deposit_storage(None);
     let byte = env::storage_byte_cost().as_yoctonear();
     leash.settle(&owner(), 1_000, 1_100);
     assert_eq!(leash.get_storage(owner()).0, STORAGE_CREDIT - 100 * byte);
     leash.settle(&owner(), 1_100, 1_060);
     assert_eq!(leash.get_storage(owner()).0, STORAGE_CREDIT - 60 * byte);
+}
+
+#[test]
+fn a_sponsor_can_pay_storage_for_a_new_owner() {
+    let mut leash = Leash::new();
+    ctx_with_deposit(vendor(), owner_key(), 1, STORAGE_CREDIT);
+    leash.deposit_storage(Some(owner()));
+    assert_eq!(leash.get_storage(owner()).0, STORAGE_CREDIT);
+    assert_eq!(leash.get_storage(vendor()).0, 0);
 }
 
 fn refused(outcome: PromiseOrValue<PayOutcome>) -> String {

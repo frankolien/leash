@@ -11,10 +11,14 @@ impl Leash {
     // ---- owner methods -------------------------------------------------------------------
 
     /// Put NEAR down for storage. Every byte a policy, a request or a log entry adds is paid from
-    /// this, so an owner who never funds it cannot grow the contract.
+    /// this, so an owner who never funds it cannot grow the contract. Anyone may pay it for a named
+    /// owner, which is how a sign-up sponsor readies a new account; credit only ever helps the owner.
     #[payable]
-    pub fn deposit_storage(&mut self) {
-        let owner = self.owner_caller();
+    pub fn deposit_storage(&mut self, account_id: Option<AccountId>) {
+        let owner = match account_id {
+            Some(id) => id,
+            None => self.owner_caller(),
+        };
         let credit = self.storage_of(&owner) + env::attached_deposit().as_yoctonear();
         self.storage.insert(owner, credit);
     }

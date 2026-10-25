@@ -9,6 +9,7 @@
 // "ok", "accepted", "refused", "parked", "proposed", "error". An agent never has to guess the shape.
 
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Account, JsonRpcProvider, KeyPairSigner } from "near-api-js";
@@ -60,8 +61,10 @@ const GUIDANCE = [
 ].join(" ");
 
 function loadKey(): KeyFile {
-  const path = process.env.LEASH_KEY_FILE;
-  if (!path) throw new Error("LEASH_KEY_FILE is not set; run `leash grant` to make one");
+  const raw = process.env.LEASH_KEY_FILE;
+  if (!raw) throw new Error("LEASH_KEY_FILE is not set; create an agent in the dashboard or run `leash grant`");
+  // Config files for Codex and Cursor do not expand ~, so the server does.
+  const path = raw.replace(/^~(?=\/)/, homedir());
   const key = JSON.parse(readFileSync(path, "utf8")) as KeyFile;
   for (const field of ["owner", "public_key", "private_key", "contract", "network"] as const) {
     if (!key[field]) throw new Error(`key file is missing ${field}`);

@@ -114,7 +114,7 @@ async fn the_six_steps_run_against_a_real_chain() -> Result<()> {
     let owner_id = w.owner.id().clone();
 
     // Step 2: storage credit and a deposit through ft_transfer_call.
-    w.owner.call(w.leash.id(), "deposit_storage").deposit(NearToken::from_millinear(500)).transact().await?.into_result()?;
+    w.owner.call(w.leash.id(), "deposit_storage").args_json(serde_json::json!({})).deposit(NearToken::from_millinear(500)).transact().await?.into_result()?;
     let credit_before_policy = credit(&w.leash, &owner_id).await?;
     w.owner
         .call(w.ft.id(), "ft_transfer_call")
@@ -172,7 +172,7 @@ async fn the_six_steps_run_against_a_real_chain() -> Result<()> {
 async fn a_failed_transfer_is_refunded_on_chain() -> Result<()> {
     let w = world().await?;
     let owner_id = w.owner.id().clone();
-    w.owner.call(w.leash.id(), "deposit_storage").deposit(NearToken::from_millinear(500)).transact().await?.into_result()?;
+    w.owner.call(w.leash.id(), "deposit_storage").args_json(serde_json::json!({})).deposit(NearToken::from_millinear(500)).transact().await?.into_result()?;
     w.owner
         .call(w.ft.id(), "ft_transfer_call")
         .args_json(json!({ "receiver_id": w.leash.id(), "amount": (5 * USDC).to_string(), "msg": "" }))

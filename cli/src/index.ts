@@ -38,6 +38,12 @@ const RPC: Record<Network, string> = {
   mainnet: "https://rpc.mainnet.fastnear.com",
 };
 // Circle's native USDC on each network; the bridged USDC.e is not this.
+/// The contract every owner shares, keyed by owner inside.
+const SHARED: Record<Network, string> = {
+  testnet: process.env.LEASH_CONTRACT_TESTNET ?? "leash.frankolien.testnet",
+  mainnet: process.env.LEASH_CONTRACT_MAINNET ?? "leash.near",
+};
+
 const USDC: Record<Network, string> = {
   testnet: "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
   mainnet: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
@@ -54,8 +60,9 @@ const STORAGE_DEPOSIT = 1_250_000_000_000_000_000_000n;
 function usage(): never {
   console.log(`leash <command> [options]
 
-  init      --owner <account> [--network testnet] [--wasm <path>] [--owner-key <file>]
-            Create leash.<owner>, deploy the contract, register it on USDC, save ~/.leash/config.json
+  init      --owner <account> [--network testnet] [--owner-key <file>] [--own-contract [--wasm <path>]]
+            Join the shared Leash contract: register on USDC, put down storage credit, save ~/.leash/config.json
+            --own-contract deploys a private instance at leash.<owner> instead (about 4 NEAR)
   deposit   <usdc>                      Move USDC from the owner into the Leash vault
   withdraw  <usdc>                      Move USDC from the vault back to the owner
   grant     --name <agent> --daily <usdc> --per-payment <usdc> [--to a.near,b.near] [--cooldown <secs>] [--ttl <2h|3d>]
@@ -110,18 +117,9 @@ async function call(account: Account, contractId: string, methodName: string, ar
   return account.callFunction({ contractId, methodName, args, deposit, gas });
 }
 
-async function init(flags: Record<string, string | undefined>) {
-  const owner = flags.owner ?? usage();
-  const network = (flags.network ?? "testnet") as Network;
-  const ownerKeyFile = flags["owner-key"] ?? join(homedir(), ".near-credentials", network, `${owner}.json`);
-  // cargo-near's optimised binary is half the size of a plain cargo build, and storage is paid per byte.
-  const candidates = [join(process.cwd(), "contract/target/near/leash.wasm"), join(process.cwd(), "contract/target/wasm32-unknown-unknown/release/leash.wasm")];
-  const wasmPath = flags.wasm ?? candidates.find((p) => existsSync(p)) ?? candidates[0];
-  if (!existsSync(ownerKeyFile)) throw new Error(`no owner key at ${ownerKeyFile}; log in with the near CLI first`);
+async function deployOwn(o: { account: Account; provider: JsonRpcProvider; publicKey: string; contract: string; wasmPath: string; ownerKeyFile: string }) {
+  const { account, provider, publicKey, contract, wasmPath, ownerKeyFile } = o;
   if (!existsSync(wasmPath)) throw new Error(`no contract at ${wasmPath}; build it with cargo first`);
-  const contract = `leash.${owner}`;
-  const { account, provider, publicKey } = ownerAccount({ owner, network, owner_key_file: ownerKeyFile });
-
   let exists = false;
   try {
     await provider.viewAccount({ accountId: contract });
@@ -151,6 +149,23 @@ async function init(flags: Record<string, string | undefined>) {
     if (!String(error).includes("already")) throw error;
     console.log("already initialised");
   }
+}
+
+async function init(flags: Record<string, string | undefined>) {
+  const owner = flags.owner ?? usage();
+  const network = (flags.network ?? "testnet") as Network;
+  const ownerKeyFile = flags["owner-key"] ?? join(homedir(), ".near-credentials", network, `${owner}.json`);
+  // cargo-near's optimised binary is half the size of a plain cargo build, and storage is paid per byte.
+  const candidates = [join(process.cwd(), "contract/target/near/leash.wasm"), join(process.cwd(), "contract/target/wasm32-unknown-unknown/release/leash.wasm")];
+  const wasmPath = flags.wasm ?? candidates.find((p) => existsSync(p)) ?? candidates[0];
+  if (!existsSync(ownerKeyFile)) throw new Error(`no owner key at ${ownerKeyFile}; log in with the near CLI first`);
+  // Every owner shares one contract by default; --own-contract deploys a private instance at
+  // leash.<owner>, which locks about 4 NEAR for the code.
+  const own = flags["own-contract"] !== undefined;
+  const contract = flags.contract ?? (own ? `leash.${owner}` : SHARED[network]);
+  const { account, provider, publicKey } = ownerAccount({ owner, network, owner_key_file: ownerKeyFile });
+  if (own) await deployOwn({ account, provider, publicKey, contract, wasmPath, ownerKeyFile });
+
   const token = flags.token ?? USDC[network];
   // Both the vault and the owner must be registered on the token before either can hold it; a
   // faucet or a transfer to an unregistered account fails with no clear message.
