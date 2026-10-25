@@ -54,6 +54,6 @@ Every step below is one command and says what you should see. The AI judges can 
 - [x] MCP server, smoke-tested against testnet
 - [x] CLI
 - [x] Owner-paid storage accounting, measured on testnet
-- [ ] Integration test through near-workspaces
+- [x] Sandbox integration tests through near-workspaces: the six steps, the refund path, the storage rule
 - [ ] Dashboard
 - [ ] Mainnet

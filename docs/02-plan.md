@@ -23,7 +23,7 @@ Submission window: 1 to 14 November 2026, 23:59 UTC. Judging 16 to 18 November. 
 | When | What | Done when |
 | --- | --- | --- |
 | 26 Oct | Test USDC in the vault; two payments land, third refused, request parked and approved; `revoke` makes the next call fail at the protocol | The README's six steps run as written on testnet |
-| 27 Oct | near-workspaces integration test that runs the same six steps against a sandbox with a mock USDC | `cargo test` covers the cross-contract path, not only the unit path |
+| 27 Oct | Done 25 Oct: three near-workspaces tests against a sandbox with a mock USDC: the six steps, the refund of a failed transfer, the storage rule; cooldown and expiry also exercised on testnet | `cargo test` covers the cross-contract path, not only the unit path |
 | 28 Oct | Done 25 Oct: storage accounting, owner-paid, measured with `env::storage_usage()` after a flush | A stranger cannot grow the contract's storage for free |
 | 29 Oct | Dashboard: one page that reads `get_policies`, `get_requests`, `get_log` for an owner, with approve and deny through a wallet | The owner never needs the CLI to say yes |
 | 30 Oct | Claude Code and Codex demo: the MCP server in a real agent session, recorded | The demo film's raw footage exists |
