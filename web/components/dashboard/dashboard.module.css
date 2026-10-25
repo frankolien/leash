@@ -143,8 +143,16 @@ a.row:hover { background: #1c1c1c; }
 .vaultCopy .sectionLink { display: inline-flex; align-items: center; gap: 5px; }
 .ovWaiting { grid-column: 3; grid-row: 2 / 4; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .ovWaiting > section { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-/* A short proposal takes its own height and recipients fill the rest; an approval fills the column. */
-.ovWaiting > .proposal, .ovWaiting > .caughtUp { flex: 0 0 auto; }
+.noApproval { display: flex; flex-direction: column; }
+/* In the overview's column the decision sits at the bottom of the card, under everything it rests on. */
+.ovWaiting .decide { margin-top: auto; padding-top: 18px; }
+.ovWaiting .approval .amount { font-size: 56px; margin-top: 22px; }
+.noApprovalBody { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px 12px; text-align: center; }
+.noApprovalBody strong { margin-top: 8px; font-size: 18px; font-weight: 600; }
+.noApprovalBody > span:last-child { max-width: 280px; color: var(--grey); font-size: 14px; line-height: 1.45; }
+.ask { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 0 0 12px 52px; padding: 11px 14px; border-radius: 14px; background: var(--raised); color: var(--text-2); font-size: 14px; line-height: 1.4; }
+.ask b { color: #fff; font-weight: 600; }
+.ask .sectionLink { flex-shrink: 0; padding: 0; }
 .miniRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--edge); }
 .miniRow .recipientMark { width: 36px; height: 36px; }
 .miniRow .rowMain strong { font-size: 15px; }
@@ -170,7 +178,8 @@ a.row:hover { background: #1c1c1c; }
 
 /* Waiting on you */
 .approval, .proposal { display: flex; flex-direction: column; }
-.who { display: inline-flex; align-items: center; gap: 10px; min-width: 0; font-size: 16px; font-weight: 600; }
+.approval .cardHead, .proposal .cardHead { flex-wrap: wrap; row-gap: 10px; }
+.who { display: inline-flex; align-items: center; gap: 10px; min-width: 0; font-size: 16px; font-weight: 600; white-space: nowrap; }
 .reason { padding: 6px 12px; border-radius: 999px; background: var(--chip-bg); color: var(--text-2); font-size: 12px; font-weight: 500; white-space: nowrap; }
 .amount { display: block; margin-top: 16px; font-size: 48px; font-weight: 700; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .amount > span { font-size: 1em; }

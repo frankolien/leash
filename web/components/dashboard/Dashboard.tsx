@@ -24,7 +24,6 @@ import ApprovalCard from "./ApprovalCard";
 import ConnectCard from "./ConnectCard";
 import PageHeader from "./PageHeader";
 import ProposalCard from "./ProposalCard";
-import RecipientsCard from "./RecipientsCard";
 import RecipientsView from "./RecipientsView";
 import SettingsView from "./SettingsView";
 import Sidebar from "./Sidebar";
@@ -124,11 +123,21 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
           </header>
           <VaultCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} />
           <div className={styles.ovWaiting}>
-            {waiting ? waitingCards(snap, 1) : caughtUp}
-            {waiting > 1 && <a className={styles.more} href="#approvals">{waiting - 1} more waiting</a>}
-            {snap.requests.length === 0 && <RecipientsCard agents={snap.agents} log={snap.log} names={names} />}
+            {snap.requests.length ? (
+              <ApprovalCard request={snap.requests[0]} agent={snap.agents.find((x) => x.key === snap.requests[0].key)} names={names} now={now} busy={busy} onApprove={() => approve(snap.requests[0])} onDeny={() => deny(snap.requests[0])} />
+            ) : (
+              <section className={`${styles.card} ${styles.noApproval}`} aria-label="Approvals">
+                <div className={styles.cardHead}><strong>Approvals</strong><span className={styles.muted}>{Math.round(snap.requestTtl / 60)} min to decide</span></div>
+                <div className={styles.noApprovalBody}>
+                  <span className={styles.caughtBadge} aria-hidden="true"><Check size={20} /></span>
+                  <strong>Nothing to approve</strong>
+                  <span>When an agent asks to pay above its limit, the payment appears here with what you need to decide.</span>
+                </div>
+              </section>
+            )}
+            {snap.requests.length > 1 && <a className={styles.more} href="#approvals">{snap.requests.length - 1} more waiting</a>}
           </div>
-          <AgentsCard agents={snap.agents} names={names} paused={snap.paused} onAdd={openSetup} />
+          <AgentsCard agents={snap.agents} names={names} paused={snap.paused} proposals={snap.proposals} busy={busy} onDismiss={dismiss} onAdd={openSetup} />
           <ActivityCard log={snap.log} names={names} limit={6} />
         </div>
       );

@@ -17,11 +17,15 @@ export default function ApprovalCard(props: { request: Request; agent: Agent | u
   const expires = msOf(r.expires_at);
   const left = Math.max(0, expires - now);
   const { whole, cents } = splitUsdc(BigInt(r.amount));
+  // The contract's reason, said the short way the owner thinks of it.
+  const chip = agent && r.reason.includes("per-payment") ? `over $${toUsdc(agent.policy.per_payment_cap)} limit`
+    : agent && r.reason.includes("daily") ? `over $${toUsdc(agent.policy.daily_cap)} a day`
+    : r.reason;
   return (
     <section className={`${styles.card} ${styles.approval}`} aria-label={`${who} wants to pay ${toUsdc(r.amount)} USDC`}>
       <div className={styles.cardHead}>
         <span className={styles.who}><AgentIcon name={who} size={38} />{who} wants to pay</span>
-        <span className={styles.reason}>{r.reason}</span>
+        <span className={styles.reason} title={r.reason}>{chip}</span>
       </div>
       <Money whole={whole} cents={cents} className={styles.amount} />
       <span className={styles.sub}>to <span className="mono">{r.to}</span></span>
