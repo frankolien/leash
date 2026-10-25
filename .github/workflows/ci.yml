@@ -1,0 +1,38 @@
+# Every push runs the contract's unit and sandbox tests, and builds and tests the MCP server, the
+# CLI and the web app.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: contract } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: wasm32-unknown-unknown }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: contract }
+      - run: cargo install cargo-near --locked
+      - run: cargo test --lib
+      - run: cargo near build non-reproducible-wasm
+      - run: cargo test --test leash
+        env: { LEASH_SKIP_BUILD: "1" }
+
+  node:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [mcp, cli, web]
+    defaults: { run: { working-directory: "${{ matrix.package }}" } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: "${{ matrix.package }}/package-lock.json" }
+      - run: npm ci
+      - run: npm run build
+      - if: matrix.package != 'mcp'
+        run: npm test
