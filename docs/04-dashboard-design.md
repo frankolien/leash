@@ -31,7 +31,13 @@ buttons.
 
 ## Landing
 
-1. Hero: the claim, then a photograph with the moment played over it in four beats: Maya asks her
+0. Film: the first screen is a full-bleed film of five candid scenes (taxi, cafe, crosswalk,
+   platform, market) generated with Higgsfield Seedance 2.0 from Soul stills, cut with crossfades into
+   a 22.6s silent loop (`web/public/film/`, 1080p and 720p). Leash's mark floats in it as a glass
+   block, drawn in three.js with the film on a plane behind it so the glass refracts the footage. The
+   caption names the agent on screen, "Now your Claude can pay. Only what you allow.", and the name
+   changes on each cut. Without WebGL the plain video shows. Modelled on PayBox's hero.
+1. One payment, start to finish: the claim, then a photograph with the moment played over it in four beats: Maya asks her
    agent, Leash stops it at the cap, her phone asks her, it is paid once. A rail names the beats and
    lets the reader step through them. Reduced motion shows the last beat.
 2. Stories: an endless strip of people and the instruction each gave their agent, with the limit

@@ -6,16 +6,18 @@
 import { useEffect, useState, type ReactNode } from "react";
 import styles from "./site.module.css";
 
-export default function SiteHeader({ right }: { right?: ReactNode }) {
+/// Over a full-screen film (`overFilm`) the bar is clear with white type until the film has
+/// scrolled away.
+export default function SiteHeader({ right, overFilm = false }: { right?: ReactNode; overFilm?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > 12);
+    const update = () => setScrolled(window.scrollY > (overFilm ? window.innerHeight - 90 : 12));
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
-  }, []);
+  }, [overFilm]);
   return (
-    <header className={styles.header} data-scrolled={scrolled}>
+    <header className={styles.header} data-scrolled={scrolled} data-light={overFilm && !scrolled}>
       <nav aria-label="Leash">
         <a href="/" aria-label="Leash home" className="wordmark"><span className="mark" aria-hidden="true" />Leash</a>
         <div className={styles.right}>{right}</div>

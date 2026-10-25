@@ -1,6 +1,8 @@
 .header { position: fixed; inset: 0 0 auto; z-index: 40; transition: background-color 240ms ease, box-shadow 240ms ease, backdrop-filter 240ms ease; }
 .header[data-scrolled="true"] { background: rgba(245, 246, 243, .72); box-shadow: 0 1px 0 var(--hairline); backdrop-filter: saturate(1.4) blur(18px); -webkit-backdrop-filter: saturate(1.4) blur(18px); }
 .header nav { max-width: calc(var(--shell) + var(--gutter) * 2); height: var(--header-height); margin: 0 auto; padding: 0 var(--gutter); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.header[data-light="true"] { color: #fff; }
+.header[data-light="true"] :global(.btn.ink) { background: #fff; color: var(--ink); }
 .right { display: flex; align-items: center; gap: 8px; min-width: 0; }
 
 .footer { position: relative; background: var(--ink); color: #e9ebe8; }

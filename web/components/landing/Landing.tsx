@@ -11,6 +11,7 @@ import SiteHeader from "@/components/site/SiteHeader";
 import Atmosphere from "@/components/site/Atmosphere";
 import { Invitation, Questions } from "./Closing";
 import Hero from "./Hero";
+import HeroFilm from "./HeroFilm";
 import HowItHolds from "./HowItHolds";
 import SetupDialog from "./SetupDialog";
 import Stories from "./Stories";
@@ -31,6 +32,7 @@ export default function Landing() {
       <Atmosphere />
       <a href="#how" className="skip">Skip to how it works</a>
       <SiteHeader
+        overFilm
         right={
           <>
             {(Object.keys(AGENTS) as Agent[]).map((a) => (
@@ -41,6 +43,7 @@ export default function Landing() {
         }
       />
       <main>
+        <HeroFilm />
         <Hero />
         <Stories />
         <HowItHolds />

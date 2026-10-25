@@ -1,6 +1,6 @@
-.hero { max-width: calc(var(--shell) + var(--gutter) * 2); margin: 0 auto; padding: calc(var(--header-height) + 40px) var(--gutter) 0; }
+.hero { max-width: calc(var(--shell) + var(--gutter) * 2); margin: 0 auto; padding: 128px var(--gutter) 0; scroll-margin-top: 40px; }
 .copy { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 48px; align-items: end; }
-.copy h1 { margin: 0; font-size: clamp(44px, 5.5vw, 84px); }
+.copy h2 { margin: 0; font-size: clamp(40px, 4.6vw, 72px); }
 .side p { margin: 0; max-width: 420px; color: var(--ink-2); font-size: 18px; line-height: 1.45; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 
@@ -51,7 +51,7 @@
   .rail { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
 }
 @media (max-width: 600px) {
-  .hero { padding-top: calc(var(--header-height) + 28px); }
+  .hero { padding-top: 88px; }
   .side p { font-size: 16px; }
   .moment { margin-top: 36px; }
   .stop { top: 21%; width: 86%; }

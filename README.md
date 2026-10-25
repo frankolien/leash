@@ -65,7 +65,7 @@ Every step below is one command and says what you should see. The AI judges can 
 | `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `types` |
 | `web/hooks/` | `useSnapshot` (polling), `useWallet` (session and the one way to write), `useNames`, `useToast`, `useActiveSection` |
 | `web/components/site/` | The header, footer and the drifting ground every page shares |
-| `web/components/landing/` | The landing page: `Hero` and `LiveMoment`, `Stories`, `HowItHolds` and `Wireframe`, `WorksWith`, `YourSide`, `Closing`, `SetupDialog` |
+| `web/components/landing/` | The landing page: `HeroFilm` and `GlassBlock` (the film and the refracting glass), `Hero` and `LiveMoment`, `Stories`, `HowItHolds` and `Wireframe`, `WorksWith`, `YourSide`, `Closing`, `SetupDialog` |
 | `web/components/dashboard/` | The owner's page: `Overview` (vault, kill switch, waiting scene), `RequestCard`, `ProposalCard`, `AgentCard`, `Activity`, `AmountDialog`, composed in `Dashboard` |
 
 ## Status

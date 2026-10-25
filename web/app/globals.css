@@ -65,6 +65,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
 .btn.ink { background: var(--ink); color: var(--paper); }
 .btn.glass { background: var(--glass-dark); color: #f1f2ef; border-color: rgba(255, 255, 255, .12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 6px 16px -8px rgba(0, 0, 0, .5); backdrop-filter: blur(12px); }
 .btn.line { background: transparent; border-color: var(--line); }
+.btn.light { background: #fff; color: var(--ink); }
 .btn.danger { color: var(--danger); }
 .btn svg { flex-shrink: 0; }
 @media (hover: hover) and (pointer: fine) {
@@ -72,6 +73,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
   .btn.ink:hover:not(:disabled) { background: var(--ink-2); }
   .btn.glass:hover:not(:disabled) { background: rgba(40, 43, 41, .9); }
   .btn.line:hover:not(:disabled) { background: rgba(17, 19, 18, .04); }
+  .btn.light:hover:not(:disabled) { background: #ecedea; }
 }
 
 /* The small square that names a category, as on a printed label. */
