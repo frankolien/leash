@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, X } from "lucide-react";
-import { AGENTS, steps, type Agent } from "./setup";
+import { AGENTS, steps, type Agent } from "./agents";
 import styles from "./setup.module.css";
 
 function CopyCode({ code }: { code: string }) {

@@ -57,3 +57,26 @@ export function requestFacts(r: Request, agent: Agent | undefined, names: Names,
     { label: "Approving", value: "This payment only" },
   ];
 }
+
+export type Recipient = { account: string; keys: string[]; paid: bigint; lastPaidMs: number | null };
+
+/// Every account an agent is allowed to pay, from the allowlists, with what the log shows was paid
+/// to it. Accounts that were paid but are on no list (agents with no list may pay anyone) are kept.
+export function recipients(agents: Agent[], log: LogEntry[]): { list: Recipient[]; openKeys: string[] } {
+  const byAccount = new Map<string, Recipient>();
+  const entry = (account: string) => {
+    let r = byAccount.get(account);
+    if (!r) byAccount.set(account, (r = { account, keys: [], paid: BigInt(0), lastPaidMs: null }));
+    return r;
+  };
+  for (const a of agents) if (a.policy.active) for (const to of a.policy.allowlist) entry(to).keys.push(a.key);
+  for (const e of log) {
+    if (!e.to || !e.amount || (e.event !== "pay" && e.event !== "request_approved")) continue;
+    const r = entry(e.to);
+    r.paid += BigInt(e.amount);
+    r.lastPaidMs = Math.max(r.lastPaidMs ?? 0, msOf(e.at));
+  }
+  const openKeys = agents.filter((a) => a.policy.active && a.policy.allowlist.length === 0).map((a) => a.key);
+  const list = [...byAccount.values()].sort((x, y) => Number(y.paid - x.paid) || x.account.localeCompare(y.account));
+  return { list, openKeys };
+}

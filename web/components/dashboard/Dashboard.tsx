@@ -1,28 +1,34 @@
 "use client";
 
-// The owner's dashboard as an app: a sidebar, a header with the kill switch and Add money, and five
-// views addressed by the URL hash. State lives in the hooks; the cards only draw and call back.
+// The owner's dashboard as an app: a sidebar with the views, the kill switch and the wallet, and
+// six views addressed by the URL hash, each opening with a title, its state and one main action.
+// State lives in the hooks; the cards only draw and call back.
 
 import { useCallback, useEffect, useState } from "react";
-import { Pause, Play, Plus, Wallet } from "lucide-react";
+import { Check, Plus } from "lucide-react";
+import SetupDialog from "@/components/setup/SetupDialog";
+import type { Agent as SetupAgent } from "@/components/setup/agents";
 import { useNames } from "@/hooks/useNames";
 import { useNow, useSnapshot } from "@/hooks/useSnapshot";
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { agentLabel, toUnits, toUsdc } from "@/lib/format";
-import { greeting } from "@/lib/insights";
+import { greeting, recipients } from "@/lib/insights";
 import { contractOf, networkOf } from "@/lib/reader";
 import type { Agent, Proposal, Request, Snapshot } from "@/lib/types";
 import ActivityCard from "./ActivityCard";
-import AgentCard from "./AgentCard";
+import AgentList from "./AgentList";
 import AgentsCard from "./AgentsCard";
 import AmountDialog, { type AmountAsk } from "./AmountDialog";
 import ApprovalCard from "./ApprovalCard";
-import NewAgent from "./NewAgent";
+import BalanceHero from "./BalanceHero";
+import ConnectCard from "./ConnectCard";
+import PageHeader from "./PageHeader";
 import ProposalCard from "./ProposalCard";
+import RecipientsView from "./RecipientsView";
 import SettingsView from "./SettingsView";
 import Sidebar from "./Sidebar";
-import VaultCard from "./VaultCard";
+import SpendCard from "./SpendCard";
 import { viewFromHash, type View } from "./views";
 import styles from "./dashboard.module.css";
 
@@ -39,13 +45,6 @@ function useView(): View {
   return view;
 }
 
-const TITLES: Record<Exclude<View, "overview">, { title: string; sub: string }> = {
-  agents: { title: "Agents", sub: "Each key, its limits, and what it has left today." },
-  approvals: { title: "Approvals", sub: "Payments above a limit and requests for more, waiting on you." },
-  activity: { title: "Activity", sub: "Every payment, refusal and change, as it landed on chain." },
-  settings: { title: "Settings", sub: "How your vault behaves and where it lives." },
-};
-
 export default function Dashboard({ owner, contract: contractOverride }: { owner: string; contract?: string }) {
   const network = networkOf(owner);
   const contract = contractOverride ?? contractOf(owner);
@@ -56,6 +55,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const now = useNow();
   const view = useView();
   const [ask, setAsk] = useState<AmountAsk | null>(null);
+  const [setup, setSetup] = useState<SetupAgent | null>(null);
 
   const { act, call, busy } = wallet;
   const approve = useCallback((r: Request) => act("approve", () => call(contract, "approve", { request_id: r.id }), `Approved ${toUsdc(r.amount)} USDC to ${r.to}`), [act, call, contract]);
@@ -85,90 +85,120 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
       onConfirm: (usdc) => act("withdraw", () => call(contract, "withdraw", { token: snap.token, amount: toUnits(usdc).toString() }), `Withdrew ${usdc} USDC`),
     });
   }, [act, call, contract, snap]);
+  const openSetup = useCallback(() => setSetup("claude"), []);
 
   const waiting = snap ? snap.requests.length + snap.proposals.length : 0;
-  const agentOf = (key: string) => snap?.agents.find((a) => a.key === key);
 
   const waitingCards = (s: Snapshot, limit?: number) => {
     const cards = [
-      ...s.requests.map((r) => <ApprovalCard key={`r${r.id}`} request={r} agent={agentOf(r.key)} names={names} now={now} busy={busy} onApprove={() => approve(r)} onDeny={() => deny(r)} />),
+      ...s.requests.map((r) => <ApprovalCard key={`r${r.id}`} request={r} agent={s.agents.find((a) => a.key === r.key)} names={names} now={now} busy={busy} onApprove={() => approve(r)} onDeny={() => deny(r)} />),
       ...s.proposals.map((p) => <ProposalCard key={`p${p.id}`} proposal={p} names={names} busy={busy} onDismiss={() => dismiss(p)} />),
     ];
     return limit ? cards.slice(0, limit) : cards;
   };
 
-  const calm = (
-    <section className={`${styles.card} ${styles.calm}`}>
-      <strong>Nothing needs you.</strong>
-      <span>Every agent is inside its limits. When one asks to pay more, it lands here.</span>
+  const caughtUp = (
+    <section className={`${styles.card} ${styles.caughtUp}`}>
+      <span className={styles.caughtIcon} aria-hidden="true"><Check size={18} /></span>
+      <strong>Nothing waiting</strong>
+      <span>When an agent asks to pay above its limit, it lands here.</span>
     </section>
   );
 
-  let body: React.ReactNode = null;
+  let page: React.ReactNode = null;
   if (snap) {
+    const active = snap.agents.filter((a) => a.policy.active).length;
+    const revoked = snap.agents.length - active;
     if (view === "overview") {
-      body = (
-        <div className={styles.overview}>
-          <div className={styles.column}>
-            <VaultCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} />
-            <AgentsCard agents={snap.agents} names={names} paused={snap.paused} />
-          </div>
-          <div className={`${styles.column} ${styles.decisions}`}>
-            <div className={styles.waiting}>
-              {waiting ? waitingCards(snap, 1) : calm}
-              {waiting > 1 && <a className={styles.more} href="#approvals">{waiting - 1} more waiting</a>}
+      page = (
+        <div className={styles.wide}>
+          <span className={styles.greeting}>{greeting(now)}, {new Date(now).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span>
+          <BalanceHero vault={snap.vault} contract={snap.contract} busy={busy} onDeposit={deposit} onSetup={openSetup} />
+          <div className={styles.overview}>
+            <div className={styles.column}>
+              <SpendCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} />
+              <AgentsCard agents={snap.agents} names={names} paused={snap.paused} />
             </div>
-            <ActivityCard log={snap.log} names={names} limit={5} />
+            <div className={`${styles.column} ${styles.decisions}`}>
+              <div className={styles.waiting}>
+                {waiting ? waitingCards(snap, 1) : caughtUp}
+                {waiting > 1 && <a className={styles.more} href="#approvals">{waiting - 1} more waiting</a>}
+              </div>
+              <ActivityCard log={snap.log} names={names} limit={5} />
+            </div>
           </div>
         </div>
       );
     } else if (view === "agents") {
-      body = (
-        <div className={styles.agentGrid}>
-          {snap.agents.map((a) => <AgentCard key={a.key} agent={a} names={names} paused={snap.paused} busy={busy} onRevoke={() => revoke(a)} />)}
-          <NewAgent />
+      page = (
+        <div className={styles.narrow}>
+          <PageHeader title="Agents" status={`${active} active${revoked ? `, ${revoked} revoked` : ""}`} action={<button className="btn line" onClick={openSetup}><Plus size={16} /> New agent</button>} />
+          <ConnectCard onPick={setSetup} />
+          <AgentList agents={snap.agents} names={names} paused={snap.paused} busy={busy} onRevoke={revoke} />
         </div>
       );
     } else if (view === "approvals") {
-      body = <div className={styles.approvalList}>{waiting ? waitingCards(snap) : calm}</div>;
+      page = (
+        <div className={styles.narrow}>
+          <PageHeader title="Approvals" status={waiting ? `${waiting} waiting on you` : "All caught up"} action={waiting ? undefined : <span className={styles.caughtBadge} aria-hidden="true"><Check size={18} /></span>} />
+          <div className={styles.approvalList}>{waiting ? waitingCards(snap) : caughtUp}</div>
+        </div>
+      );
     } else if (view === "activity") {
-      body = <ActivityCard log={snap.log} names={names} full />;
+      page = (
+        <div className={styles.narrow}>
+          <PageHeader title="Activity" status={`Last ${snap.log.length} events on chain`} />
+          <ActivityCard log={snap.log} names={names} full />
+        </div>
+      );
+    } else if (view === "recipients") {
+      const count = recipients(snap.agents, snap.log).list.length;
+      page = (
+        <div className={styles.narrow}>
+          <PageHeader title="Recipients" status={`${count} ${count === 1 ? "account" : "accounts"} your agents may pay`} action={<button className="btn line" onClick={() => (window.location.hash = "agents")}>Edit lists</button>} />
+          <RecipientsView agents={snap.agents} log={snap.log} names={names} />
+        </div>
+      );
     } else {
-      body = <SettingsView snapshot={snap} busy={busy} canAct={wallet.isOwner} onWindow={setWindow} onPause={pause} onResume={resume} />;
+      page = (
+        <div className={styles.narrow}>
+          <PageHeader title="Settings" status="How your vault behaves and where it lives" />
+          <SettingsView snapshot={snap} busy={busy} canAct={wallet.isOwner} onWindow={setWindow} onPause={pause} onResume={resume} />
+        </div>
+      );
     }
   }
 
-  const heading = view === "overview"
-    ? { title: `${greeting(now)}`, sub: new Date(now).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) }
-    : TITLES[view];
-
   return (
     <div className={styles.app}>
-      <Sidebar view={view} waiting={waiting} owner={owner} network={network} account={wallet.account} onConnect={wallet.onConnect} onDisconnect={wallet.onDisconnect} />
+      <Sidebar
+        view={view}
+        waiting={waiting}
+        owner={owner}
+        network={network}
+        account={wallet.account}
+        paused={snap?.paused}
+        canAct={wallet.isOwner}
+        busy={busy}
+        onConnect={wallet.onConnect}
+        onDisconnect={wallet.onDisconnect}
+        onPause={pause}
+        onResume={resume}
+        onSetup={openSetup}
+      />
       <main className={styles.main}>
-        <header className={styles.top}>
-          <div>
-            <span className={styles.muted}>{heading.sub}</span>
-            <h1 className="display">{heading.title}</h1>
-          </div>
-          {snap && (
-            <div className={styles.topActions}>
-              {snap.paused
-                ? <button className="btn danger on" onClick={resume} disabled={busy !== null || !wallet.isOwner}><Play size={15} /> Resume</button>
-                : <button className="btn" onClick={pause} disabled={busy !== null || !wallet.isOwner} title="Stops every agent key at once"><Pause size={15} /> Pause all</button>}
-              <button className="btn ink" onClick={deposit} disabled={busy !== null}><Plus size={15} /> Add money</button>
-              {wallet.account
-                ? <button className={`btn line ${styles.phoneOnly}`} onClick={wallet.onDisconnect}>Connected</button>
-                : <button className={`btn line ${styles.phoneOnly}`} onClick={wallet.onConnect}><Wallet size={15} /> Connect</button>}
-            </div>
-          )}
-        </header>
+        <div className={styles.phoneBar}>
+          <a href="/" className="wordmark" aria-label="Leash home"><span className="mark" aria-hidden="true" />Leash</a>
+          {wallet.account
+            ? <button className="btn line" onClick={wallet.onDisconnect}>Connected</button>
+            : <button className="btn ink" onClick={wallet.onConnect}>Connect wallet</button>}
+        </div>
         {snap?.paused && <div className={styles.banner}>Paused. No agent can pay until you resume.</div>}
         {!snap && (
           <div className={styles.empty}>
             {error ? (
               <>
-                <h2 className="display">No vault here yet.</h2>
+                <h1 className="display">No vault here yet.</h1>
                 <p>There is no Leash contract at <span className="mono">{contract}</span>. The owner creates one with <span className="mono">leash init</span>.</p>
                 <a className="btn" href="/">Back to Leash</a>
               </>
@@ -177,9 +207,10 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
             )}
           </div>
         )}
-        {body}
+        {page}
       </main>
       <AmountDialog ask={ask} onClose={() => setAsk(null)} />
+      <SetupDialog agent={setup} onClose={() => setSetup(null)} onSwitch={setSetup} />
       {toast && <div className={styles.toast} data-bad={toast.bad || undefined} role="status">{toast.text}</div>}
     </div>
   );

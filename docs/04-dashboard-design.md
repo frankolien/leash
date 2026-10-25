@@ -52,21 +52,25 @@ The header shortcuts for Claude Code, Codex and Cursor open the real setup steps
 
 ## Dashboard
 
-The owner's page is the app the landing film closes into, on live chain data. A sidebar holds the
-five views, addressed by the URL hash so each can be linked: Overview, Agents, Approvals, Activity
-and Settings, with the owner's wallet at the bottom (a tab bar along the bottom on phones). The
-header carries the kill switch and Add money.
+The owner's page is an app on live chain data. Its structure takes PayBox's app as a reference for
+how an agent wallet is navigated, mapped onto what Leash is:
 
-- Overview: the vault with what agents spent today against their combined limits and a seven-day
-  spending chart built from the on-chain log; the first payment waiting on the owner with the facts
-  that decide it (what the agent may pay alone, what it has left, whether the recipient is on its
-  list, that approving covers this payment only); the agents table; the latest activity.
-- Agents: one card per key with its limits and Revoke. Approvals: every request and proposal.
-  Activity: the full log, refusals struck through. Settings: the approval window (set on chain),
-  the kill switch, where the vault lives, and the storage credit.
+| PayBox | Leash |
+| --- | --- |
+| Portfolio | Overview: the balance (hideable), Add money and Connect an agent, then spending, what waits, agents, activity |
+| Credentials | Recipients: every account an agent may pay, from the allowlists, with who may pay it and what has gone to it |
+| Agents | Agents: a Connect card for Claude Code, Codex and Cursor (the real setup steps), search, rows that open to show limits and Revoke |
+| Approvals | Approvals: "All caught up", or every payment and proposal waiting |
+| Plugins | Not applicable; Activity takes the slot, with search and filters for payments, refusals, requests and changes |
+| Settings and account at the bottom | Kill switch, a dismissible first-agent setup card, the owner's wallet and Settings, pinned at the bottom |
+
+Every view opens with a title, its state in a few words ("2 active", "All caught up") and one main
+action. Views are addressed by the URL hash. On phones the views become a tab bar and the wallet
+moves to a top bar.
 
 Derived figures live in `web/lib/insights.ts`; the chart in `web/components/charts/` is shared with
-the landing preview.
+the landing preview; the agent setup steps and dialog in `web/components/setup/` are shared with the
+landing header.
 
 ## Photography
 

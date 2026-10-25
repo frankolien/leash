@@ -12,10 +12,10 @@ import Atmosphere from "@/components/site/Atmosphere";
 import { Invitation, Questions } from "./Closing";
 import FilmSequence from "./FilmSequence";
 import HowItHolds from "./HowItHolds";
-import SetupDialog from "./SetupDialog";
+import SetupDialog from "@/components/setup/SetupDialog";
 import Stories from "./Stories";
 import WorksWith from "./WorksWith";
-import { AGENTS, type Agent } from "./setup";
+import { AGENTS, type Agent } from "@/components/setup/agents";
 
 const ICONS: Record<Agent, React.ReactNode> = {
   claude: <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d={siClaude.path} fill="currentColor" /></svg>,
