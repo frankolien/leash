@@ -43,13 +43,16 @@ Owner methods, called by the owner with a full-access key:
 | `pause()` / `resume()` | Kill switch for every key of this owner |
 | `approve(request_id)` / `deny(request_id)` | Decide a parked payment |
 | `withdraw(token, amount)` | Take vault money back to the owner |
+| `set_request_ttl(secs)` | How long a parked request waits for the owner; an hour by default |
+| `dismiss_proposal(id)` | Clear an agent's note asking for more |
 
 Agent methods, called as the owner with the agent's function-call key:
 
 | Method | Does |
 | --- | --- |
 | `pay(to, amount, memo)` | Pay within policy, or fail with the reason |
-| `request(to, amount, memo)` | Park a payment the policy would refuse, for the owner to decide |
+| `request(to, amount, memo)` | Park a payment the policy would refuse, for the owner to decide. It expires after the owner's window and is logged as `request_expired` when touched afterwards |
+| `ask_more(note)` | Ask the owner for a wider policy in one sentence. Nothing changes until the owner acts |
 
 Token callback:
 
@@ -65,7 +68,9 @@ Views:
 | `get_policies(owner)` | Every policy of an owner |
 | `get_vault(owner, token)` | Vault balance |
 | `check(owner, public_key, to, amount)` | The pre-flight verdict: ok, or the reason, and whether a request would be needed |
-| `get_requests(owner)` | Parked payments |
+| `get_requests(owner)` | Parked payments that have not expired |
+| `get_proposals(owner)` | Notes from agents asking for more |
+| `get_request_ttl(owner)` | The owner's request window in seconds |
 | `get_log(owner, from, limit)` | Recent decisions, newest last |
 
 Policy fields: `token`, `daily_cap`, `per_payment_cap`, `allowlist` (empty means anyone), `cooldown_secs`,
@@ -73,7 +78,7 @@ Policy fields: `token`, `daily_cap`, `per_payment_cap`, `allowlist` (empty means
 
 Every decision is a NEP-297 event under standard `leash`, version `1.0.0`: `policy_set`, `policy_revoked`,
 `paused`, `resumed`, `deposit`, `withdraw`, `pay`, `pay_failed`, `pay_refused`, `request_parked`,
-`request_approved`, `request_denied`.
+`request_approved`, `request_denied`, `request_expired`, `proposal_made`, `proposal_dismissed`.
 
 ## Safety rules the contract follows
 
@@ -94,10 +99,13 @@ Every decision is a NEP-297 event under standard `leash`, version `1.0.0`: `poli
 
 ## The MCP server and CLI
 
-The MCP server exposes tools any agent can call: `leash_preflight` (the contract's `check` plus heuristics:
-account has no code and no history, name looks like a known one, not in allowlist), `leash_pay`,
-`leash_request`, `leash_status` (policy, spent, remaining, pending requests). It holds the agent key and
-nothing else.
+The MCP server exposes six tools any agent can call, each answering in one envelope whose `status` is
+`ok`, `accepted`, `refused`, `parked`, `proposed` or `error`: `leash_status` (mode, caps, remaining,
+allowlist, what is waiting on the owner, how many other keys exist), `leash_preflight` (the contract's
+`check` plus heuristics: recipient missing, not registered for the token, lookalike of an allowlisted
+name), `leash_pay`, `leash_request`, `leash_ask_more` and `leash_history` (this key's own log). Every tool
+description carries the rules an agent must follow: preflight when unsure, never repeat a pay, a parked
+request is not a payment, a refusal costs nothing. It holds the agent key and nothing else.
 
 The CLI is for the owner: `leash init`, `leash deposit <usdc>`, `leash grant --daily 20 --per-payment 5
 --to api.vendor.near --ttl 2h`, `leash register <account>`, `leash revoke <key>`, `leash pause`,

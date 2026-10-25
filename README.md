@@ -55,5 +55,6 @@ Every step below is one command and says what you should see. The AI judges can 
 - [x] CLI
 - [x] Owner-paid storage accounting, measured on testnet
 - [x] Sandbox integration tests through near-workspaces: the six steps, the refund path, the storage rule
+- [x] Parked requests expire; agents can ask for more and read their own history; one result envelope
 - [ ] Dashboard
 - [ ] Mainnet
