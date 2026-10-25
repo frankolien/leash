@@ -1,0 +1,21 @@
+.dialog { width: min(640px, calc(100vw - 24px)); max-height: calc(100svh - 32px); padding: 0; border: 0; border-radius: 22px; background: var(--card); color: var(--ink); box-shadow: var(--shadow-float); }
+.dialog::backdrop { background: rgba(17, 19, 18, .32); backdrop-filter: blur(6px); }
+.dialog[open] { animation: rise 260ms var(--ease); }
+@keyframes rise { from { opacity: 0; transform: translateY(12px) scale(.985); } }
+.body { padding: 32px; }
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.head h2 { margin: 0; font-size: 34px; }
+.close { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 50%; background: rgba(17, 19, 18, .06); }
+.switch { display: inline-flex; gap: 4px; margin-top: 20px; padding: 4px; border-radius: 999px; background: rgba(17, 19, 18, .05); }
+.switch button { min-height: 36px; padding: 6px 16px; border: 0; border-radius: 999px; background: transparent; font-size: 14px; font-weight: 500; color: var(--muted); }
+.switch button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(17, 19, 18, .12); }
+.steps { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; }
+.steps li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; padding: 18px 0; border-top: 1px solid var(--hairline); }
+.num { color: var(--faint); font-size: 14px; font-variant-numeric: tabular-nums; padding-top: 2px; }
+.steps h3 { margin: 0; font-size: 17px; font-weight: 500; letter-spacing: -.01em; }
+.where { display: block; margin-top: 2px; color: var(--muted); font-size: 14px; }
+.code { position: relative; margin-top: 10px; border-radius: 12px; background: #f3f4f1; }
+.code pre { margin: 0; padding: 14px 52px 14px 16px; overflow-x: auto; font-family: var(--font-mono), monospace; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+.code button { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: var(--card); color: var(--muted); box-shadow: 0 1px 2px rgba(17, 19, 18, .1); }
+.foot { margin: 8px 0 0; padding-top: 18px; border-top: 1px solid var(--hairline); color: var(--muted); font-size: 14px; }
+@media (max-width: 600px) { .body { padding: 22px; } .head h2 { font-size: 28px; } .steps li { grid-template-columns: minmax(0, 1fr); } }

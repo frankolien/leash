@@ -29,13 +29,13 @@ export default function Overview(props: {
     <section id="waiting" className={styles.overview} aria-label="Vault and waiting requests">
       <div className={styles.vault}>
         <div className={styles.vaultTop}>
-          <span className="eyebrow">Vault</span>
+          <span className="tag">Vault</span>
           <span className={`${styles.contract} mono`}>{s.contract}</span>
           <span aria-label={`${toUsdc(s.vault)} USDC in the vault`}><Money whole={whole} cents={cents} className={styles.balance} /></span>
           <span className={styles.balanceNote}>USDC your agents can spend from</span>
           <div className={styles.vaultActions}>
-            <button className="pill primary" onClick={onDeposit} disabled={busy !== null}><Plus size={15} /> Add money</button>
-            <button className="pill" onClick={onWithdraw} disabled={busy !== null || s.vault === BigInt(0)}><ArrowUpRight size={15} /> Withdraw</button>
+            <button className="btn ink" onClick={onDeposit} disabled={busy !== null}><Plus size={15} /> Add money</button>
+            <button className="btn" onClick={onWithdraw} disabled={busy !== null || s.vault === BigInt(0)}><ArrowUpRight size={15} /> Withdraw</button>
           </div>
         </div>
         <dl className={styles.facts}>
@@ -49,16 +49,16 @@ export default function Overview(props: {
             <span>{s.paused ? "Paused. No agent can pay until you resume." : "Stops every agent key at once."}</span>
           </div>
           {s.paused ? (
-            <button className="pill danger on" onClick={onResume} disabled={busy !== null || !canAct}>Resume</button>
+            <button className="btn ink" onClick={onResume} disabled={busy !== null || !canAct}>Resume</button>
           ) : (
-            <button className="pill danger" onClick={onPause} disabled={busy !== null || !canAct}>Pause all</button>
+            <button className="btn line danger" onClick={onPause} disabled={busy !== null || !canAct}>Pause all</button>
           )}
         </div>
       </div>
 
-      <div className={styles.stage} data-scene={waiting ? "shore" : "sky"}>
+      <div className={styles.stage} >
         <span className={styles.stagePill}>
-          {waiting ? <><span className={styles.statusDot} data-tone="warn" />{waiting} waiting on you</> : <><span className={styles.statusDot} data-tone="good" />Nothing waiting</>}
+          {waiting ? `${waiting} waiting on you` : "Nothing waiting"}
         </span>
         <div className={styles.stagePanels}>
           {waiting ? children : (

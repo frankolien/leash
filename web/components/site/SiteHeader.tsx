@@ -1,28 +1,25 @@
-// The bar every page shares: the wordmark on the left, the page's own links in the middle, and its
-// actions on the right. Over the landing hero it is transparent and takes the hero's ink.
+"use client";
 
-import type { ReactNode } from "react";
+// The bar every page shares: the wordmark on the left and the page's actions on the right. It sits
+// clear over the page until the reader scrolls, then gathers into a frosted strip.
+
+import { useEffect, useState, type ReactNode } from "react";
 import styles from "./site.module.css";
 
-export default function SiteHeader({ overHero = false, middle, right }: { overHero?: boolean; middle?: ReactNode; right?: ReactNode }) {
+export default function SiteHeader({ right }: { right?: ReactNode }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 12);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
   return (
-    <header className={styles.header} data-over-hero={overHero}>
+    <header className={styles.header} data-scrolled={scrolled}>
       <nav aria-label="Leash">
         <a href="/" aria-label="Leash home" className="wordmark"><span className="mark" aria-hidden="true" />Leash</a>
-        <div className={styles.middle}>{middle}</div>
         <div className={styles.right}>{right}</div>
       </nav>
     </header>
-  );
-}
-
-/// Section links that underline the chapter in view.
-export function ChapterLinks({ chapters, active }: { chapters: readonly { id: string; label: string }[]; active: string }) {
-  return (
-    <div className={styles.chapters} role="group" aria-label="Sections">
-      {chapters.map((c) => (
-        <a key={c.id} href={`#${c.id}`} aria-current={active === c.id ? "location" : undefined}>{c.label}</a>
-      ))}
-    </div>
   );
 }

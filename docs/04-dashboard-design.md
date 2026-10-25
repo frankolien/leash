@@ -1,51 +1,55 @@
 # Web design
 
-The landing page and the dashboard follow PRYDD's website, read from its source rather than its
-screenshots (`EntrypointLabs/prydd-website`, components under `components/prydd/`). PRYDD in turn
-assigns roles to four references: Wise for the hero type, Plasma for the 3D sphere, Revolut for the
-hero handoff, Altitude for the body. Leash keeps those roles.
+Second direction, 25 October. The first, built on PRYDD's system with a sphere of payment chips,
+read as generic: coloured status dots, a decorative globe, no people. This one takes PayBox's
+strongest idea, editorial photographs of people with the instruction they gave their agent, and
+builds past it: the hero plays the product working over a photograph, the steps are drawn as turning
+wireframes, and the owner's dashboard sits in the same world.
+
+Sources studied in code, not screenshots: PayBox (Söhne, a soft shader ground, three.js wireframe
+cubes, a looping card strip), PRYDD (`EntrypointLabs/prydd-website`), Anthropic's frontend-design
+skill and the ui-ux-pro-max data (landing patterns, type pairings, UX rules).
 
 ## System
 
 | Token | Value | Use |
 | --- | --- | --- |
-| Body | `#fff` ground, `#000` ink, `#727272` muted | Both schemes. Only the hero follows the OS |
-| Hero | `#fff` / `#000`, dark `#17191d` / `#fafaf7` | Ground and ink of the opening |
-| Action | `#2457f5` | The hero's one button, nothing else |
-| Accent | `#000` | Primary pills, budget bars |
-| Chip | `#f4f4f4`, hover `#ebebeb` | Secondary pills |
-| Eyebrow | 8px square `#a0dcff` | Opens every chapter |
-| Semantic | good `#208550`, wait `#d69a1d`, refusal `#c8323f` | Status only |
-| Panels | white, 16px radius, PRYDD's three-layer panel shadow | Product UI laid on photographs |
+| Paper | `#f5f6f3` under drifting sage, sand and sky washes with grain | The ground of every page |
+| Ink | `#111312`, second ink `#2b2e2c`, muted `#6b6f6c` | Type, primary buttons, bars |
+| Leaf | `#1e5b3e` | The category square, focus rings, the highlighted piece in a wireframe |
+| Danger | `#b3261e` | Refusals, pause, revoke. Nothing else is coloured |
+| Glass | white at 62% with an 18px blur | Captions over photographs, header shortcuts |
 
-Type: Montserrat 900 uppercase at up to 70px, tracking -0.06em, for the hero only; Montserrat 800 for
-the wordmark. Everything else is Inter: 400 sentence case for headings (28 to 40px, line height
-0.95, tracking -0.02em), 16px body at 1.3, 500 for amounts with the cents at half size. Geist Mono for
-account ids and keys.
+No status dots and no tinted chips: state is said in words and, where it is a warning, in the danger
+red.
 
-Layout: a 1440px shell with 64px gutters (20px on phones). Chapters are equal columns 64px apart and
-128px from each other; the copy column starts with a hairline rule and 32px of padding.
+Type is one family, Instrument Sans. Display is narrowed to 88% width, weight 500, tracking -0.035em,
+at up to 84px. Reading text is full width at 17px. Geist Mono only for account ids and keys.
+
+Radii follow the object: 4px for editorial cards and photographs, 16px for product panels, full for
+buttons.
 
 ## Landing
 
-1. Hero: a three.js sphere of payment chips (green paid, red refused, amber asked, blue approved) on
-   a Fibonacci sphere, small at the front and back and large at the rim, so the headline sits in a
-   quiet centre. "Give your agents a budget, not your wallet."
-2. Handoff: scrolling contracts the sphere behind the one card that matters, a request waiting on
-   its owner, with the budget and the kill switch sliding in on either side.
-3. Four chapters, each a scene: limits (a fenced meadow), payments (sky), approvals (shore), kill
-   switch (ridge). Scenes are generated photographs in `web/public/scenes/` with white panels on top.
-4. Where it plugs in (dark split over a dusk photo), FAQ (40/60), the way in (account field), footer.
+1. Hero: the claim, then a photograph with the moment played over it in four beats: Maya asks her
+   agent, Leash stops it at the cap, her phone asks her, it is paid once. A rail names the beats and
+   lets the reader step through them. Reduced motion shows the last beat.
+2. Stories: an endless strip of people and the instruction each gave their agent, with the limit
+   that holds it. Pauses on hover; a scrollable strip under reduced motion.
+3. How it holds: four numbered steps, each with a turning wireframe drawn on a 2D canvas.
+4. Works with: a wall of the MCP clients that can hold a key, plus NEAR and Circle.
+5. The dashboard's own pieces over a desk photograph.
+6. Questions, then the way in over a photograph, then the footer.
 
-Reduced motion and screens under 600px tall get the same content without the scroll handoff.
+The header shortcuts for Claude Code, Codex and Cursor open the real setup steps with copy buttons.
 
 ## Dashboard
 
-- Overview: the vault as a large numeral on the left with facts and the kill switch; on the right,
-  a photograph holding every request and proposal as white panels. On phones the waiting scene comes
-  first, because it is the decision.
-- Agents: one card per key with what is left today, a bar, and the limits as rows. Revoke is quiet
-  until needed.
-- Activity: 40/60, a ruled list of on-chain events with toned icons. Refusals are listed with the
-  amount struck through, since nothing moved.
-- Adding and withdrawing money use a native dialog, not a browser prompt.
+The vault as a large numeral with facts and the kill switch; the waiting requests and proposals as
+white panels over the desk photograph (first on phones); agent cards; a ruled activity list where a
+refusal's amount is struck through. Adding and withdrawing use a native dialog.
+
+## Photography
+
+Generated with Higgsfield (Soul 2.0 for the editorial set, GPT Image 2 where text had to be avoided)
+and kept in `web/public/people/`. Screens face away so no generated text appears.

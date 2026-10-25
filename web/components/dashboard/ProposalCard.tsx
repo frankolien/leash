@@ -13,11 +13,11 @@ export default function ProposalCard({ proposal: p, names, busy, onDismiss }: { 
     <article className={styles.panel} aria-label={`Proposal ${p.id} from ${who}`}>
       <div className={styles.panelHeader}>
         <span className={styles.who}><AgentBadge name={who} size={28} />{who} asks for more</span>
-        <span className={styles.chip}>Proposal</span>
+        <span className={styles.reason}>Proposal</span>
       </div>
       <p className={styles.memo}>“{p.note}”</p>
       <div className={styles.proposalFoot}>
-        <button className="pill" onClick={onDismiss} disabled={busy !== null}>Dismiss</button>
+        <button className="btn" onClick={onDismiss} disabled={busy !== null}>Dismiss</button>
         <small className={styles.note}>To widen it, run <span className="mono">leash grant</span> with the new limits.</small>
       </div>
     </article>

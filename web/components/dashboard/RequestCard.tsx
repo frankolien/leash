@@ -21,18 +21,18 @@ export default function RequestCard(props: { request: Request; names: Names; now
     <article className={styles.panel} aria-label={`Request ${r.id} from ${who}`}>
       <div className={styles.panelHeader}>
         <span className={styles.who}><AgentBadge name={who} size={28} />{who} wants to pay</span>
-        <span className={styles.chip} data-tone="warn">{r.reason}</span>
+        <span className={styles.reason}>{r.reason}</span>
       </div>
       <div className={styles.split}>
         <div><span className={styles.label}>Amount</span><Money whole={whole} cents={cents} className={styles.requestAmount} /></div>
         <div><span className={styles.label}>To</span><strong className={`${styles.recipient} mono`}>{r.to}</strong></div>
       </div>
       {r.memo && <p className={styles.memo}>“{r.memo}”</p>}
-      <Track share={share} tone={share < 0.15 ? "bad" : "warn"} />
+      <Track share={share} />
       <small className={styles.note}>{left === 0 ? "Expired. It drops on the next change." : `${minutes} min left to decide · approves exactly this payment`}</small>
       <div className={styles.decide}>
-        <button className="pill" onClick={onDeny} disabled={busy !== null}>Deny</button>
-        <button className="pill primary" onClick={onApprove} disabled={busy !== null || left === 0}><Check size={15} /> Approve</button>
+        <button className="btn" onClick={onDeny} disabled={busy !== null}>Deny</button>
+        <button className="btn ink" onClick={onApprove} disabled={busy !== null || left === 0}><Check size={15} /> Approve</button>
       </div>
     </article>
   );

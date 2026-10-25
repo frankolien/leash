@@ -42,8 +42,8 @@ export default function AmountDialog({ ask, onClose }: { ask: AmountAsk | null; 
             <small>USDC</small>
           </label>
           <div className={styles.dialogActions}>
-            <button type="button" className="pill" onClick={onClose}>Cancel</button>
-            <button type="submit" className="pill primary" disabled={!valid}>{ask.confirm}</button>
+            <button type="button" className="btn" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn ink" disabled={!valid}>{ask.confirm}</button>
           </div>
         </form>
       )}

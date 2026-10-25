@@ -9,14 +9,13 @@ import styles from "./dashboard.module.css";
 export default function Wallet({ owner, network, account, onConnect, onDisconnect }: { owner: string; network: string; account: string | null; onConnect: () => void; onDisconnect: () => void }) {
   return (
     <>
-      <span className={styles.network}><span data-network={network} />{network === "mainnet" ? "Mainnet" : "Testnet"}</span>
+      <span className={styles.network}>{network === "mainnet" ? "Mainnet" : "Testnet"}</span>
       {account ? (
-        <button className="pill" onClick={onDisconnect} title="Disconnect">
-          <span className={styles.statusDot} data-tone={account === owner ? "good" : "warn"} />
-          <span className="mono">{account === owner ? "you" : account}</span>
+        <button className="btn line" onClick={onDisconnect} title="Disconnect">
+          <span className="mono">{account === owner ? `${account} (you)` : account}</span>
         </button>
       ) : (
-        <button className="pill primary" onClick={onConnect}><WalletIcon size={15} /> Connect wallet</button>
+        <button className="btn ink" onClick={onConnect}><WalletIcon size={15} /> Connect wallet</button>
       )}
     </>
   );
