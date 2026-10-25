@@ -5,7 +5,7 @@
 // The owner's own key never leaves ~/.near-credentials. Agent keys are written to ~/.leash/<name>.json
 // and are useless anywhere but the Leash contract.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
@@ -232,6 +232,8 @@ async function revoke(name: string) {
   } catch (error) {
     console.log(`revoked ${name}: policy off; key delete failed (${String(error).slice(0, 80)})`);
   }
+  // The file stays for the record, under a name that frees `grant` to issue a fresh key.
+  renameSync(keyFile, join(HOME, `${name}.revoked.${Date.now()}.json`));
 }
 
 async function simple(method: "pause" | "resume") {

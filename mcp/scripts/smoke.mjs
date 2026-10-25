@@ -8,6 +8,9 @@ import { dirname, join } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const to = process.argv[2] ?? "vendor.testnet";
 const usdc = process.argv[3] ?? "1";
+// "request" parks the payment for the owner instead of paying, which is what an agent does after
+// preflight says can_request.
+const action = process.argv[4] === "request" ? "leash_request" : "leash_pay";
 
 const transport = new StdioClientTransport({ command: "node", args: [join(here, "..", "dist", "index.js")], env: { ...process.env } });
 const client = new Client({ name: "smoke", version: "0.0.1" });
@@ -20,7 +23,7 @@ const calls = [
   ["leash_status", {}],
   ["leash_preflight", { to, usdc }],
   ["leash_preflight", { to: to.replace("o", "0"), usdc: "5" }],
-  ["leash_pay", { to, usdc, memo: "smoke test" }],
+  [action, { to, usdc, memo: "smoke test" }],
 ];
 for (const [name, args] of calls) {
   const result = await client.callTool({ name, arguments: args });
