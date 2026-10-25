@@ -5,7 +5,8 @@
 
 import { agentLabel, modeOf, shortKey, splitUsdc, toUsdc } from "@/lib/format";
 import type { Agent, Names } from "@/lib/types";
-import { AgentBadge, Money, Track } from "./parts";
+import AgentIcon from "./AgentIcon";
+import { Money, Track } from "./parts";
 import styles from "./dashboard.module.css";
 
 export default function AgentCard({ agent: a, names, paused, busy, onRevoke }: { agent: Agent; names: Names; paused: boolean; busy: string | null; onRevoke: () => void }) {
@@ -18,7 +19,7 @@ export default function AgentCard({ agent: a, names, paused, busy, onRevoke }: {
   return (
     <article className={styles.agent} data-off={!a.policy.active || paused || undefined}>
       <div className={styles.agentTop}>
-        <AgentBadge name={who} />
+        <AgentIcon name={who} size={40} off={!a.policy.active} />
         <div><strong>{who}</strong><span>{a.policy.active ? modeOf(a.policy) : "Its key no longer exists"}</span></div>
         <span className={styles.status} data-off={status !== "Active" || undefined}>{status}</span>
       </div>

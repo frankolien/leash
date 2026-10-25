@@ -62,11 +62,12 @@ Every step below is one command and says what you should see. The AI judges can 
 | `contract/tests/` | Sandbox tests against a real node with a mock USDC |
 | `mcp/src/index.ts` | The six tools and the one envelope |
 | `cli/src/index.ts` | The owner's commands |
-| `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `types` |
+| `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `insights` (today's spend, the week, request facts), `types` |
 | `web/hooks/` | `useSnapshot` (polling), `useWallet` (session and the one way to write), `useNames`, `useToast`, `useActiveSection`, `useHeroHandoff` (the timed scroll handoff) |
 | `web/components/site/` | The header, footer and the drifting ground every page shares |
 | `web/components/landing/` | The landing page: `FilmSequence` (the film closing into `DashboardScene`), `HeroFilm` and `GlassBlock`, `Stories`, `HowItHolds` and `Wireframe`, `WorksWith`, `Closing`, `SetupDialog` |
-| `web/components/dashboard/` | The owner's page: `Overview` (vault, kill switch, waiting scene), `RequestCard`, `ProposalCard`, `AgentCard`, `Activity`, `AmountDialog`, composed in `Dashboard` |
+| `web/components/dashboard/` | The owner's app: `Sidebar` and five views (`views.ts`), `VaultCard`, `ApprovalCard`, `ProposalCard`, `AgentsCard`, `ActivityCard`, `AgentCard`, `SettingsView`, `AmountDialog`, composed in `Dashboard` |
+| `web/components/charts/` | `SpendChart`, shared by the dashboard and the landing preview |
 
 ## Status
 

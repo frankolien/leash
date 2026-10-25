@@ -52,9 +52,21 @@ The header shortcuts for Claude Code, Codex and Cursor open the real setup steps
 
 ## Dashboard
 
-The vault as a large numeral with facts and the kill switch; the waiting requests and proposals as
-white panels over the desk photograph (first on phones); agent cards; a ruled activity list where a
-refusal's amount is struck through. Adding and withdrawing use a native dialog.
+The owner's page is the app the landing film closes into, on live chain data. A sidebar holds the
+five views, addressed by the URL hash so each can be linked: Overview, Agents, Approvals, Activity
+and Settings, with the owner's wallet at the bottom (a tab bar along the bottom on phones). The
+header carries the kill switch and Add money.
+
+- Overview: the vault with what agents spent today against their combined limits and a seven-day
+  spending chart built from the on-chain log; the first payment waiting on the owner with the facts
+  that decide it (what the agent may pay alone, what it has left, whether the recipient is on its
+  list, that approving covers this payment only); the agents table; the latest activity.
+- Agents: one card per key with its limits and Revoke. Approvals: every request and proposal.
+  Activity: the full log, refusals struck through. Settings: the approval window (set on chain),
+  the kill switch, where the vault lives, and the storage credit.
+
+Derived figures live in `web/lib/insights.ts`; the chart in `web/components/charts/` is shared with
+the landing preview.
 
 ## Photography
 

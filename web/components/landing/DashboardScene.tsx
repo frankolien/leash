@@ -5,6 +5,7 @@
 import { forwardRef } from "react";
 import { Activity, ArrowDownLeft, ArrowUpRight, Ban, Bell, Check, KeyRound, LayoutGrid, Pause, Plus, Settings, SquareTerminal, Users } from "lucide-react";
 import { siClaude, siCursor } from "simple-icons";
+import SpendChart from "@/components/charts/SpendChart";
 import styles from "./dashboard-scene.module.css";
 
 const WEEK = [1.2, 3.4, 2.1, 4.8, 3.9, 6.4, 5.1];
@@ -12,31 +13,6 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function Logo({ path, size = 16 }: { path: string; size?: number }) {
   return <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true"><path d={path} fill="currentColor" /></svg>;
-}
-
-/// The week's spending as an area chart: one scale for line, fill and labels, the last day marked.
-function Spend() {
-  const w = 300, h = 96, pad = 6, max = 8;
-  const x = (i: number) => pad + (i * (w - pad * 2)) / (WEEK.length - 1);
-  const y = (v: number) => h - pad - (v / max) * (h - pad * 2);
-  const line = WEEK.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const area = `${line} L${x(WEEK.length - 1)},${h - pad} L${x(0)},${h - pad} Z`;
-  const last = WEEK.length - 1;
-  return (
-    <figure className={styles.chart} aria-label="Spent by agents this week, highest on Saturday at $6.40">
-      <div className={styles.plot}>
-      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-        <defs><linearGradient id="spendFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#111312" stopOpacity=".14" /><stop offset="1" stopColor="#111312" stopOpacity="0" /></linearGradient></defs>
-        {[2, 4, 6].map((g) => <line key={g} x1={pad} x2={w - pad} y1={y(g)} y2={y(g)} stroke="#111312" strokeOpacity=".06" />)}
-        <path d={area} fill="url(#spendFill)" />
-        <path d={line} fill="none" stroke="#111312" strokeWidth="1.6" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-      </svg>
-      {/* The chart stretches to fill the card, so the endpoint is drawn outside the SVG to stay round. */}
-      <span className={styles.endpoint} style={{ left: `${(x(last) / w) * 100}%`, top: `${(y(WEEK[last]) / h) * 100}%` }} />
-      </div>
-      <figcaption>{DAYS.map((d) => <span key={d}>{d}</span>)}</figcaption>
-    </figure>
-  );
 }
 
 const AGENTS = [
@@ -80,7 +56,7 @@ export const DashboardScene = forwardRef<HTMLDivElement>(function DashboardScene
             <span className={styles.sub}>USDC on NEAR</span>
             <div className={styles.today}><span>Spent today</span><b>$6.40</b><span>of $18 across agents</span></div>
           </div>
-          <Spend />
+          <SpendChart values={WEEK} labels={DAYS} label="Spent by agents this week, highest on Saturday at $6.40" />
         </section>
 
         <section className={`${styles.card} ${styles.approval}`}>
