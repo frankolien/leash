@@ -285,14 +285,18 @@ export function useHeroHandoff(
         }
         return
       }
-      const crossedForward = recentIntent.direction > 0
-        && ((previous <= bounds.start + EDGE_TOLERANCE && position > bounds.start + EDGE_TOLERANCE)
-          || (previous < bounds.end && position > bounds.end + EDGE_TOLERANCE))
-      const crossedReverse = recentIntent.direction < 0
-        && ((previous >= bounds.end - EDGE_TOLERANCE && position < bounds.end - EDGE_TOLERANCE)
-          || (previous > bounds.start && position < bounds.start - EDGE_TOLERANCE))
-      if (crossedForward) begin(1, bounds.start)
-      else if (crossedReverse) begin(-1, bounds.end)
+      // Entering the runway from outside starts at its near edge. Leaving it from inside resumes
+      // from where the reader was, never from the far edge: on a retina screen a settled handoff can
+      // rest half a pixel short of its end, and restarting from the top threw the reader back into
+      // the film. Within the edge tolerance counts as already at the edge.
+      const inside = previous > bounds.start + EDGE_TOLERANCE && previous < bounds.end - EDGE_TOLERANCE
+      if (recentIntent.direction > 0) {
+        if (previous <= bounds.start + EDGE_TOLERANCE && position > bounds.start + EDGE_TOLERANCE) begin(1, bounds.start)
+        else if (inside && position > bounds.end + EDGE_TOLERANCE) begin(1, previous)
+      } else {
+        if (previous >= bounds.end - EDGE_TOLERANCE && position < bounds.end - EDGE_TOLERANCE) begin(-1, bounds.end)
+        else if (inside && position < bounds.start - EDGE_TOLERANCE) begin(-1, previous)
+      }
     }
 
     function onKeyDown(event: KeyboardEvent) {
