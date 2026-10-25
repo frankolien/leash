@@ -34,6 +34,7 @@ enum StorageKey {
     Keys,
     Vaults,
     Paused,
+    Storage,
     Requests,
     Logs,
 }
@@ -123,6 +124,9 @@ pub struct Leash {
     keys: LookupMap<AccountId, Vec<PublicKey>>,
     vaults: LookupMap<(AccountId, AccountId), u128>,
     paused: LookupMap<AccountId, bool>,
+    /// Yocto NEAR each owner has put down for the bytes their policies, requests and log take.
+    /// The contract never pays for a stranger's state.
+    storage: LookupMap<AccountId, u128>,
     requests: IterableMap<u64, Request>,
     next_request: u64,
     logs: LookupMap<AccountId, Vec<LogEntry>>,
@@ -137,6 +141,7 @@ impl Leash {
             keys: LookupMap::new(StorageKey::Keys),
             vaults: LookupMap::new(StorageKey::Vaults),
             paused: LookupMap::new(StorageKey::Paused),
+            storage: LookupMap::new(StorageKey::Storage),
             requests: IterableMap::new(StorageKey::Requests),
             next_request: 1,
             logs: LookupMap::new(StorageKey::Logs),
@@ -145,8 +150,23 @@ impl Leash {
 
     // ---- owner methods -------------------------------------------------------------------
 
+    /// Put NEAR down for storage. Every byte a policy, a request or a log entry adds is paid from
+    /// this, so an owner who never funds it cannot grow the contract.
+    #[payable]
+    pub fn deposit_storage(&mut self) {
+        let owner = self.owner_caller();
+        let credit = self.storage_of(&owner) + env::attached_deposit().as_yoctonear();
+        self.storage.insert(owner, credit);
+    }
+
+    #[payable]
     pub fn set_policy(&mut self, public_key: PublicKey, policy: PolicyInput) {
         let owner = self.owner_caller();
+        let before = env::storage_usage();
+        if env::attached_deposit().as_yoctonear() > 0 {
+            let credit = self.storage_of(&owner) + env::attached_deposit().as_yoctonear();
+            self.storage.insert(owner.clone(), credit);
+        }
         assert!(policy.per_payment_cap.0 <= policy.daily_cap.0, "per_payment_cap above daily_cap");
         let stored = Policy {
             token: policy.token.clone(),
@@ -173,6 +193,7 @@ impl Leash {
                     "per_payment_cap": policy.per_payment_cap, "allowlist": policy.allowlist,
                     "cooldown_secs": policy.cooldown_secs, "expires_at": policy.expires_at }),
         );
+        self.charge(&owner, before);
     }
 
     pub fn revoke(&mut self, public_key: PublicKey) {
@@ -201,9 +222,11 @@ impl Leash {
 
     pub fn approve(&mut self, request_id: u64) -> PromiseOrValue<PayOutcome> {
         let owner = self.owner_caller();
+        let before = env::storage_usage();
         let request = self.requests.get(&request_id).cloned().expect("no such request");
         assert_eq!(request.owner, owner, "not your request");
         self.requests.remove(&request_id);
+        self.charge(&owner, before);
         let vault = self.vault_of(&owner, &request.token);
         if vault < request.amount.0 {
             self.record(&owner, Some(&request.key), "request_denied", Some(&request.to), Some(request.amount), Some("vault too low"));
@@ -220,11 +243,13 @@ impl Leash {
 
     pub fn deny(&mut self, request_id: u64) {
         let owner = self.owner_caller();
+        let before = env::storage_usage();
         let request = self.requests.get(&request_id).cloned().expect("no such request");
         assert_eq!(request.owner, owner, "not your request");
         self.requests.remove(&request_id);
         self.record(&owner, Some(&request.key), "request_denied", Some(&request.to), Some(request.amount), None);
         emit("request_denied", json!({ "owner": owner, "id": request_id }));
+        self.charge(&owner, before);
     }
 
     pub fn withdraw(&mut self, token: AccountId, amount: U128) -> near_sdk::Promise {
@@ -247,11 +272,13 @@ impl Leash {
     pub fn pay(&mut self, to: AccountId, amount: U128, memo: Option<String>) -> PromiseOrValue<PayOutcome> {
         let owner = env::predecessor_account_id();
         let key = env::signer_account_pk();
+        let before = env::storage_usage();
         let verdict = self.preflight(&owner, &key, &to, amount.0);
         if !verdict.ok {
             let reason = verdict.reason.clone().unwrap_or_default();
             self.record(&owner, Some(&key), "pay_refused", Some(&to), Some(amount), Some(&reason));
             emit("pay_refused", json!({ "owner": owner, "key": key, "to": to, "amount": amount, "reason": reason }));
+            self.charge(&owner, before);
             return PromiseOrValue::Value(PayOutcome { accepted: false, reason: Some(reason), remaining_today: verdict.remaining_today });
         }
         let id = (owner.clone(), key.clone());
@@ -269,6 +296,7 @@ impl Leash {
         self.vaults.insert((owner.clone(), token.clone()), vault - amount.0);
         self.record(&owner, Some(&key), "pay", Some(&to), Some(amount), memo.as_deref());
         emit("pay", json!({ "owner": owner, "key": key, "token": token, "to": to, "amount": amount, "memo": memo }));
+        self.charge(&owner, before);
         PromiseOrValue::Promise(self.transfer(owner, key, token, to, amount.0, memo, true))
     }
 
@@ -277,6 +305,7 @@ impl Leash {
     pub fn request(&mut self, to: AccountId, amount: U128, memo: Option<String>) -> u64 {
         let owner = env::predecessor_account_id();
         let key = env::signer_account_pk();
+        let before = env::storage_usage();
         let verdict = self.preflight(&owner, &key, &to, amount.0);
         assert!(verdict.can_request, "{}", verdict.reason.unwrap_or_else(|| "nothing to request".into()));
         let policy = self.policies.get(&(owner.clone(), key.clone())).cloned().expect("policy");
@@ -299,6 +328,7 @@ impl Leash {
         );
         self.record(&owner, Some(&key), "request_parked", Some(&to), Some(amount), Some(&reason));
         emit("request_parked", json!({ "owner": owner, "key": key, "id": id, "to": to, "amount": amount, "reason": reason }));
+        self.charge(&owner, before);
         id
     }
 
@@ -375,6 +405,11 @@ impl Leash {
         self.paused.get(&owner).copied().unwrap_or(false)
     }
 
+    /// Yocto NEAR of storage credit the owner still has.
+    pub fn get_storage(&self, owner: AccountId) -> U128 {
+        U128(self.storage_of(&owner))
+    }
+
     pub fn check(&self, owner: AccountId, public_key: PublicKey, to: AccountId, amount: U128) -> Preflight {
         self.preflight(&owner, &public_key, &to, amount.0)
     }
@@ -400,6 +435,39 @@ impl Leash {
         let key = env::signer_account_pk();
         assert!(self.policies.get(&(owner.clone(), key)).is_none(), "an agent key cannot manage policies");
         owner
+    }
+
+    fn storage_of(&self, owner: &AccountId) -> u128 {
+        self.storage.get(owner).copied().unwrap_or(0)
+    }
+
+    /// Bill the bytes this call added to the owner's storage credit. Bytes freed are credited back,
+    /// so a revoke or a decided request costs nothing. A call that would overdraw the credit fails,
+    /// which is the owner's signal to top up; the contract never pays for state itself.
+    fn charge(&mut self, owner: &AccountId, before: u64) {
+        // The store collections keep writes in memory until the call ends, so without a flush the
+        // measurement would always read zero bytes added.
+        self.policies.flush();
+        self.keys.flush();
+        self.vaults.flush();
+        self.paused.flush();
+        self.storage.flush();
+        self.requests.flush();
+        self.logs.flush();
+        self.settle(owner, before, env::storage_usage());
+    }
+
+    fn settle(&mut self, owner: &AccountId, before: u64, after: u64) {
+        let credit = self.storage_of(owner);
+        let byte = env::storage_byte_cost().as_yoctonear();
+        let next = if after >= before {
+            let cost = u128::from(after - before) * byte;
+            assert!(credit >= cost, "owner has no storage credit: deposit_storage first");
+            credit - cost
+        } else {
+            credit + u128::from(before - after) * byte
+        };
+        self.storage.insert(owner.clone(), next);
     }
 
     fn vault_of(&self, owner: &AccountId, token: &AccountId) -> u128 {
@@ -536,26 +604,56 @@ mod tests {
     }
 
     fn ctx(predecessor: AccountId, key: PublicKey, now: u64) {
+        ctx_with_deposit(predecessor, key, now, 0);
+    }
+
+    fn ctx_with_deposit(predecessor: AccountId, key: PublicKey, now: u64, yocto: u128) {
         let mut builder = VMContextBuilder::new();
         builder
             .current_account_id("leash.test".parse().unwrap())
             .predecessor_account_id(predecessor)
             .signer_account_id(owner())
             .signer_account_pk(key)
+            .attached_deposit(NearToken::from_yoctonear(yocto))
             .block_timestamp(now);
         testing_env!(builder.build());
     }
+
+    const STORAGE_CREDIT: u128 = 1_000_000_000_000_000_000_000_000;
 
     fn funded(daily: u128, per_payment: u128) -> Leash {
         let mut leash = Leash::new();
         ctx(token(), owner_key(), 1);
         leash.ft_on_transfer(owner(), U128(10 * USDC), String::new());
-        ctx(owner(), owner_key(), 1);
+        ctx_with_deposit(owner(), owner_key(), 1, STORAGE_CREDIT);
         leash.set_policy(
             agent_key(),
             PolicyInput { token: token(), daily_cap: U128(daily), per_payment_cap: U128(per_payment), allowlist: vec![], cooldown_secs: 0, expires_at: 0 },
         );
+        ctx(owner(), owner_key(), 1);
         leash
+    }
+
+    #[test]
+    #[should_panic(expected = "owner has no storage credit")]
+    fn bytes_added_without_storage_credit_are_refused() {
+        let mut leash = Leash::new();
+        ctx(owner(), owner_key(), 1);
+        leash.settle(&owner(), 1_000, 1_100);
+    }
+
+    #[test]
+    fn storage_credit_falls_with_bytes_added_and_returns_when_they_go() {
+        // The mocked chain does not move storage_usage with writes, so the arithmetic is tested here
+        // and the measured path in the sandbox test.
+        let mut leash = Leash::new();
+        ctx_with_deposit(owner(), owner_key(), 1, STORAGE_CREDIT);
+        leash.deposit_storage();
+        let byte = env::storage_byte_cost().as_yoctonear();
+        leash.settle(&owner(), 1_000, 1_100);
+        assert_eq!(leash.get_storage(owner()).0, STORAGE_CREDIT - 100 * byte);
+        leash.settle(&owner(), 1_100, 1_060);
+        assert_eq!(leash.get_storage(owner()).0, STORAGE_CREDIT - 60 * byte);
     }
 
     fn refused(outcome: PromiseOrValue<PayOutcome>) -> String {
@@ -606,7 +704,7 @@ mod tests {
         let mut leash = Leash::new();
         ctx(token(), owner_key(), 1);
         leash.ft_on_transfer(owner(), U128(10 * USDC), String::new());
-        ctx(owner(), owner_key(), 1);
+        ctx_with_deposit(owner(), owner_key(), 1, STORAGE_CREDIT);
         leash.set_policy(
             agent_key(),
             PolicyInput { token: token(), daily_cap: U128(5 * USDC), per_payment_cap: U128(USDC), allowlist: vec![vendor()], cooldown_secs: 60, expires_at: 1_000 },

@@ -19,17 +19,24 @@ control, and the agent holds no balance to drain.
 Every step below is one command and says what you should see. The AI judges can run this too.
 
 1. Install: `cargo install cargo-near near-cli-rs`, then `npm install` in `mcp/` and `cli/`.
-2. `leash init --owner you.testnet` deploys a contract for you on testnet and deposits 10 test USDC.
-   See: the contract account and a vault balance of 10.
-3. `leash grant --daily 3 --per-payment 2 --name claude` adds an agent key to your account.
-   See: a key file at `~/.leash/claude.json` and `near account view-access-key-list you.testnet` showing a
-   function-call key for the contract, methods `pay, request`.
-4. Point an agent at the MCP server (`mcp/README.md` has the Claude Code line) and ask it to pay 1 USDC
-   to `vendor.testnet` twice. See: two `pay` events and the vault at 8.
-5. Ask for a third payment of 2 USDC. See: the contract answers `over daily cap`; the agent parks a
-   request; `leash log` shows it; `leash approve 1` lands it; the vault is at 6.
+2. `leash init --owner you.testnet` creates `leash.you.testnet`, deploys the contract, registers both
+   accounts on testnet USDC and puts half a NEAR down for your storage. Get test USDC from
+   [Circle's faucet](https://faucet.circle.com) for NEAR Testnet, then `leash deposit 10`.
+   See: `leash status` shows a vault of 10 USDC and the storage credit.
+3. `leash grant --name claude --daily 3 --per-payment 2 --to vendor.testnet` adds an agent key to your
+   account. See: a key file at `~/.leash/claude.json`, and `near account view-access-key-list you.testnet`
+   shows a function-call key for the contract with methods `pay, request` only.
+4. `leash register vendor.testnet` pays the vendor's registration on the token, which a transfer needs.
+   Point an agent at the MCP server (`mcp/README.md` has the Claude Code line) and ask it to pay 1 USDC
+   to `vendor.testnet` twice. See: two `pay` entries in `leash log` and the vault at 8.
+5. Ask for a third payment of 2 USDC. See: the agent reports `over daily cap` and parks a request;
+   `leash requests` shows it; `leash approve 1` lands it; the vault is at 6. Approving a recipient the
+   token does not know is refused up front; a transfer that still fails on chain is refunded by the
+   contract's callback.
 6. `leash revoke claude`. See: the next agent call fails with `AccessKeyDoesNotExist` before it reaches
    the contract.
+
+`mcp/scripts/smoke.mjs` runs steps 4 and 5 without an agent, over the same stdio protocol an agent uses.
 
 ## Layout
 
@@ -46,6 +53,7 @@ Every step below is one command and says what you should see. The AI judges can 
 - [x] Testnet deployment: `leash.frankolien.testnet`
 - [x] MCP server, smoke-tested against testnet
 - [x] CLI
+- [x] Owner-paid storage accounting, measured on testnet
 - [ ] Integration test through near-workspaces
 - [ ] Dashboard
 - [ ] Mainnet

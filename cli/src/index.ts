@@ -62,7 +62,8 @@ function usage(): never {
             Make a key for an agent, add it to the owner's account, set its policy, write ~/.leash/<agent>.json
   revoke    <agent>                     Policy off and key deleted from the account
   pause | resume                        Kill switch for every agent key
-  approve   <id> | deny <id>            Decide a parked request
+  approve   <id> [--force] | deny <id>  Decide a parked request; approve refuses an unregistered recipient unless forced
+  register  <account>                   Pay an account's registration on the token so it can receive USDC
   status | requests | log               What the agents can do, want to do, and did
 `);
   process.exit(1);
@@ -158,6 +159,13 @@ async function init(flags: Record<string, string | undefined>) {
       console.log(`registered ${who} on ${token}`);
     }
   }
+  // The contract charges the owner for every byte their policies, requests and log add; half a NEAR
+  // covers thousands of entries and is refunded as entries are decided.
+  const credit = BigInt((await view<string>(provider, contract, "get_storage", { owner })) ?? "0");
+  if (credit < NEAR / 10n) {
+    await call(account, contract, "deposit_storage", {}, NEAR / 2n);
+    console.log(`put 0.5 NEAR down for ${owner}'s storage`);
+  }
   mkdirSync(HOME, { recursive: true });
   const config: Config = { owner, contract, network, token, owner_key_file: ownerKeyFile };
   writeFileSync(CONFIG, JSON.stringify(config, null, 2));
@@ -243,23 +251,44 @@ async function simple(method: "pause" | "resume") {
   console.log(method === "pause" ? "paused: no agent key can pay" : "resumed");
 }
 
-async function decide(method: "approve" | "deny", id: string) {
+async function decide(method: "approve" | "deny", id: string, force = false) {
   const config = loadConfig();
-  const { account } = ownerAccount(config);
+  const { account, provider } = ownerAccount(config);
+  if (method === "approve" && !force) {
+    // An approved transfer to an account the token does not know fails on chain and costs gas for
+    // nothing; the contract refunds, but the owner is better told before than after.
+    const rows = await view<{ id: number; to: string }[]>(provider, config.contract, "get_requests", { owner: config.owner });
+    const request = rows.find((r) => r.id === Number(id));
+    if (!request) throw new Error(`no parked request #${id}`);
+    const registered = await view<unknown>(provider, config.token, "storage_balance_of", { account_id: request.to });
+    if (!registered) {
+      throw new Error(`${request.to} is not registered on the token, so the transfer would fail. Run \`leash register ${request.to}\` first, or pass --force.`);
+    }
+  }
   const outcome = await call(account, config.contract, method, { request_id: Number(id) }, 0n, 60n * TGAS);
   console.log(method === "approve" ? JSON.stringify(outcome) : `denied ${id}`);
+}
+
+async function register(who: string) {
+  const config = loadConfig();
+  const { account, provider } = ownerAccount(config);
+  const registered = await view<unknown>(provider, config.token, "storage_balance_of", { account_id: who });
+  if (registered) return console.log(`${who} is already registered on the token`);
+  await call(account, config.token, "storage_deposit", { account_id: who }, STORAGE_DEPOSIT);
+  console.log(`registered ${who} on the token; it can receive USDC now`);
 }
 
 async function status() {
   const config = loadConfig();
   const { provider } = ownerAccount(config);
-  const [vault, paused, policies] = await Promise.all([
+  const [vault, paused, policies, storage] = await Promise.all([
     view<string>(provider, config.contract, "get_vault", { owner: config.owner, token: config.token }),
     view<boolean>(provider, config.contract, "is_paused", { owner: config.owner }),
     view<[string, { daily_cap: string; per_payment_cap: string; active: boolean; allowlist: string[]; expires_at: number }][]>(provider, config.contract, "get_policies", { owner: config.owner }),
+    view<string>(provider, config.contract, "get_storage", { owner: config.owner }),
   ]);
   console.log(`${config.contract} on ${config.network}${paused ? "  PAUSED" : ""}`);
-  console.log(`vault: ${toUsdc(vault)} USDC`);
+  console.log(`vault: ${toUsdc(vault)} USDC, storage credit: ${(Number(BigInt(storage ?? "0") / 10n ** 20n) / 10_000).toFixed(4)} NEAR`);
   for (const [key, policy] of policies) {
     const check = await view<{ remaining_today: string }>(provider, config.contract, "check", { owner: config.owner, public_key: key, to: config.owner, amount: "1" });
     const until = policy.expires_at ? ` until ${new Date(policy.expires_at * 1000).toISOString()}` : "";
@@ -300,19 +329,22 @@ async function main() {
       to: { type: "string" },
       cooldown: { type: "string" },
       ttl: { type: "string" },
+      force: { type: "boolean" },
     },
   });
   const [command, arg] = positionals;
+  const flags = values as unknown as Record<string, string | undefined>;
   switch (command) {
-    case "init": return init(values);
+    case "init": return init(flags);
     case "deposit": return deposit(arg ?? usage());
     case "withdraw": return withdraw(arg ?? usage());
-    case "grant": return grant(values);
+    case "grant": return grant(flags);
     case "revoke": return revoke(arg ?? usage());
     case "pause": return simple("pause");
     case "resume": return simple("resume");
-    case "approve": return decide("approve", arg ?? usage());
+    case "approve": return decide("approve", arg ?? usage(), values.force === true);
     case "deny": return decide("deny", arg ?? usage());
+    case "register": return register(arg ?? usage());
     case "status": return status();
     case "requests": return requests();
     case "log": return log();

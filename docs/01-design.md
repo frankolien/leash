@@ -86,6 +86,11 @@ Every decision is a NEP-297 event under standard `leash`, version `1.0.0`: `poli
 - `pay` and `request` are non-payable, so a function-call key can call them without a wallet popup.
 - The daily window is per key and resets by elapsed time, not by calendar day, so there is no midnight
   double-spend.
+- The owner pays for the bytes their policies, requests and log add. `deposit_storage` puts NEAR down;
+  every call that adds state measures `storage_usage` before and after, flushing the store collections
+  first because they buffer writes until the call ends, and bills the difference at the protocol's byte
+  price. Freed bytes are credited back. A call that would overdraw fails, so the contract never pays for
+  a stranger's state and nobody can grow it for free.
 
 ## The MCP server and CLI
 
@@ -95,7 +100,8 @@ account has no code and no history, name looks like a known one, not in allowlis
 nothing else.
 
 The CLI is for the owner: `leash init`, `leash deposit <usdc>`, `leash grant --daily 20 --per-payment 5
---to api.vendor.near --ttl 2h`, `leash revoke <key>`, `leash pause`, `leash approve <id>`, `leash log`.
+--to api.vendor.near --ttl 2h`, `leash register <account>`, `leash revoke <key>`, `leash pause`,
+`leash approve <id>`, `leash log`.
 
 ## The demo a judge runs
 
