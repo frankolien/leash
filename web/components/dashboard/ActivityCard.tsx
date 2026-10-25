@@ -8,7 +8,6 @@ import { Search, ArrowDownLeft, ArrowUpRight, Ban, Check, Clock, KeyRound, Messa
 import { DETAIL_IN_TITLE, describe, type Icon } from "@/lib/activity";
 import { agentLabel, msOf, toUsdc } from "@/lib/format";
 import type { LogEntry, Names } from "@/lib/types";
-import { CardHead } from "./parts";
 import styles from "./dashboard.module.css";
 
 const ICONS: Record<Icon, typeof Check> = {
@@ -53,7 +52,6 @@ export default function ActivityCard({ log, names, limit, full }: { log: LogEntr
       </div>
     )}
     <section className={`${styles.card} ${styles.activityCard}`} data-full={full || undefined} aria-label="Activity">
-      {!full && <CardHead title="Activity" aside={<a className={styles.link} href="#activity">All activity</a>} />}
       {rows.length === 0 && <p className={styles.muted}>{log.length ? "Nothing matches." : "Nothing yet. The first payment, refusal or request lands here."}</p>}
       {rows.map((e, i) => {
         const who = e.key ? agentLabel(e.key, names) : "you";

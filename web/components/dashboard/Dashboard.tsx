@@ -13,7 +13,7 @@ import { useNow, useSnapshot } from "@/hooks/useSnapshot";
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { agentLabel, toUnits, toUsdc } from "@/lib/format";
-import { greeting, recipients } from "@/lib/insights";
+import { recipients } from "@/lib/insights";
 import { contractOf, networkOf } from "@/lib/reader";
 import type { Agent, Proposal, Request, Snapshot } from "@/lib/types";
 import ActivityCard from "./ActivityCard";
@@ -29,6 +29,7 @@ import RecipientsView from "./RecipientsView";
 import SettingsView from "./SettingsView";
 import Sidebar from "./Sidebar";
 import Skeleton from "./Skeleton";
+import Section from "./Section";
 import SpendCard from "./SpendCard";
 import { viewFromHash, type View } from "./views";
 import styles from "./dashboard.module.css";
@@ -100,7 +101,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
 
   const caughtUp = (
     <section className={`${styles.card} ${styles.caughtUp}`}>
-      <span className={styles.caughtIcon} aria-hidden="true"><Check size={18} /></span>
+      <Check size={20} className={styles.good} aria-hidden="true" />
       <strong>Nothing waiting</strong>
       <span>When an agent asks to pay above its limit, it lands here.</span>
     </section>
@@ -112,42 +113,42 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
     const revoked = snap.agents.length - active;
     if (view === "overview") {
       page = (
-        <div className={styles.wide}>
-          <span className={styles.greeting}>{greeting(now)}, {new Date(now).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span>
+        <div className={styles.column}>
           <BalanceHero vault={snap.vault} contract={snap.contract} busy={busy} onDeposit={deposit} onSetup={openSetup} />
-          <div className={styles.overview}>
-            <div className={styles.column}>
-              <SpendCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} />
-              <AgentsCard agents={snap.agents} names={names} paused={snap.paused} />
-            </div>
-            <div className={`${styles.column} ${styles.decisions}`}>
-              <div className={styles.waiting}>
-                {waiting ? waitingCards(snap, 1) : caughtUp}
-                {waiting > 1 && <a className={styles.more} href="#approvals">{waiting - 1} more waiting</a>}
-              </div>
-              <ActivityCard log={snap.log} names={names} limit={5} />
-            </div>
-          </div>
+          {waiting > 0 && (
+            <Section title="Waiting on you" count={waiting} aside={waiting > 1 ? <a className={styles.sectionLink} href="#approvals">See all</a> : undefined}>
+              {waitingCards(snap, 1)}
+            </Section>
+          )}
+          <Section title="Spending" aside={<button className={styles.sectionLink} onClick={withdraw} disabled={busy !== null || snap.vault === BigInt(0)}>Withdraw</button>}>
+            <SpendCard snapshot={snap} now={now} />
+          </Section>
+          <Section title="Your agents" count={active} aside={<a className={styles.sectionLink} href="#agents">Manage</a>}>
+            <AgentsCard agents={snap.agents} names={names} paused={snap.paused} />
+          </Section>
+          <Section title="Recent activity" aside={<a className={styles.sectionLink} href="#activity">See all</a>}>
+            <ActivityCard log={snap.log} names={names} limit={5} />
+          </Section>
         </div>
       );
     } else if (view === "agents") {
       page = (
-        <div className={styles.narrow}>
-          <PageHeader title="Agents" status={`${active} active${revoked ? `, ${revoked} revoked` : ""}`} action={<button className="btn line" onClick={openSetup}><Plus size={16} /> New agent</button>} />
+        <div className={styles.column}>
+          <PageHeader title="Agents" status={`${active} active${revoked ? `, ${revoked} revoked` : ""}`} action={<button className={styles.dark} onClick={openSetup}><Plus size={17} /> New agent</button>} />
           <ConnectCard onPick={setSetup} />
           <AgentList agents={snap.agents} names={names} paused={snap.paused} busy={busy} onRevoke={revoke} />
         </div>
       );
     } else if (view === "approvals") {
       page = (
-        <div className={styles.narrow}>
+        <div className={styles.column}>
           <PageHeader title="Approvals" status={waiting ? `${waiting} waiting on you` : "All caught up"} action={waiting ? undefined : <span className={styles.caughtBadge} aria-hidden="true"><Check size={18} /></span>} />
           <div className={styles.approvalList}>{waiting ? waitingCards(snap) : caughtUp}</div>
         </div>
       );
     } else if (view === "activity") {
       page = (
-        <div className={styles.narrow}>
+        <div className={styles.column}>
           <PageHeader title="Activity" status={`Last ${snap.log.length} events on chain`} />
           <ActivityCard log={snap.log} names={names} full />
         </div>
@@ -155,14 +156,14 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
     } else if (view === "recipients") {
       const count = recipients(snap.agents, snap.log).list.length;
       page = (
-        <div className={styles.narrow}>
-          <PageHeader title="Recipients" status={`${count} ${count === 1 ? "account" : "accounts"} your agents may pay`} action={<button className="btn line" onClick={() => (window.location.hash = "agents")}>Edit lists</button>} />
+        <div className={styles.column}>
+          <PageHeader title="Recipients" status={`${count} ${count === 1 ? "account" : "accounts"} your agents may pay`} action={<button className={styles.dark} onClick={() => (window.location.hash = "agents")}>Edit lists</button>} />
           <RecipientsView agents={snap.agents} log={snap.log} names={names} />
         </div>
       );
     } else {
       page = (
-        <div className={styles.narrow}>
+        <div className={styles.column}>
           <PageHeader title="Settings" status="How your vault behaves and where it lives" />
           <SettingsView snapshot={snap} busy={busy} canAct={wallet.isOwner} onWindow={setWindow} onPause={pause} onResume={resume} />
         </div>
@@ -191,15 +192,15 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         <div className={styles.phoneBar}>
           <a href="/" className="wordmark" aria-label="Leash home"><span className="mark" aria-hidden="true" />Leash</a>
           {wallet.account
-            ? <button className="btn line" onClick={wallet.onDisconnect}>Connected</button>
-            : <button className="btn ink" onClick={wallet.onConnect}>Connect wallet</button>}
+            ? <button className={styles.dark} onClick={wallet.onDisconnect}>Connected</button>
+            : <button className={styles.white} onClick={wallet.onConnect}>Connect wallet</button>}
         </div>
         {snap?.paused && <div className={styles.banner}>Paused. No agent can pay until you resume.</div>}
         {!snap && error && (
           <div className={styles.empty}>
             <h1 className="display">No vault here yet.</h1>
             <p>There is no Leash contract at <span className="mono">{contract}</span>. The owner creates one with <span className="mono">leash init</span>.</p>
-            <a className="btn" href="/">Back to Leash</a>
+            <a className={styles.dark} href="/">Back to Leash</a>
           </div>
         )}
         {!snap && !error && <Skeleton />}

@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Instrument_Sans } from "next/font/google";
+import { Geist_Mono, Instrument_Sans, Inter } from "next/font/google";
 import "./globals.css";
 
 const sans = Instrument_Sans({ variable: "--font-sans", subsets: ["latin"], axes: ["wdth"] });
+const app = Inter({ variable: "--font-app", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 const mono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"], weight: ["400", "500"] });
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${app.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

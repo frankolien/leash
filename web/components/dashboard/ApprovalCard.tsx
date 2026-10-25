@@ -20,7 +20,7 @@ export default function ApprovalCard(props: { request: Request; agent: Agent | u
   return (
     <section className={`${styles.card} ${styles.approval}`} aria-label={`${who} wants to pay ${toUsdc(r.amount)} USDC`}>
       <div className={styles.cardHead}>
-        <span className={styles.who}><AgentIcon name={who} size={28} />{who} wants to pay</span>
+        <span className={styles.who}><AgentIcon name={who} size={38} />{who} wants to pay</span>
         <span className={styles.reason}>{r.reason}</span>
       </div>
       <Money whole={whole} cents={cents} className={styles.amount} />

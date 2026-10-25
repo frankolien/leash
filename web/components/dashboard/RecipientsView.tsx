@@ -34,7 +34,7 @@ export default function RecipientsView({ agents, log, names }: { agents: Agent[]
                 <strong className="mono">{r.account}</strong>
                 <small>{r.keys.length ? `On the list of ${r.keys.map((k) => agentLabel(k, names)).join(", ")}` : "Paid by an agent with no list"}{r.lastPaidMs ? `. Last paid ${new Date(r.lastPaidMs).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : ""}</small>
               </span>
-              <span className={styles.recipientAgents}>{r.keys.map((k) => <AgentIcon key={k} name={agentLabel(k, names)} size={26} />)}</span>
+              <span className={styles.recipientAgents}>{r.keys.map((k) => <AgentIcon key={k} name={agentLabel(k, names)} size={32} />)}</span>
               <span className={styles.recipientPaid}><b className="tabular">${toUsdc(r.paid)}</b><small>paid</small></span>
             </div>
           </div>

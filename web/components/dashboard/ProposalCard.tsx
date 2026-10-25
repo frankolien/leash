@@ -12,7 +12,7 @@ export default function ProposalCard({ proposal: p, names, busy, onDismiss }: { 
   return (
     <section className={`${styles.card} ${styles.proposal}`} aria-label={`${who} asks for more`}>
       <div className={styles.cardHead}>
-        <span className={styles.who}><AgentIcon name={who} size={28} />{who} asks for more</span>
+        <span className={styles.who}><AgentIcon name={who} size={38} />{who} asks for more</span>
         <span className={styles.reason}>Proposal</span>
       </div>
       <p className={styles.memo}>“{p.note}”</p>

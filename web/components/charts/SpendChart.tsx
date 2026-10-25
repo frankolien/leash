@@ -1,5 +1,6 @@
-// Spending over days as an area chart. One scale places line, fill and gridlines; the SVG stretches
-// to its box, so the endpoint marker is drawn outside it to stay round.
+// Spending over days as an area chart, drawn in the current text colour so it sits on a light or a
+// dark surface. One scale places line, fill and gridlines; the SVG stretches to its box, so the
+// endpoint marker is drawn outside it to stay round.
 
 import styles from "./chart.module.css";
 
@@ -15,10 +16,10 @@ export default function SpendChart({ values, labels, label }: { values: number[]
     <figure className={styles.chart} aria-label={label}>
       <div className={styles.plot}>
         <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true">
-          <defs><linearGradient id="spendFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#111312" stopOpacity=".14" /><stop offset="1" stopColor="#111312" stopOpacity="0" /></linearGradient></defs>
-          {[0.25, 0.5, 0.75].map((g) => <line key={g} x1={pad} x2={w - pad} y1={y(max * g)} y2={y(max * g)} stroke="#111312" strokeOpacity=".06" vectorEffect="non-scaling-stroke" />)}
+          <defs><linearGradient id="spendFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="currentColor" stopOpacity=".16" /><stop offset="1" stopColor="currentColor" stopOpacity="0" /></linearGradient></defs>
+          {[0.25, 0.5, 0.75].map((g) => <line key={g} x1={pad} x2={w - pad} y1={y(max * g)} y2={y(max * g)} stroke="currentColor" strokeOpacity=".08" vectorEffect="non-scaling-stroke" />)}
           <path d={area} fill="url(#spendFill)" />
-          <path d={line} fill="none" stroke="#111312" strokeWidth="1.6" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+          <path d={line} fill="none" stroke="currentColor" strokeWidth="1.6" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
         </svg>
         <span className={styles.endpoint} style={{ left: `${(x(last) / w) * 100}%`, top: `${(y(values[last]) / h) * 100}%` }} />
       </div>

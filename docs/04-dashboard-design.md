@@ -52,6 +52,12 @@ The header shortcuts for Claude Code, Codex and Cursor open the real setup steps
 
 ## Dashboard
 
+The dashboard's look is drawn to PayBox's app, with values sampled from its screens: a #0b0b0b ground,
+#171717 cards with 24px corners, #242424 for search, chips and raised buttons, white pill buttons for
+the main actions, one #858585 grey for secondary text, Inter, a single 952px centred column, and agent
+logos in their own colours in round tiles. Leash's colour is limited to the danger red and the green
+of "nothing waiting". The landing keeps its own light editorial look.
+
 The owner's page is an app on live chain data. Its structure takes PayBox's app as a reference for
 how an agent wallet is navigated, mapped onto what Leash is:
 

@@ -7,7 +7,7 @@ export default function PageHeader({ title, status, action }: { title: string; s
   return (
     <header className={styles.pageHeader}>
       <div>
-        <h1 className="display">{title}</h1>
+        <h1>{title}</h1>
         <span className={styles.status}>{status}</span>
       </div>
       {action}

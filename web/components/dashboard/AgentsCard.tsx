@@ -1,35 +1,28 @@
 "use client";
 
-// Every agent in one table: its mark, how it behaves, what is left today, and whether its key works.
+// Every agent as a row: its mark, how it behaves, and what it has left today, linking to Agents.
 
-import { Plus } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { agentLabel, modeOf, toUsdc } from "@/lib/format";
 import type { Agent, Names } from "@/lib/types";
 import AgentIcon from "./AgentIcon";
-import { CardHead, Track } from "./parts";
 import styles from "./dashboard.module.css";
 
 export default function AgentsCard({ agents, names, paused }: { agents: Agent[]; names: Names; paused: boolean }) {
   return (
-    <section className={`${styles.card} ${styles.agentsCard}`} aria-label="Agents">
-      <CardHead title="Agents" aside={<a className={styles.link} href="#agents">Manage</a>} />
+    <div className={styles.rows}>
       {agents.map((a) => {
         const who = agentLabel(a.key, names);
-        const daily = BigInt(a.policy.daily_cap);
-        const off = !a.policy.active || paused;
-        const state = !a.policy.active ? "Revoked" : paused ? "Paused" : "Active";
+        const off = !a.policy.active;
         return (
-          <div key={a.key} className={styles.agentRow} data-off={off || undefined}>
-            <AgentIcon name={who} off={!a.policy.active} />
-            <span className={styles.agentName}>{who}<small>{a.policy.active ? modeOf(a.policy) : "Key deleted"}</small></span>
-            <span className={styles.budget}>
-              {a.policy.active ? <><span><b className="tabular">${toUsdc(a.remaining)}</b> of ${toUsdc(daily)}</span><Track share={daily === BigInt(0) ? 0 : Number((a.remaining * BigInt(1000)) / daily) / 1000} /></> : <span />}
-            </span>
-            <span className={styles.state} data-off={state !== "Active" || undefined}>{state}</span>
-          </div>
+          <a key={a.key} href="#agents" className={styles.row} data-off={off || undefined}>
+            <AgentIcon name={who} off={off} />
+            <span className={styles.rowMain}><strong>{who}</strong><small>{off ? "Revoked. Key deleted" : paused ? "Paused by you" : modeOf(a.policy)}</small></span>
+            <span className={styles.rowValue}>{off ? <b className={styles.danger}>Revoked</b> : <><b className="tabular">${toUsdc(a.remaining)}</b><small>of ${toUsdc(a.policy.daily_cap)} left today</small></>}</span>
+            <ChevronRight size={18} className={styles.chev} aria-hidden="true" />
+          </a>
         );
       })}
-      <a className={styles.addRow} href="#agents"><span className={styles.addIcon}><Plus size={14} /></span>Add an agent<span className="mono">leash grant</span></a>
-    </section>
+    </div>
   );
 }
