@@ -28,7 +28,7 @@ export default function BalanceHero({ vault, contract, busy, onDeposit, onSetup 
       <div className={styles.heroLabel}>
         <span>Vault balance</span>
         <button onClick={toggle} aria-label={hidden ? "Show balance" : "Hide balance"} aria-pressed={hidden}>{hidden ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-        <span className={`${styles.contractChip} mono`}>{contract}</span>
+        <span className={styles.contractChip}>{contract}</span>
       </div>
       <span aria-label={hidden ? "Balance hidden" : `${toUsdc(vault)} USDC`}>
         {hidden ? <strong className={styles.heroBalance}>$•••••</strong> : <Money whole={whole} cents={cents} className={styles.heroBalance} />}

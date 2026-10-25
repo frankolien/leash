@@ -34,12 +34,13 @@ export function msOf(ns: number | string): number {
   return Number(BigInt(ns) / BigInt(1_000_000));
 }
 
+/// How an agent behaves, in the owner's terms and with the real amounts.
 export function modeOf(policy: Policy): string {
   const per = BigInt(policy.per_payment_cap);
   const daily = BigInt(policy.daily_cap);
-  if (per === BigInt(0)) return "Asks every time";
-  if (per < daily) return "Autonomous below a limit, asks above it";
-  return "Autonomous within limits";
+  if (per === BigInt(0)) return "Asks before every payment";
+  if (per < daily) return `Pays up to $${toUsdc(per)} alone, asks above`;
+  return `Pays alone, up to $${toUsdc(daily)} a day`;
 }
 
 export function shortKey(key: string): string {

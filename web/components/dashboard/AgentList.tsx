@@ -30,7 +30,7 @@ export default function AgentList({ agents, names, paused, busy, onRevoke }: { a
           return (
             <div key={a.key} className={styles.listItem} data-open={isOpen || undefined}>
               <button className={styles.listRow} onClick={() => setOpen(isOpen ? null : a.key)} aria-expanded={isOpen}>
-                <AgentIcon name={who} size={38} off={!a.policy.active} />
+                <AgentIcon name={who} size={42} off={!a.policy.active} />
                 <span className={styles.listMain}>
                   <strong>{who}</strong>
                   <small>{a.policy.active ? `${modeOf(a.policy)}. $${toUsdc(a.remaining)} of $${toUsdc(daily)} left today` : "Key deleted. It can no longer pay."}</small>

@@ -6,7 +6,7 @@ import styles from "./dashboard.module.css";
 
 const BRANDS: Record<string, string> = { claude: siClaude.path, cursor: siCursor.path, gemini: siGooglegemini.path, copilot: siGithubcopilot.path };
 
-export default function AgentIcon({ name, size = 30, off = false }: { name: string; size?: number; off?: boolean }) {
+export default function AgentIcon({ name, size = 34, off = false }: { name: string; size?: number; off?: boolean }) {
   const key = name.toLowerCase();
   const brand = Object.keys(BRANDS).find((b) => key.includes(b));
   return (

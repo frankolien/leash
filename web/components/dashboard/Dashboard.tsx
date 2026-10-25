@@ -28,6 +28,7 @@ import ProposalCard from "./ProposalCard";
 import RecipientsView from "./RecipientsView";
 import SettingsView from "./SettingsView";
 import Sidebar from "./Sidebar";
+import Skeleton from "./Skeleton";
 import SpendCard from "./SpendCard";
 import { viewFromHash, type View } from "./views";
 import styles from "./dashboard.module.css";
@@ -194,19 +195,14 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
             : <button className="btn ink" onClick={wallet.onConnect}>Connect wallet</button>}
         </div>
         {snap?.paused && <div className={styles.banner}>Paused. No agent can pay until you resume.</div>}
-        {!snap && (
+        {!snap && error && (
           <div className={styles.empty}>
-            {error ? (
-              <>
-                <h1 className="display">No vault here yet.</h1>
-                <p>There is no Leash contract at <span className="mono">{contract}</span>. The owner creates one with <span className="mono">leash init</span>.</p>
-                <a className="btn" href="/">Back to Leash</a>
-              </>
-            ) : (
-              <p className={styles.muted}>Reading the chain…</p>
-            )}
+            <h1 className="display">No vault here yet.</h1>
+            <p>There is no Leash contract at <span className="mono">{contract}</span>. The owner creates one with <span className="mono">leash init</span>.</p>
+            <a className="btn" href="/">Back to Leash</a>
           </div>
         )}
+        {!snap && !error && <Skeleton />}
         {page}
       </main>
       <AmountDialog ask={ask} onClose={() => setAsk(null)} />

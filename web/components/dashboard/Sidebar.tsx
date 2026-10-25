@@ -50,12 +50,12 @@ export default function Sidebar(props: {
       <nav className={styles.nav} aria-label="Dashboard">
         {LINKS.map(({ view: v, label, icon: Icon }) => (
           <a key={v} href={`#${v}`} aria-current={view === v ? "page" : undefined}>
-            <Icon size={18} />
+            <Icon size={20} strokeWidth={1.8} />
             <span>{label}</span>
             {v === "approvals" && waiting > 0 && <em aria-label={`${waiting} waiting`}>{waiting}</em>}
           </a>
         ))}
-        <a href="#settings" className={styles.phoneTab} aria-current={view === "settings" ? "page" : undefined}><Settings size={18} /><span>Settings</span></a>
+        <a href="#settings" className={styles.phoneTab} aria-current={view === "settings" ? "page" : undefined}><Settings size={20} strokeWidth={1.8} /><span>Settings</span></a>
       </nav>
 
       <div className={styles.sideBottom}>
@@ -74,12 +74,12 @@ export default function Sidebar(props: {
           </div>
         )}
         <div className={styles.account}>
-          <span className={styles.accountId}><span className="mono">{owner}</span><small>{network === "mainnet" ? "Mainnet" : "Testnet"}{account ? (account === owner ? ", wallet connected" : `, connected as ${account}`) : ""}</small></span>
+          <span className={styles.accountId}><span>{owner}</span><small>{network === "mainnet" ? "Mainnet" : "Testnet"}{account ? (account === owner ? ", wallet connected" : `, connected as ${account}`) : ""}</small></span>
           {account
             ? <button className={styles.accountButton} onClick={onDisconnect}>Disconnect</button>
             : <button className="btn ink" onClick={onConnect}><Wallet size={15} /> Connect wallet</button>}
         </div>
-        <a href="#settings" className={styles.settingsLink} aria-current={view === "settings" ? "page" : undefined}><Settings size={18} /><span>Settings</span></a>
+        <a href="#settings" className={styles.settingsLink} aria-current={view === "settings" ? "page" : undefined}><Settings size={20} strokeWidth={1.8} /><span>Settings</span></a>
       </div>
     </aside>
   );
