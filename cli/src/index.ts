@@ -206,6 +206,7 @@ async function grant(flags: Record<string, string | undefined>) {
   await call(account, config.contract, "set_policy", {
     public_key: publicKey,
     policy: {
+      name,
       token: config.token,
       daily_cap: toUnits(daily).toString(),
       per_payment_cap: toUnits(perPayment).toString(),
@@ -286,7 +287,7 @@ async function status() {
   const [vault, paused, policies, storage] = await Promise.all([
     view<string>(provider, config.contract, "get_vault", { owner: config.owner, token: config.token }),
     view<boolean>(provider, config.contract, "is_paused", { owner: config.owner }),
-    view<[string, { daily_cap: string; per_payment_cap: string; active: boolean; allowlist: string[]; expires_at: number }][]>(provider, config.contract, "get_policies", { owner: config.owner }),
+    view<[string, { name: string | null; daily_cap: string; per_payment_cap: string; active: boolean; allowlist: string[]; expires_at: number }][]>(provider, config.contract, "get_policies", { owner: config.owner }),
     view<string>(provider, config.contract, "get_storage", { owner: config.owner }),
   ]);
   console.log(`${config.contract} on ${config.network}${paused ? "  PAUSED" : ""}`);
@@ -294,7 +295,7 @@ async function status() {
   for (const [key, policy] of policies) {
     const check = await view<{ remaining_today: string }>(provider, config.contract, "check", { owner: config.owner, public_key: key, to: config.owner, amount: "1" });
     const until = policy.expires_at ? ` until ${new Date(policy.expires_at * 1000).toISOString()}` : "";
-    console.log(`  ${policy.active ? "on " : "off"} ${key}  ${toUsdc(check.remaining_today)} of ${toUsdc(policy.daily_cap)} left today, ${toUsdc(policy.per_payment_cap)} per payment${policy.allowlist.length ? `, to ${policy.allowlist.join(", ")}` : ""}${until}`);
+    console.log(`  ${policy.active ? "on " : "off"} ${(policy.name ?? "").padEnd(10)} ${key.slice(0, 20)}…  ${toUsdc(check.remaining_today)} of ${toUsdc(policy.daily_cap)} left today, ${toUsdc(policy.per_payment_cap)} per payment${policy.allowlist.length ? `, to ${policy.allowlist.join(", ")}` : ""}${until}`);
   }
 }
 

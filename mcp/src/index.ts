@@ -27,6 +27,7 @@ type KeyFile = {
 type Preflight = { ok: boolean; reason: string | null; can_request: boolean; remaining_today: string; vault: string };
 
 type Policy = {
+  name: string | null;
   token: string;
   daily_cap: string;
   per_payment_cap: string;
@@ -198,7 +199,7 @@ async function main() {
       ]);
       return reply({
         status: "ok",
-        agent: leash.key.name ?? null,
+        agent: policy.name ?? leash.key.name ?? null,
         owner: leash.key.owner,
         key: leash.key.public_key,
         active: policy.active && !paused,

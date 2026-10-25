@@ -47,6 +47,8 @@ enum StorageKey {
 #[near(serializers = [borsh, json])]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Policy {
+    /// What the owner calls this agent, so a request reads "claude wants to pay" to anyone.
+    pub name: Option<String>,
     pub token: AccountId,
     pub daily_cap: U128,
     pub per_payment_cap: U128,
@@ -66,6 +68,8 @@ pub struct Policy {
 #[near(serializers = [json])]
 #[derive(Clone, Debug)]
 pub struct PolicyInput {
+    #[serde(default)]
+    pub name: Option<String>,
     pub token: AccountId,
     pub daily_cap: U128,
     pub per_payment_cap: U128,
@@ -192,7 +196,9 @@ impl Leash {
             self.storage.insert(owner.clone(), credit);
         }
         assert!(policy.per_payment_cap.0 <= policy.daily_cap.0, "per_payment_cap above daily_cap");
+        assert!(policy.name.as_ref().map_or(true, |n| !n.is_empty() && n.len() <= 32), "a name is at most 32 characters");
         let stored = Policy {
+            name: policy.name.clone(),
             token: policy.token.clone(),
             daily_cap: policy.daily_cap,
             per_payment_cap: policy.per_payment_cap,
@@ -213,7 +219,7 @@ impl Leash {
         self.record(&owner, Some(&public_key), "policy_set", None, Some(policy.daily_cap), None);
         emit(
             "policy_set",
-            json!({ "owner": owner, "key": public_key, "token": policy.token, "daily_cap": policy.daily_cap,
+            json!({ "owner": owner, "key": public_key, "name": policy.name, "token": policy.token, "daily_cap": policy.daily_cap,
                     "per_payment_cap": policy.per_payment_cap, "allowlist": policy.allowlist,
                     "cooldown_secs": policy.cooldown_secs, "expires_at": policy.expires_at }),
         );
@@ -711,7 +717,7 @@ mod tests {
         ctx_with_deposit(owner(), owner_key(), 1, STORAGE_CREDIT);
         leash.set_policy(
             agent_key(),
-            PolicyInput { token: token(), daily_cap: U128(daily), per_payment_cap: U128(per_payment), allowlist: vec![], cooldown_secs: 0, expires_at: 0 },
+            PolicyInput { name: Some("claude".into()), token: token(), daily_cap: U128(daily), per_payment_cap: U128(per_payment), allowlist: vec![], cooldown_secs: 0, expires_at: 0 },
         );
         ctx(owner(), owner_key(), 1);
         leash
@@ -790,7 +796,7 @@ mod tests {
         ctx_with_deposit(owner(), owner_key(), 1, STORAGE_CREDIT);
         leash.set_policy(
             agent_key(),
-            PolicyInput { token: token(), daily_cap: U128(5 * USDC), per_payment_cap: U128(USDC), allowlist: vec![vendor()], cooldown_secs: 60, expires_at: 1_000 },
+            PolicyInput { name: Some("claude".into()), token: token(), daily_cap: U128(5 * USDC), per_payment_cap: U128(USDC), allowlist: vec![vendor()], cooldown_secs: 60, expires_at: 1_000 },
         );
         ctx(owner(), agent_key(), 10 * NS_PER_SEC);
         assert_eq!(refused(leash.pay(vendor(), U128(2 * USDC), None)), "over per-payment cap");
