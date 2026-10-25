@@ -64,6 +64,8 @@ function usage(): never {
   pause | resume                        Kill switch for every agent key
   approve   <id> [--force] | deny <id>  Decide a parked request; approve refuses an unregistered recipient unless forced
   register  <account>                   Pay an account's registration on the token so it can receive USDC
+  proposals | dismiss <id>              What agents asked for beyond their policy, and clearing a note
+  window    <secs>                      How long a parked request waits for you (default 3600)
   status | requests | log               What the agents can do, want to do, and did
 `);
   process.exit(1);
@@ -200,7 +202,7 @@ async function grant(flags: Record<string, string | undefined>) {
 
   const pair = KeyPair.fromRandom("ed25519");
   const publicKey = pair.getPublicKey().toString();
-  await account.addFunctionCallAccessKey({ publicKey, contractId: config.contract, methodNames: ["pay", "request"], allowance: KEY_ALLOWANCE });
+  await account.addFunctionCallAccessKey({ publicKey, contractId: config.contract, methodNames: ["pay", "request", "ask_more"], allowance: KEY_ALLOWANCE });
   await call(account, config.contract, "set_policy", {
     public_key: publicKey,
     policy: {
@@ -299,9 +301,34 @@ async function status() {
 async function requests() {
   const config = loadConfig();
   const { provider } = ownerAccount(config);
-  const rows = await view<{ id: number; to: string; amount: string; memo: string | null; reason: string }[]>(provider, config.contract, "get_requests", { owner: config.owner });
+  const rows = await view<{ id: number; to: string; amount: string; memo: string | null; reason: string; expires_at: number }[]>(provider, config.contract, "get_requests", { owner: config.owner });
   if (!rows.length) return console.log("no parked requests");
-  for (const r of rows) console.log(`#${r.id}  ${toUsdc(r.amount)} USDC to ${r.to}  (${r.reason})${r.memo ? `  ${r.memo}` : ""}`);
+  for (const r of rows) {
+    const left = Math.max(0, Math.round((Number(BigInt(r.expires_at) / 1_000_000_000n) - Date.now() / 1000) / 60));
+    console.log(`#${r.id}  ${toUsdc(r.amount)} USDC to ${r.to}  (${r.reason})${r.memo ? `  ${r.memo}` : ""}  expires in ${left} min`);
+  }
+}
+
+async function proposals() {
+  const config = loadConfig();
+  const { provider } = ownerAccount(config);
+  const rows = await view<{ id: number; key: string; note: string }[]>(provider, config.contract, "get_proposals", { owner: config.owner });
+  if (!rows.length) return console.log("no proposals");
+  for (const r of rows) console.log(`#${r.id}  ${r.key.slice(0, 16)}...  ${r.note}`);
+}
+
+async function dismiss(id: string) {
+  const config = loadConfig();
+  const { account } = ownerAccount(config);
+  await call(account, config.contract, "dismiss_proposal", { proposal_id: Number(id) });
+  console.log(`dismissed ${id}`);
+}
+
+async function window(secs: string) {
+  const config = loadConfig();
+  const { account } = ownerAccount(config);
+  await call(account, config.contract, "set_request_ttl", { secs: Number(secs) });
+  console.log(`parked requests now wait ${secs} seconds for you`);
 }
 
 async function log() {
@@ -345,6 +372,9 @@ async function main() {
     case "approve": return decide("approve", arg ?? usage(), values.force === true);
     case "deny": return decide("deny", arg ?? usage());
     case "register": return register(arg ?? usage());
+    case "proposals": return proposals();
+    case "dismiss": return dismiss(arg ?? usage());
+    case "window": return window(arg ?? usage());
     case "status": return status();
     case "requests": return requests();
     case "log": return log();

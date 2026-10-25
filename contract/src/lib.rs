@@ -19,6 +19,8 @@ const GAS_FOR_CALLBACK: Gas = Gas::from_tgas(10);
 // The dashboard reads recent decisions; a fixed window keeps an owner's storage flat however many
 // payments an agent makes.
 const LOG_LIMIT: usize = 100;
+// A human decides parked requests, so an hour by default; the owner can set their own window.
+const DEFAULT_REQUEST_TTL_SECS: u64 = 3_600;
 const EVENT_STANDARD: &str = "leash";
 const EVENT_VERSION: &str = "1.0.0";
 
@@ -36,6 +38,8 @@ enum StorageKey {
     Paused,
     Storage,
     Requests,
+    Proposals,
+    RequestTtl,
     Logs,
 }
 
@@ -85,6 +89,20 @@ pub struct Request {
     pub memo: Option<String>,
     pub reason: String,
     pub created_at: u64,
+    /// Nanoseconds. After this the owner can no longer approve; the request is dropped on the next
+    /// touch and logged as expired, so an agent is never waiting on a decision that is not coming.
+    pub expires_at: u64,
+}
+
+/// An agent asking for a wider policy. Nothing changes until the owner acts on it.
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct Proposal {
+    pub id: u64,
+    pub owner: AccountId,
+    pub key: PublicKey,
+    pub note: String,
+    pub created_at: u64,
 }
 
 #[near(serializers = [borsh, json])]
@@ -130,6 +148,9 @@ pub struct Leash {
     requests: IterableMap<u64, Request>,
     next_request: u64,
     logs: LookupMap<AccountId, Vec<LogEntry>>,
+    proposals: IterableMap<u64, Proposal>,
+    next_proposal: u64,
+    request_ttl: LookupMap<AccountId, u64>,
 }
 
 #[near]
@@ -145,6 +166,9 @@ impl Leash {
             requests: IterableMap::new(StorageKey::Requests),
             next_request: 1,
             logs: LookupMap::new(StorageKey::Logs),
+            proposals: IterableMap::new(StorageKey::Proposals),
+            next_proposal: 1,
+            request_ttl: LookupMap::new(StorageKey::RequestTtl),
         }
     }
 
@@ -226,6 +250,12 @@ impl Leash {
         let request = self.requests.get(&request_id).cloned().expect("no such request");
         assert_eq!(request.owner, owner, "not your request");
         self.requests.remove(&request_id);
+        if env::block_timestamp() >= request.expires_at {
+            self.record(&owner, Some(&request.key), "request_expired", Some(&request.to), Some(request.amount), None);
+            emit("request_expired", json!({ "owner": owner, "id": request_id }));
+            self.charge(&owner, before);
+            return PromiseOrValue::Value(PayOutcome { accepted: false, reason: Some("request expired".into()), remaining_today: self.remaining(&owner, &request.key) });
+        }
         self.charge(&owner, before);
         let vault = self.vault_of(&owner, &request.token);
         if vault < request.amount.0 {
@@ -249,6 +279,24 @@ impl Leash {
         self.requests.remove(&request_id);
         self.record(&owner, Some(&request.key), "request_denied", Some(&request.to), Some(request.amount), None);
         emit("request_denied", json!({ "owner": owner, "id": request_id }));
+        self.charge(&owner, before);
+    }
+
+    /// How long a parked request waits for the owner, in seconds.
+    pub fn set_request_ttl(&mut self, secs: u64) {
+        let owner = self.owner_caller();
+        assert!(secs >= 60, "a request must live at least a minute");
+        self.request_ttl.insert(owner, secs);
+    }
+
+    pub fn dismiss_proposal(&mut self, proposal_id: u64) {
+        let owner = self.owner_caller();
+        let before = env::storage_usage();
+        let proposal = self.proposals.get(&proposal_id).cloned().expect("no such proposal");
+        assert_eq!(proposal.owner, owner, "not your proposal");
+        self.proposals.remove(&proposal_id);
+        self.record(&owner, Some(&proposal.key), "proposal_dismissed", None, None, Some(&proposal.note));
+        emit("proposal_dismissed", json!({ "owner": owner, "id": proposal_id }));
         self.charge(&owner, before);
     }
 
@@ -324,10 +372,29 @@ impl Leash {
                 memo,
                 reason: reason.clone(),
                 created_at: env::block_timestamp(),
+                expires_at: env::block_timestamp() + self.request_ttl_of(&owner) * NS_PER_SEC,
             },
         );
         self.record(&owner, Some(&key), "request_parked", Some(&to), Some(amount), Some(&reason));
         emit("request_parked", json!({ "owner": owner, "key": key, "id": id, "to": to, "amount": amount, "reason": reason }));
+        self.charge(&owner, before);
+        id
+    }
+
+    /// The agent asks for a wider policy in one sentence. Nothing changes until the owner acts; the
+    /// note is stored so the owner sees it beside the key, and it costs the owner's storage credit,
+    /// so an agent cannot spam it for free either.
+    pub fn ask_more(&mut self, note: String) -> u64 {
+        let owner = env::predecessor_account_id();
+        let key = env::signer_account_pk();
+        assert!(self.policies.get(&(owner.clone(), key.clone())).is_some(), "no policy for this key");
+        assert!(!note.is_empty() && note.len() <= 280, "a note is one short sentence");
+        let before = env::storage_usage();
+        let id = self.next_proposal;
+        self.next_proposal += 1;
+        self.proposals.insert(id, Proposal { id, owner: owner.clone(), key: key.clone(), note: note.clone(), created_at: env::block_timestamp() });
+        self.record(&owner, Some(&key), "proposal_made", None, None, Some(&note));
+        emit("proposal_made", json!({ "owner": owner, "key": key, "id": id, "note": note }));
         self.charge(&owner, before);
         id
     }
@@ -414,8 +481,18 @@ impl Leash {
         self.preflight(&owner, &public_key, &to, amount.0)
     }
 
+    /// Live requests only; an expired one is dropped the next time the owner touches it.
     pub fn get_requests(&self, owner: AccountId) -> Vec<Request> {
-        self.requests.values().filter(|r| r.owner == owner).cloned().collect()
+        let now = env::block_timestamp();
+        self.requests.values().filter(|r| r.owner == owner && r.expires_at > now).cloned().collect()
+    }
+
+    pub fn get_proposals(&self, owner: AccountId) -> Vec<Proposal> {
+        self.proposals.values().filter(|p| p.owner == owner).cloned().collect()
+    }
+
+    pub fn get_request_ttl(&self, owner: AccountId) -> u64 {
+        self.request_ttl_of(&owner)
     }
 
     pub fn get_log(&self, owner: AccountId, from: Option<u64>, limit: Option<u64>) -> Vec<LogEntry> {
@@ -437,6 +514,10 @@ impl Leash {
         owner
     }
 
+    fn request_ttl_of(&self, owner: &AccountId) -> u64 {
+        self.request_ttl.get(owner).copied().unwrap_or(DEFAULT_REQUEST_TTL_SECS)
+    }
+
     fn storage_of(&self, owner: &AccountId) -> u128 {
         self.storage.get(owner).copied().unwrap_or(0)
     }
@@ -454,6 +535,8 @@ impl Leash {
         self.storage.flush();
         self.requests.flush();
         self.logs.flush();
+        self.proposals.flush();
+        self.request_ttl.flush();
         self.settle(owner, before, env::storage_usage());
     }
 
@@ -748,6 +831,32 @@ mod tests {
         assert!(leash.get_requests(owner()).is_empty());
         // The owner's decision does not eat the agent's own allowance.
         assert_eq!(leash.check(owner(), agent_key(), vendor(), U128(USDC)).remaining_today.0, 3 * USDC);
+    }
+
+    #[test]
+    fn an_old_request_expires_instead_of_paying() {
+        let mut leash = funded(3 * USDC, 2 * USDC);
+        ctx(owner(), agent_key(), 10);
+        let id = leash.request(vendor(), U128(5 * USDC), None);
+        assert_eq!(leash.get_requests(owner()).len(), 1);
+        let later = 10 + (DEFAULT_REQUEST_TTL_SECS + 1) * NS_PER_SEC;
+        ctx(owner(), owner_key(), later);
+        assert!(leash.get_requests(owner()).is_empty(), "an expired request is not shown");
+        assert_eq!(refused(leash.approve(id)), "request expired");
+        assert_eq!(leash.get_vault(owner(), token()).0, 10 * USDC, "nothing moved");
+        assert_eq!(leash.get_log(owner(), None, None).last().unwrap().event, "request_expired");
+    }
+
+    #[test]
+    fn an_agent_can_ask_for_more_and_the_owner_dismisses_it() {
+        let mut leash = funded(3 * USDC, 2 * USDC);
+        ctx(owner(), agent_key(), 10);
+        let id = leash.ask_more("Need 10 a day for the compute bill".into());
+        assert_eq!(leash.get_proposals(owner()).len(), 1);
+        assert_eq!(leash.get_policy(owner(), agent_key()).unwrap().daily_cap.0, 3 * USDC, "asking changes nothing");
+        ctx(owner(), owner_key(), 11);
+        leash.dismiss_proposal(id);
+        assert!(leash.get_proposals(owner()).is_empty());
     }
 
     #[test]

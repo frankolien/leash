@@ -54,11 +54,12 @@ struct World {
     vendor: Account,
 }
 
-/// Builds a contract with cargo-near once and reads the optimised binary. `cargo test` therefore
-/// needs cargo-near on the path, which the README's install step covers.
+/// Builds a contract with cargo-near and reads the optimised binary, so the sandbox always runs the
+/// source as it stands. `cargo test` therefore needs cargo-near on the path, which the README's
+/// install step covers. LEASH_SKIP_BUILD=1 reuses what is there.
 fn built(dir: &str, name: &str) -> Result<Vec<u8>> {
     let path = format!("{dir}/target/near/{name}.wasm");
-    if std::fs::metadata(&path).is_err() {
+    if std::env::var("LEASH_SKIP_BUILD").is_err() || std::fs::metadata(&path).is_err() {
         let status = std::process::Command::new("cargo")
             .args(["near", "build", "non-reproducible-wasm"])
             .current_dir(dir)
