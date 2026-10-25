@@ -1,10 +1,9 @@
 "use client";
 
-// The owner's wallet, through HOT Connect. Only writes go through it; every read is plain RPC.
-// The connector is created once per page so wallets keep their session across renders.
+// NEAR wallets through NEAR Connect. Only writes go through it; every read is plain RPC. The
+// connector is created once per page so wallets keep their session across renders.
 
 import { NearConnector } from "@hot-labs/near-connect";
-import { actions } from "near-api-js";
 import type { Network } from "./types";
 
 export type Wallet = Awaited<ReturnType<NearConnector["wallet"]>>;
@@ -37,15 +36,4 @@ export async function connect(network: Network): Promise<string | null> {
 
 export async function disconnect(network: Network): Promise<void> {
   await getConnector(network).disconnect();
-}
-
-const TGAS = BigInt(10) ** BigInt(12);
-
-/// One function call on a contract, signed and sent by the connected wallet.
-export async function callAs(network: Network, receiverId: string, methodName: string, args: Record<string, unknown>, deposit = BigInt(0), gas = BigInt(60) * TGAS) {
-  const wallet = await getConnector(network).wallet();
-  return wallet.signAndSendTransaction({
-    receiverId,
-    actions: [actions.functionCall(methodName, args, gas, deposit)],
-  });
 }

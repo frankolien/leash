@@ -5,7 +5,8 @@
 // phone the views become a bar along the bottom.
 
 import { useEffect, useState } from "react";
-import { Activity, Bell, LayoutGrid, Pause, Play, Settings, Users, Wallet, X, BookUser } from "lucide-react";
+import { Activity, Bell, LayoutGrid, Pause, Play, Settings, Users, X, BookUser } from "lucide-react";
+import { shortAccount } from "@/lib/config";
 import type { View } from "./views";
 import styles from "./dashboard.module.css";
 
@@ -25,6 +26,8 @@ export default function Sidebar(props: {
   owner: string;
   network: string;
   account: string | null;
+  /// The signed-in person in their own terms (an email), when they signed in that way.
+  accountLabel?: string;
   paused?: boolean;
   canAct: boolean;
   busy: string | null;
@@ -34,7 +37,7 @@ export default function Sidebar(props: {
   onResume: () => void;
   onSetup: () => void;
 }) {
-  const { view, waiting, owner, network, account, paused, canAct, busy, onConnect, onDisconnect, onPause, onResume, onSetup } = props;
+  const { view, waiting, owner, network, account, accountLabel, paused, canAct, busy, onConnect, onDisconnect, onPause, onResume, onSetup } = props;
   const [promo, setPromo] = useState(false);
   useEffect(() => {
     try { setPromo(window.localStorage.getItem(PROMO_KEY) !== "1"); } catch { setPromo(true); }
@@ -74,10 +77,17 @@ export default function Sidebar(props: {
           </div>
         )}
         <div className={styles.account}>
-          <span className={styles.accountId}><span>{owner}</span><small>{network === "mainnet" ? "Mainnet" : "Testnet"}{account ? (account === owner ? ", wallet connected" : `, connected as ${account}`) : ""}</small></span>
-          {account
-            ? <button className={styles.accountButton} onClick={onDisconnect}>Disconnect</button>
-            : <button className="btn ink" onClick={onConnect}><Wallet size={15} /> Connect wallet</button>}
+          {account ? (
+            <>
+              <span className={styles.accountId}>{accountLabel ?? shortAccount(account)}<small>{account === owner ? (accountLabel ? `${shortAccount(account)}, ${network}` : network === "mainnet" ? "Mainnet" : "Testnet") : `Viewing ${shortAccount(owner)}`}</small></span>
+              <button className={styles.accountButton} onClick={onDisconnect}>Sign out</button>
+            </>
+          ) : (
+            <>
+              <span className={styles.accountId}>{shortAccount(owner)}<small>{network === "mainnet" ? "Mainnet" : "Testnet"}, read only</small></span>
+              <button className="btn ink" onClick={onConnect}>Sign in</button>
+            </>
+          )}
         </div>
         <a href="#settings" className={styles.settingsLink} aria-current={view === "settings" ? "page" : undefined}><Settings size={20} strokeWidth={1.8} /><span>Settings</span></a>
       </div>

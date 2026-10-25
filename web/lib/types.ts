@@ -53,6 +53,8 @@ export type Snapshot = {
   network: Network;
   token: string;
   vault: bigint;
+  /// USDC in the owner's own account, ready to move into the vault.
+  held: bigint;
   storage: bigint;
   paused: boolean;
   requestTtl: number;

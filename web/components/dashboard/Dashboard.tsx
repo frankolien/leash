@@ -6,7 +6,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Check, Pause, Play, Plus } from "lucide-react";
-import SetupDialog from "@/components/setup/SetupDialog";
 import type { Agent as SetupAgent } from "@/components/setup/agents";
 import { useNames } from "@/hooks/useNames";
 import { useNow, useSnapshot } from "@/hooks/useSnapshot";
@@ -14,13 +13,15 @@ import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { agentLabel, toUnits, toUsdc } from "@/lib/format";
 import { greeting, recipients } from "@/lib/insights";
-import { contractOf, networkOf } from "@/lib/reader";
+import { USDC, contractOf, networkOf } from "@/lib/config";
+import DepositDetail from "./DepositDetail";
 import type { Agent, Proposal, Request, Snapshot } from "@/lib/types";
 import ActivityCard from "./ActivityCard";
 import AgentList from "./AgentList";
 import AgentsCard from "./AgentsCard";
 import AmountDialog, { type AmountAsk } from "./AmountDialog";
 import ApprovalCard from "./ApprovalCard";
+import NewAgentDialog from "./NewAgentDialog";
 import ApprovalPanel, { useApprovalQueue } from "./ApprovalPanel";
 import ConnectCard from "./ConnectCard";
 import PageHeader from "./PageHeader";
@@ -51,7 +52,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const contract = contractOverride ?? contractOf(owner);
   const { snapshot: snap, error, refresh } = useSnapshot(owner, contract, network);
   const { toast, say } = useToast();
-  const wallet = useWallet(owner, network, refresh, say);
+  const wallet = useWallet(owner, refresh, say);
   const names = useNames(owner, snap?.agents);
   const now = useNow();
   const view = useView();
@@ -63,7 +64,12 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const approve = useCallback((r: Request) => act("approve", () => call(contract, "approve", { request_id: r.id }), `Approved ${toUsdc(r.amount)} USDC to ${r.to}`), [act, call, contract]);
   const deny = useCallback((r: Request) => act("deny", () => call(contract, "deny", { request_id: r.id }), `Denied request ${r.id}. Nothing moved.`), [act, call, contract]);
   const dismiss = useCallback((p: Proposal) => act("dismiss", () => call(contract, "dismiss_proposal", { proposal_id: p.id }), "Dismissed"), [act, call, contract]);
-  const revoke = useCallback((a: Agent) => act("revoke", () => call(contract, "revoke", { public_key: a.key }), `${agentLabel(a.key, names)} can no longer pay`), [act, call, contract, names]);
+  // Revoke stops the policy on Leash, then deletes the key from the owner's account, so NEAR
+  // rejects the agent's next call before the contract runs.
+  const revoke = useCallback((a: Agent) => act("revoke", async () => {
+    await call(contract, "revoke", { public_key: a.key });
+    await wallet.session?.deleteKey(a.key).catch(() => undefined);
+  }, `${agentLabel(a.key, names)} can no longer pay`), [act, call, contract, names, wallet.session]);
   const pause = useCallback(() => act("pause", () => call(contract, "pause", {}), "Paused. No agent can pay until you resume."), [act, call, contract]);
   const resume = useCallback(() => act("resume", () => call(contract, "resume", {}), "Resumed"), [act, call, contract]);
   const setWindow = useCallback((secs: number) => act("set the approval window", () => call(contract, "set_request_ttl", { secs }), `Requests now wait ${Math.round(secs / 60)} minutes`), [act, call, contract]);
@@ -72,8 +78,9 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
     setAsk({
       title: "Add money",
       hint: "Moves USDC from your account into the vault your agents spend from.",
+      detail: <DepositDetail owner={owner} held={snap.held} />,
       confirm: "Add to vault",
-      initial: "10",
+      initial: snap.held > BigInt(0) ? toUsdc(snap.held) : "10",
       onConfirm: (usdc) => act("deposit", () => call(snap.token, "ft_transfer_call", { receiver_id: contract, amount: toUnits(usdc).toString(), msg: "" }, ONE_YOCTO), `Added ${usdc} USDC`),
     });
   }, [act, call, contract, snap]);
@@ -88,6 +95,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
     });
   }, [act, call, contract, snap]);
   const openSetup = useCallback(() => setSetup("claude"), []);
+  const afterAgent = useCallback(async () => { await refresh(); }, [refresh]);
 
   const waiting = snap ? snap.requests.length + snap.proposals.length : 0;
 
@@ -177,6 +185,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         owner={owner}
         network={network}
         account={wallet.account}
+        accountLabel={wallet.session?.label}
         paused={snap?.paused}
         canAct={wallet.isOwner}
         busy={busy}
@@ -190,8 +199,8 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         <div className={styles.phoneBar}>
           <a href="/" className="wordmark" aria-label="Leash home"><span className="mark" aria-hidden="true" />Leash</a>
           {wallet.account
-            ? <button className={styles.dark} onClick={wallet.onDisconnect}>Connected</button>
-            : <button className={styles.white} onClick={wallet.onConnect}>Connect wallet</button>}
+            ? <button className={styles.dark} onClick={wallet.onDisconnect}>Sign out</button>
+            : <button className={styles.white} onClick={wallet.onConnect}>Sign in</button>}
         </div>
         {snap?.paused && <div className={styles.banner}>Paused. No agent can pay until you resume.</div>}
         {!snap && error && (
@@ -206,7 +215,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
       </main>
       {snap && queue.next && <ApprovalPanel request={queue.next} total={queue.pending.length} agents={snap.agents} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onClose={queue.later} />}
       <AmountDialog ask={ask} onClose={() => setAsk(null)} />
-      <SetupDialog agent={setup} onClose={() => setSetup(null)} onSwitch={setSetup} />
+      <NewAgentDialog kind={setup} session={wallet.session} owner={owner} contract={contract} token={snap?.token ?? USDC[network]} onClose={() => setSetup(null)} onSignIn={wallet.onConnect} onCreated={afterAgent} />
       {toast && <div className={styles.toast} data-bad={toast.bad || undefined} role="status">{toast.text}</div>}
     </div>
   );

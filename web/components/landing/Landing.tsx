@@ -38,7 +38,7 @@ export default function Landing() {
             {(Object.keys(AGENTS) as Agent[]).map((a) => (
               <button key={a} className="btn glass hide-sm" onClick={() => setSetup(a)}>{ICONS[a]}{AGENTS[a].label}</button>
             ))}
-            <a className="btn ink" href="#open">Open dashboard</a>
+            <a className="btn ink" href="/app">Sign in</a>
           </>
         }
       />

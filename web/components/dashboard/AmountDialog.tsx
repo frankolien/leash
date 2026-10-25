@@ -3,10 +3,10 @@
 // Asks how much to add or take back. A native dialog, so focus, Escape and the backdrop behave as
 // the platform expects.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import styles from "./dashboard.module.css";
 
-export type AmountAsk = { title: string; hint: string; confirm: string; initial: string; onConfirm: (usdc: string) => void };
+export type AmountAsk = { title: string; hint: string; detail?: ReactNode; confirm: string; initial: string; onConfirm: (usdc: string) => void };
 
 export default function AmountDialog({ ask, onClose }: { ask: AmountAsk | null; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -36,6 +36,7 @@ export default function AmountDialog({ ask, onClose }: { ask: AmountAsk | null; 
         >
           <h2>{ask.title}</h2>
           <p>{ask.hint}</p>
+          {ask.detail}
           <label className={styles.amountField}>
             <span>$</span>
             <input autoFocus inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} aria-label="Amount in USDC" />

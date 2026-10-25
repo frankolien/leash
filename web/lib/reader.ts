@@ -2,25 +2,10 @@
 // anyone's dashboard read-only, and the owner's wallet is the only thing that can change it.
 
 import { JsonRpcProvider } from "near-api-js";
+import { RPC, USDC, contractOf } from "./config";
 import type { LogEntry, Network, Policy, Proposal, Request, Snapshot } from "./types";
 
-export const RPC: Record<Network, string> = {
-  testnet: "https://rpc.testnet.fastnear.com",
-  mainnet: "https://rpc.mainnet.fastnear.com",
-};
-
-export const USDC: Record<Network, string> = {
-  testnet: "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
-  mainnet: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-};
-
-export function networkOf(owner: string): Network {
-  return owner.endsWith(".testnet") ? "testnet" : "mainnet";
-}
-
-export function contractOf(owner: string): string {
-  return `leash.${owner}`;
-}
+export { contractOf, networkOf } from "./config";
 
 export class LeashReader {
   readonly provider: JsonRpcProvider;
@@ -45,8 +30,9 @@ export class LeashReader {
       this.view<number>(contract, "get_request_ttl", { owner }),
     ]);
     const token = policies[0]?.[1].token ?? USDC[this.network];
-    const [vault, ...remaining] = await Promise.all([
+    const [vault, held, ...remaining] = await Promise.all([
       this.view<string>(contract, "get_vault", { owner, token }),
+      this.view<string>(token, "ft_balance_of", { account_id: owner }).catch(() => "0"),
       ...policies.map(([key]) => this.view<{ remaining_today: string }>(contract, "check", { owner, public_key: key, to: owner, amount: "1" })),
     ]);
     return {
@@ -55,6 +41,7 @@ export class LeashReader {
       network: this.network,
       token,
       vault: BigInt(vault ?? "0"),
+      held: BigInt(held ?? "0"),
       storage: BigInt(storage ?? "0"),
       paused: paused ?? false,
       requestTtl: requestTtl ?? 3600,

@@ -38,7 +38,10 @@ export function Invitation() {
       <div className={styles.inviteScrim} aria-hidden="true" />
       <div className={`${styles.shell} ${styles.inviteInner}`}>
         <h2 id="open-title" className="display">Give your agent a budget, not your wallet.</h2>
-        <OpenForm />
+        <div className={styles.inviteActions}>
+          <a className="btn light" href="/app">Get started with Google, Apple or email</a>
+          <OpenForm />
+        </div>
       </div>
     </section>
   );

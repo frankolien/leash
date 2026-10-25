@@ -42,6 +42,8 @@
 .inviteScrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(17, 19, 18, .05) 20%, rgba(17, 19, 18, .62)); }
 .inviteInner { width: 100%; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: end; padding-bottom: 88px; }
 .inviteInner h2 { margin: 0; font-size: clamp(40px, 5vw, 76px); }
+.inviteActions { display: flex; flex-direction: column; gap: 22px; }
+.inviteActions > :global(.btn) { min-height: 54px; font-size: 16px; font-weight: 600; }
 .openForm { display: flex; flex-direction: column; gap: 10px; }
 .openForm label { font-size: 15px; font-weight: 500; }
 .openForm > div { display: flex; gap: 6px; padding: 6px; border-radius: 999px; background: rgba(255, 255, 255, .78); border: 1px solid rgba(255, 255, 255, .6); backdrop-filter: blur(16px); }

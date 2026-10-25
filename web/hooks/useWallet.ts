@@ -1,42 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { callAs, connect, connectedAccount, disconnect } from "@/lib/wallet";
-import type { Network } from "@/lib/types";
+import { useCallback, useState } from "react";
+import { useAuth } from "@/components/auth/AuthContext";
 
 export type Act = (label: string, run: () => Promise<unknown>, done: string) => Promise<void>;
 
-/// The owner's wallet session and a single way to run a write: refuses when the connected account
-/// is not the owner, reports the outcome, and refreshes the page afterwards.
-export function useWallet(owner: string, network: Network, afterWrite: () => Promise<void>, say: (text: string, bad?: boolean) => void) {
-  const [account, setAccount] = useState<string | null>(null);
+/// The signed-in owner and a single way to run a write: refuses when the session is not the
+/// owner's, reports the outcome, and refreshes the page afterwards.
+export function useWallet(owner: string, afterWrite: () => Promise<void>, say: (text: string, bad?: boolean) => void) {
+  const { session, openSignIn, signOut } = useAuth();
   const [busy, setBusy] = useState<string | null>(null);
-
-  useEffect(() => {
-    connectedAccount(network).then(setAccount);
-  }, [network]);
-
+  const account = session?.accountId ?? null;
   const isOwner = account === owner;
-
-  const onConnect = useCallback(async () => {
-    try {
-      const next = await connect(network);
-      setAccount(next);
-      if (next && next !== owner) say(`Connected ${next}; this dashboard belongs to ${owner}`, true);
-    } catch (e) {
-      say(e instanceof Error ? e.message : String(e), true);
-    }
-  }, [network, owner, say]);
-
-  const onDisconnect = useCallback(async () => {
-    await disconnect(network);
-    setAccount(null);
-  }, [network]);
 
   const act: Act = useCallback(
     async (label, run, done) => {
-      if (!isOwner) {
-        say(`Connect ${owner} to ${label}`, true);
+      if (!session || session.accountId !== owner) {
+        say(session ? `Signed in as another account; this dashboard belongs to ${owner}` : `Sign in as the owner to ${label}`, true);
+        if (!session) openSignIn();
         return;
       }
       setBusy(label);
@@ -50,13 +31,16 @@ export function useWallet(owner: string, network: Network, afterWrite: () => Pro
         setBusy(null);
       }
     },
-    [isOwner, owner, say, afterWrite],
+    [session, owner, say, afterWrite, openSignIn],
   );
 
   const call = useCallback(
-    (receiverId: string, method: string, args: Record<string, unknown>, deposit?: bigint) => callAs(network, receiverId, method, args, deposit),
-    [network],
+    (receiverId: string, method: string, args: Record<string, unknown>, deposit?: bigint) => {
+      if (!session) throw new Error("sign in first");
+      return session.call(receiverId, method, args, deposit);
+    },
+    [session],
   );
 
-  return { account, isOwner, busy, onConnect, onDisconnect, act, call };
+  return { account, session, isOwner, busy, onConnect: openSignIn, onDisconnect: signOut, act, call };
 }

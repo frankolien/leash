@@ -64,7 +64,7 @@ export function FilmCaption({ seconds }: { seconds: number }) {
       <div className={styles.aside}>
         <p>Daily limits, approvals above them, and a key you can revoke in one tap. Enforced on NEAR.</p>
         <div className={styles.actions}>
-          <a className="btn light" href="#open">Open your dashboard</a>
+          <a className="btn light" href="/app">Get started</a>
           <a className="btn glass" href="#stories">See how <ArrowDown size={16} /></a>
         </div>
       </div>

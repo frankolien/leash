@@ -13,10 +13,10 @@ export default function OpenForm() {
   const id = owner.trim().toLowerCase();
   return (
     <form className={styles.openForm} onSubmit={(e) => { e.preventDefault(); if (id) router.push(`/${encodeURIComponent(id)}`); }}>
-      <label htmlFor="owner">Your NEAR account</label>
+      <label htmlFor="owner">Or open any account, read only</label>
       <div>
         <input id="owner" value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="you.near or you.testnet" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
-        <button className="btn ink" type="submit" disabled={!id}>Open dashboard</button>
+        <button className="btn ink" type="submit" disabled={!id}>Open</button>
       </div>
     </form>
   );

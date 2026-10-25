@@ -3,13 +3,19 @@
 
 export type Agent = "claude" | "codex" | "cursor";
 
+/// Where an agent's MCP config goes, and the config itself for a given key file.
+export function mcpConfig(agent: Agent, keyFile: string): { where: string; code: string } {
+  const c = AGENTS[agent].config;
+  return { where: c.where, code: c.code.replace(/~\/\.leash\/\w+\.json/, keyFile) };
+}
+
 export const AGENTS: Record<Agent, { label: string; key: string; config: { where: string; code: string } }> = {
   claude: {
     label: "Claude Code",
     key: "claude",
     config: {
       where: "In your terminal",
-      code: "claude mcp add leash \\\n  -e LEASH_KEY_FILE=/Users/you/.leash/claude.json \\\n  -- node /path/to/leash/mcp/dist/index.js",
+      code: "claude mcp add leash \\\n  -e LEASH_KEY_FILE=~/.leash/claude.json \\\n  -- node /path/to/leash/mcp/dist/index.js",
     },
   },
   codex: {
@@ -17,7 +23,7 @@ export const AGENTS: Record<Agent, { label: string; key: string; config: { where
     key: "codex",
     config: {
       where: "In ~/.codex/config.toml",
-      code: '[mcp_servers.leash]\ncommand = "node"\nargs = ["/path/to/leash/mcp/dist/index.js"]\nenv = { LEASH_KEY_FILE = "/Users/you/.leash/codex.json" }',
+      code: '[mcp_servers.leash]\ncommand = "node"\nargs = ["/path/to/leash/mcp/dist/index.js"]\nenv = { LEASH_KEY_FILE = "~/.leash/codex.json" }',
     },
   },
   cursor: {
@@ -25,7 +31,7 @@ export const AGENTS: Record<Agent, { label: string; key: string; config: { where
     key: "cursor",
     config: {
       where: "In ~/.cursor/mcp.json",
-      code: '{\n  "mcpServers": {\n    "leash": {\n      "command": "node",\n      "args": ["/path/to/leash/mcp/dist/index.js"],\n      "env": { "LEASH_KEY_FILE": "/Users/you/.leash/cursor.json" }\n    }\n  }\n}',
+      code: '{\n  "mcpServers": {\n    "leash": {\n      "command": "node",\n      "args": ["/path/to/leash/mcp/dist/index.js"],\n      "env": { "LEASH_KEY_FILE": "~/.leash/cursor.json" }\n    }\n  }\n}',
     },
   },
 };

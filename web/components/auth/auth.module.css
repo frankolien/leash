@@ -1,0 +1,25 @@
+.dialog { width: min(420px, calc(100vw - 24px)); padding: 36px 28px 24px; border: 0; border-radius: 28px; background: #171717; color: #fff; font-family: var(--font-app), sans-serif; text-align: center; box-shadow: 0 0 0 1px #2b2b2b, 0 40px 90px rgba(0, 0, 0, .7); }
+.dialog::backdrop { background: rgba(0, 0, 0, .66); backdrop-filter: blur(6px); }
+.dialog[open] { animation: popIn 300ms cubic-bezier(.2, .9, .3, 1.1); }
+@keyframes popIn { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+.close { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #242424; color: #fff; }
+.mark { display: block; width: 44px; height: 44px; margin: 0 auto 18px; mask: url("/mark.svg") center / contain no-repeat; background: #fff; }
+.dialog h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.025em; }
+.dialog > p { margin: 8px 0 26px; color: #858585; font-size: 15px; }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.white, .dark { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border: 0; border-radius: 999px; font-family: inherit; font-size: 16px; font-weight: 600; }
+.white { background: #fff; color: #000; }
+.white:hover { background: #e9e9e9; }
+.dark { background: #242424; color: #fff; }
+.dark:hover { background: #2e2e2e; }
+.or { margin: 6px 0; color: #858585; font-size: 13px; }
+.preparing { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 120px; color: #d6d6d6; font-size: 16px; }
+.spin { animation: spin 900ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { margin: 16px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(242, 114, 107, .1); color: #f2726b; font-size: 14px; }
+.fine { display: block; margin-top: 18px; color: #858585; font-size: 12px; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+.page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; background: #0b0b0b; color: #fff; font-family: var(--font-app), sans-serif; }
+.page :global(.wordmark) { font-family: var(--font-app), sans-serif; font-size: 28px; font-weight: 600; font-stretch: 100%; color: #fff; }
+.page .white { padding: 0 32px; }
+.pageNote { color: #858585; font-size: 15px; }

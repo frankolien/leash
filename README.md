@@ -63,6 +63,9 @@ Every step below is one command and says what you should see. The AI judges can 
 | `mcp/src/index.ts` | The six tools and the one envelope |
 | `cli/src/index.ts` | The owner's commands |
 | `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `insights` (today's spend, the week, request facts, recipients), `types` |
+| `web/lib/session.ts`, `privySigner.ts`, `config.ts` | One signing session for NEAR wallets and embedded wallets; the shared contract per network |
+| `web/lib/server/`, `web/app/api/onboard/` | The sign-up sponsor: verifies the Privy token, funds and readies a new account |
+| `web/components/auth/` | Sign-in: context, Privy bridge, dialog, the `/app` entry |
 | `web/hooks/` | `useSnapshot` (polling), `useWallet` (session and the one way to write), `useNames`, `useToast`, `useActiveSection`, `useHeroHandoff` (the timed scroll handoff) |
 | `web/components/site/` | The header, footer and the drifting ground every page shares |
 | `web/components/landing/` | The landing page: `FilmSequence` (the film closing into `DashboardScene`), `HeroFilm` and `GlassMark`, `Stories`, `HowItHolds` and `Wireframe`, `WorksWith`, `Closing`, `SetupDialog` |
@@ -80,4 +83,5 @@ Every step below is one command and says what you should see. The AI judges can 
 - [x] Sandbox integration tests through near-workspaces: the six steps, the refund path, the storage rule
 - [x] Parked requests expire; agents can ask for more and read their own history; one result envelope
 - [x] Landing page and dashboard, read-only for anyone by account, writes through the owner's wallet
+- [x] Sign in with Google, Apple or email (Privy embedded wallet), sponsored onboarding, one shared contract
 - [ ] Mainnet

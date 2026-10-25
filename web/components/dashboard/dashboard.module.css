@@ -281,6 +281,43 @@ button.listRow:hover { background: #1c1c1c; }
 .dialogActions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 22px; }
 .dialogActions :global(.btn) { min-height: 52px; }
 
+.depositDetail { display: flex; flex-direction: column; gap: 12px; margin: -8px 0 18px; padding: 14px 16px; border-radius: 16px; background: var(--raised); }
+.depositDetail > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.depositDetail b { font-size: 16px; font-weight: 600; }
+.address { flex-direction: column; align-items: flex-start !important; }
+.address button { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 0; border: 0; background: none; color: #fff; font-size: 13px; text-align: left; }
+.address button .mono { overflow-wrap: anywhere; }
+.sheet { width: min(520px, calc(100vw - 24px)); max-height: calc(100svh - 24px); padding: 26px; border: 0; border-radius: 28px; background: var(--surface); color: #fff; font-family: var(--font-app), sans-serif; box-shadow: 0 0 0 1px var(--edge), 0 40px 90px rgba(0, 0, 0, .7); overflow-y: auto; }
+.sheet::backdrop { background: rgba(0, 0, 0, .66); backdrop-filter: blur(6px); }
+.sheet[open] { animation: popIn 300ms cubic-bezier(.2, .9, .3, 1.1); }
+@keyframes popIn { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+.sheetHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.sheetHead h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.025em; }
+.iconButton { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--raised); color: #fff; }
+.kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }
+.kinds button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border: 0; border-radius: 18px; background: var(--raised); color: var(--text-2); font-family: inherit; font-size: 14px; font-weight: 500; }
+.kinds button[aria-checked="true"] { background: #fff; color: #000; }
+.form { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+.form label { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--grey); }
+.form label i { font-style: normal; color: #5f5f5f; }
+.form input { min-height: 48px; padding: 0 16px; border: 0; border-radius: 16px; background: var(--raised); color: #fff; font-family: inherit; font-size: 16px; outline: none; }
+.form input:focus { box-shadow: 0 0 0 1px #4a4a4a; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.pair label, .money { min-width: 0; }
+.money { display: flex; align-items: center; border-radius: 16px; background: var(--raised); }
+.money b { padding-left: 16px; color: var(--grey); font-weight: 500; }
+.money input { flex: 1; min-width: 0; padding-left: 6px; background: transparent; }
+.formError { margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; background: rgba(242, 114, 107, .1); color: var(--bad); font-size: 14px; }
+.sheet > .white, .made > .white { width: 100%; }
+.made { display: flex; flex-direction: column; gap: 16px; }
+.madeSteps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; counter-reset: step; }
+.madeSteps li { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-left: 38px; position: relative; counter-increment: step; }
+.madeSteps li::before { content: counter(step); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--raised); font-size: 13px; font-weight: 600; }
+.madeSteps strong { font-size: 15px; font-weight: 600; }
+.madeSteps .dark { margin-top: 6px; }
+.codeBox { position: relative; align-self: stretch; margin-top: 6px; border-radius: 14px; background: #0f0f0f; box-shadow: inset 0 0 0 1px var(--edge); }
+.codeBox pre { margin: 0; padding: 14px 48px 14px 14px; overflow-x: auto; font-family: var(--font-mono), monospace; font-size: 12px; line-height: 1.55; color: var(--text-2); }
+.codeBox button { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: var(--raised); color: #fff; }
 .toast { position: fixed; left: 50%; bottom: 24px; z-index: 50; max-width: calc(100vw - 32px); padding: 14px 22px; border-radius: 999px; background: #fff; color: #000; font-family: var(--font-app), sans-serif; font-size: 15px; font-weight: 500; transform: translateX(-50%); box-shadow: 0 20px 50px rgba(0, 0, 0, .5); }
 .toast[data-bad] { background: var(--bad); color: #000; }
 
