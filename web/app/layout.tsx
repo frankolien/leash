@@ -1,25 +1,29 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Montserrat } from "next/font/google";
+import { Geist_Mono, Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 
-const sans = Geist({ variable: "--font-sans", subsets: ["latin"], weight: ["400", "500", "600"] });
+const display = Montserrat({ variable: "--font-display", subsets: ["latin"], weight: ["500", "800", "900"] });
+const body = Inter({ variable: "--font-body", subsets: ["latin"], weight: ["400", "500", "600"] });
 const mono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"], weight: ["400", "500"] });
-const display = Montserrat({ variable: "--font-display", subsets: ["latin"], weight: ["800", "900"] });
 
 export const metadata: Metadata = {
-  title: "Leash",
-  description: "What your agents may spend, what is waiting on you, what they did.",
+  title: { default: "Leash", template: "%s · Leash" },
+  description: "Give your AI agents a budget, not your wallet. Daily caps, approvals and a kill switch, enforced on NEAR.",
+  icons: { icon: "/mark.svg" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#131417",
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#17191d" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable} ${display.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

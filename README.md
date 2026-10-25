@@ -63,8 +63,10 @@ Every step below is one command and says what you should see. The AI judges can 
 | `mcp/src/index.ts` | The six tools and the one envelope |
 | `cli/src/index.ts` | The owner's commands |
 | `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `types` |
-| `web/hooks/` | `useSnapshot` (polling), `useWallet` (session and the one way to write), `useNames`, `useToast` |
-| `web/components/` | One file per section: `Bar`, `Balance`, `RequestCard`, `ProposalCard`, `AgentTile`, `NewAgent`, `Activity`, composed in `Dashboard` |
+| `web/hooks/` | `useSnapshot` (polling), `useWallet` (session and the one way to write), `useNames`, `useToast`, `useActiveSection` |
+| `web/components/site/` | The header and footer every page shares |
+| `web/components/landing/` | The landing page: `Hero` (scroll handoff), `PaymentGlobe` (three.js), `Chapters` and `Scenes`, `Closing` |
+| `web/components/dashboard/` | The owner's page: `Overview` (vault, kill switch, waiting scene), `RequestCard`, `ProposalCard`, `AgentCard`, `Activity`, `AmountDialog`, composed in `Dashboard` |
 
 ## Status
 
@@ -75,5 +77,5 @@ Every step below is one command and says what you should see. The AI judges can 
 - [x] Owner-paid storage accounting, measured on testnet
 - [x] Sandbox integration tests through near-workspaces: the six steps, the refund path, the storage rule
 - [x] Parked requests expire; agents can ask for more and read their own history; one result envelope
-- [x] Dashboard, read-only for anyone by account, writes through the owner's wallet
+- [x] Landing page and dashboard, read-only for anyone by account, writes through the owner's wallet
 - [ ] Mainnet

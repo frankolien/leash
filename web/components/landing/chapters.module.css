@@ -1,0 +1,125 @@
+/* Altitude's body as PRYDD measured it: a 1440px shell with 64px gutters, equal columns 64px apart,
+   128px between chapters, ruled copy, sentence-case headings at up to 40px. Scenes are photographs
+   with white product panels laid on top. */
+
+.rows { display: flex; flex-direction: column; gap: 128px; max-width: 1440px; margin: 0 auto; padding: 96px 64px 64px; }
+.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; column-gap: 64px; scroll-margin-top: calc(var(--header-height) + 16px); }
+.row[data-flip] .copy { order: 2; }
+.copy { display: flex; flex-direction: column; justify-content: space-between; gap: 40px; min-width: 0; padding-top: 32px; border-top: 1px solid var(--line); }
+.heading { display: flex; flex-direction: column; gap: 24px; }
+.heading h2 { margin: 0; max-width: 560px; font-size: clamp(28px, 1.45vw + 22.6px, 40px); font-weight: 400; line-height: .95; letter-spacing: -.02em; text-wrap: balance; }
+.body { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; padding-bottom: 24px; }
+.body p { margin: 0; max-width: 560px; font-size: 16px; line-height: 1.3; letter-spacing: -.02em; text-wrap: pretty; }
+.body ul { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.body li { display: flex; align-items: flex-start; gap: 10px; font-size: 16px; line-height: 1.3; letter-spacing: -.02em; }
+.body li > svg { flex: 0 0 15px; margin-top: 3px; }
+
+.stage { position: relative; min-width: 0; height: 540px; margin: 0; overflow: hidden; background: var(--scene-bg) center / cover no-repeat; }
+.stage[data-scene="meadow"] { background-image: url("/scenes/meadow.jpg"); background-position: center 30%; }
+.stage[data-scene="sky"] { background-image: url("/scenes/sky.jpg"); }
+.stage[data-scene="shore"] { background-image: url("/scenes/shore.jpg"); }
+.stage[data-scene="ridge"] { background-image: url("/scenes/ridge.jpg"); }
+
+.policyPanel, .accountPanel, .requestPanel, .switchPanel, .agentsPanel { position: absolute; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--panel-shadow); }
+.mark { display: inline-block; flex: 0 0 18px; width: 18px; height: 18px; mask: url("/mark.svg") center / contain no-repeat; background: currentColor; }
+.label { display: block; color: var(--muted); font-size: 11px; line-height: 1.3; letter-spacing: -.015em; }
+.windowHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--hairline); font-size: 11px; }
+.windowHeader > span:first-child { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.windowHeader > span:last-child { color: var(--muted); }
+.track { position: relative; height: 6px; margin-top: 14px; border-radius: 99px; background: var(--chip); overflow: hidden; }
+.track > span { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--accent); }
+.track[data-tone="warn"] > span { background: #d69a1d; }
+.trackNote { display: block; margin-top: 8px; color: var(--muted); font-size: 10px; }
+.floatPill { position: absolute; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 100px; background: var(--card); box-shadow: var(--float-shadow); font-size: 12px; letter-spacing: -.02em; white-space: nowrap; }
+.floatPill[data-at="top-right"] { top: 7%; right: 7%; }
+.floatPill[data-at="top-left"] { top: 7%; left: 7%; }
+.floatPill[data-at="bottom-left"] { bottom: 8%; left: 8%; }
+.dotGood { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+
+.policyPanel { left: 8%; top: 20%; width: 78%; padding: 22px; }
+.fieldGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 18px 0 14px; }
+.field { padding: 10px 12px; border: 1px solid var(--field-line); border-radius: 12px; }
+.field strong { display: block; margin-top: 4px; font-size: 15px; font-weight: 500; letter-spacing: -.025em; }
+.recipients > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.recipients > div > span { padding: 6px 10px; border-radius: 99px; background: var(--chip); font-size: 11px; }
+.legend { position: absolute; left: 16px; right: 16px; bottom: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px; background: var(--legend-bg); border: 1px solid var(--line); color: var(--scene-ink); font-size: 11px; line-height: 1.2; text-align: center; letter-spacing: -.015em; }
+.legend b { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; font-weight: 400; }
+
+.accountPanel { left: 9%; top: 18%; width: 82%; padding: 22px 22px 10px; }
+.accountMain { padding: 22px 0 22px; }
+.bigAmount { display: block; margin-top: 6px; font-size: clamp(36px, 3.1vw, 46px); font-weight: 500; line-height: 1.1; letter-spacing: -.045em; }
+.bigAmount > span, .requestAmount strong > span { font-size: .6em; }
+.activityHeader { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; font-size: 11px; }
+.activityHeader strong { font-weight: 500; }
+.activityHeader span { color: var(--muted); font-size: 10px; }
+.record { display: flex; align-items: center; gap: 10px; padding: 13px 0; border-top: 1px solid var(--hairline); }
+.record > div { min-width: 0; }
+.record strong { display: block; font-size: 11px; font-weight: 500; letter-spacing: -.015em; }
+.record div > span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+.record > b { margin-left: auto; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.recordIcon { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; background: var(--chip); }
+.recordIcon[data-tone="good"] { background: var(--good-bg); color: var(--good); }
+
+.badge { position: absolute; display: grid; place-items: center; width: 46px; height: 46px; border: 2px solid var(--card); border-radius: 50%; box-shadow: 0 2px 4px #00000014; font-family: var(--font-display), sans-serif; font-size: 18px; font-weight: 800; }
+.badge[data-tone="blue"] { top: 11%; left: 11%; background: #e8eefc; color: var(--action); }
+.badge[data-tone="sand"] { right: 10%; bottom: 20%; background: #f6ecdc; color: #8a5a12; }
+.requestPanel { left: 17%; top: 14%; width: 66%; padding: 22px; z-index: 2; }
+.requestHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 16px; font-size: 13px; font-weight: 500; letter-spacing: -.02em; }
+.reason { padding: 5px 10px; border-radius: 99px; background: var(--warn-bg); color: var(--warn); font-size: 10px; font-weight: 500; white-space: nowrap; }
+.requestAmount, .requestTo { padding: 12px 0; border-top: 1px solid var(--hairline); }
+.requestAmount strong { display: block; margin-top: 4px; font-size: 38px; font-weight: 500; line-height: 1.05; letter-spacing: -.04em; }
+.requestTo strong { display: block; margin-top: 4px; font-size: 14px; font-weight: 500; }
+.memo { margin: 4px 0 2px; padding: 10px 12px; border-radius: 10px; background: var(--soft); font-size: 12px; letter-spacing: -.015em; }
+.requestButtons { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 16px; }
+.requestButtons :global(.pill) { min-height: 38px; font-size: 13px; }
+
+.switchPanel { left: 6%; top: 30%; width: 32%; padding: 24px 16px; text-align: center; z-index: 2; }
+.switchIcon { display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 16px; border-radius: 50%; background: var(--bad); color: #fff; }
+.switchPanel strong { display: block; margin-top: 6px; font-size: 28px; font-weight: 500; letter-spacing: -.035em; }
+.switchPanel small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
+.agentsPanel { right: 5%; top: 16%; width: 58%; padding: 20px 20px 16px; }
+.agentRow { display: flex; align-items: center; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--hairline); }
+.agentRow > div { min-width: 0; }
+.agentRow strong { display: block; font-size: 12px; font-weight: 500; }
+.agentRow div > span { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+.agentRow > b { margin-left: auto; font-size: 11px; font-weight: 500; }
+.statusDot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; }
+.statusDot[data-tone="bad"] { background: var(--bad); }
+.statusDot[data-tone="warn"] { background: #d69a1d; }
+.protocolNote { margin-top: 14px; padding: 10px 12px; border-radius: 10px; background: var(--bad-bg); color: var(--bad); font-size: 11px; line-height: 1.35; }
+.legendLine { position: absolute; left: 0; right: 0; bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; font-size: 11px; text-shadow: 0 1px 2px #0005; }
+
+@media (max-width: 1200px) {
+  .row { column-gap: 40px; }
+  .stage { height: 500px; }
+  .requestPanel { left: 12%; width: 76%; }
+}
+@media (max-width: 991px) {
+  .rows { gap: 96px; }
+  .row { grid-template-columns: minmax(0, 1fr); row-gap: 32px; }
+  .row[data-flip] .copy { order: 0; }
+  .copy { gap: 32px; }
+  .body { padding-bottom: 0; }
+  .body p, .body li, .copy :global(.eyebrow) { font-size: 14px; }
+  .stage { width: 100%; max-width: 640px; height: 520px; }
+}
+@media (max-width: 767px) {
+  .rows { gap: 72px; padding: 48px 20px 32px; }
+  .stage { height: 460px; }
+  .policyPanel { left: 5%; width: 90%; top: 16%; padding: 18px; }
+  .field strong { font-size: 13px; }
+  .legend { left: 10px; right: 10px; bottom: 10px; padding: 6px; font-size: 10px; }
+  .accountPanel { left: 5%; width: 90%; top: 17%; padding: 18px 16px 8px; }
+  .floatPill { font-size: 11px; padding: 8px 13px; }
+  .requestPanel { left: 7%; width: 86%; top: 8%; padding: 18px; }
+  .requestAmount strong { font-size: 32px; }
+  .badge { width: 36px; height: 36px; font-size: 14px; }
+  .badge[data-tone="sand"] { bottom: 4%; }
+  .floatPill[data-at="bottom-left"] { display: none; }
+  .switchPanel { left: 5%; top: auto; bottom: 12%; width: 90%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-align: left; }
+  .switchIcon { flex: 0 0 34px; width: 34px; height: 34px; margin: 0; }
+  .switchPanel strong { margin: 0; font-size: 20px; }
+  .switchPanel .label { display: none; }
+  .agentsPanel { left: 5%; right: auto; width: 90%; top: 8%; }
+  .legendLine { bottom: 8px; font-size: 9px; }
+}

@@ -1,81 +1,51 @@
-# Dashboard design
+# Web design
 
-The owner's one page: what the agents may spend, what is waiting on you, what they did. Built from
-three references Frank chose, studied on 25 October 2026 from their live CSS and screens, not from
-their marketing images.
+The landing page and the dashboard follow PRYDD's website, read from its source rather than its
+screenshots (`EntrypointLabs/prydd-website`, components under `components/prydd/`). PRYDD in turn
+assigns roles to four references: Wise for the hero type, Plasma for the 3D sphere, Revolut for the
+hero handoff, Altitude for the body. Leash keeps those roles.
 
-## What each reference gives
+## System
 
-| Reference | What we take | What we leave |
+| Token | Value | Use |
 | --- | --- | --- |
-| PayBox (paybox.sh) | Söhne-style grotesk with tight tracking (-0.03em) on one big line of copy; glass pills for navigation; a mono face for keys and addresses; coral `#f45b69` and amber `#f6c94c` as the only warm colours on a near-black page | Full-bleed video and photography; a dashboard is read, not watched |
-| PRYDD (prydd.co) | Charcoal `#18191c` base, not pure black; Montserrat ExtraBold uppercase for the one statement on the page; a single electric-blue pill as the only filled button; tiny uppercase micro-labels with wide tracking for section eyebrows | Scroll-driven storytelling |
-| Revolut (app, via Mobbin) | The balance as one big numeral with small cents; the budget tile: "$79 left to spend, on track" with a thin progress bar; rounded tiles on `#1c1c1e`; activity rows of icon, title, time, amount; green and red used only for meaning | Bottom tab bar and the product carousel |
+| Body | `#fff` ground, `#000` ink, `#727272` muted | Both schemes. Only the hero follows the OS |
+| Hero | `#fff` / `#000`, dark `#17191d` / `#fafaf7` | Ground and ink of the opening |
+| Action | `#2457f5` | The hero's one button, nothing else |
+| Accent | `#000` | Primary pills, budget bars |
+| Chip | `#f4f4f4`, hover `#ebebeb` | Secondary pills |
+| Eyebrow | 8px square `#a0dcff` | Opens every chapter |
+| Semantic | good `#208550`, wait `#d69a1d`, refusal `#c8323f` | Status only |
+| Panels | white, 16px radius, PRYDD's three-layer panel shadow | Product UI laid on photographs |
 
-## Tokens
+Type: Montserrat 900 uppercase at up to 70px, tracking -0.06em, for the hero only; Montserrat 800 for
+the wordmark. Everything else is Inter: 400 sentence case for headings (28 to 40px, line height
+0.95, tracking -0.02em), 16px body at 1.3, 500 for amounts with the cents at half size. Geist Mono for
+account ids and keys.
 
-Colour, dark first, since every reference is dark and the page is read at night when an agent asks:
+Layout: a 1440px shell with 64px gutters (20px on phones). Chapters are equal columns 64px apart and
+128px from each other; the copy column starts with a hairline rule and 32px of padding.
 
-| Token | Value | Role |
-| --- | --- | --- |
-| `--bg` | `#131417` | Page |
-| `--surface` | `#1b1d21` | Tiles |
-| `--surface-2` | `#23262b` | Chips, inputs, hover |
-| `--line` | `#2c3036` | Hairlines |
-| `--ink` | `#f3f3f1` | Text |
-| `--muted` | `#9a9fa8` | Secondary text |
-| `--accent` | `#3b6cff` | The one filled button, the progress bar, links |
-| `--good` | `#19c37d` | A payment that landed, a key that is on |
-| `--warn` | `#f6c94c` | A request waiting, a key near its cap |
-| `--bad` | `#f45b69` | A refusal, the kill switch, a key that is off |
+## Landing
 
-Light theme exists for the system setting with the same roles on `#f7f7f5` and `#ffffff`.
+1. Hero: a three.js sphere of payment chips (green paid, red refused, amber asked, blue approved) on
+   a Fibonacci sphere, small at the front and back and large at the rim, so the headline sits in a
+   quiet centre. "Give your agents a budget, not your wallet."
+2. Handoff: scrolling contracts the sphere behind the one card that matters, a request waiting on
+   its owner, with the budget and the kill switch sliding in on either side.
+3. Four chapters, each a scene: limits (a fenced meadow), payments (sky), approvals (shore), kill
+   switch (ridge). Scenes are generated photographs in `web/public/scenes/` with white panels on top.
+4. Where it plugs in (dark split over a dusk photo), FAQ (40/60), the way in (account field), footer.
 
-Type, all from Google Fonts:
+Reduced motion and screens under 600px tall get the same content without the scroll handoff.
 
-| Role | Face | Where |
-| --- | --- | --- |
-| Statement | Montserrat 800, uppercase, tracking -0.02em | The page's one line when nothing waits: "NOTHING NEEDS YOU." The request card's amount |
-| Interface | Geist 400 to 600, tracking -0.01em, tabular numerals | Everything else |
-| Keys and amounts in rows | Geist Mono | Public keys, account names, log amounts |
-| Eyebrows | Geist 500, 11px, uppercase, tracking 0.12em | Section labels: WAITING ON YOU, AGENTS, ACTIVITY |
+## Dashboard
 
-## Layout
-
-One column, 680px wide on desktop, full width with 16px gutters on a phone. Top to bottom:
-
-1. **Bar**: owner's account name in mono, a network pill (glass), the connected wallet or a Connect pill,
-   and on the far right the kill switch: a coral outline pill reading "Pause all" that becomes a filled
-   coral "Paused" state with "Resume". Never more than one tap away.
-2. **Balance**: the vault as one numeral, Revolut-style, cents small: `$10.00` with "in the vault" under
-   it in muted. Beside it the storage credit in NEAR, small, mono. Deposit and Withdraw as ghost pills.
-3. **Waiting on you**: the request cards. This is the screen that matters. One card per parked request:
-   the agent's name as the eyebrow, the amount huge in Montserrat, "to vendor.testnet" in mono, the
-   agent's memo as a quote, the reason the policy stopped it as an amber chip ("over daily cap"), the
-   time left as a thin bar draining, and two actions: Approve, the only blue pill on the page, and Deny,
-   ghost. Below the requests, proposals as smaller cards: the note in the agent's words, a Dismiss ghost
-   and "Change policy" that opens the key's card. When nothing waits, the section is the one statement:
-   "NOTHING NEEDS YOU." in Montserrat with a muted line under it.
-4. **Agents**: a tile per key. Name, mode in words, a Revolut-style budget line: "$2 of $3 left today"
-   with the bar, the per-payment cap, allowlist chips, expiry if any, an on or off dot. Revoke as a coral
-   ghost pill inside the tile; Grant as a dashed empty tile at the end.
-5. **Activity**: rows newest first. A small icon by event, the title ("Paid vendor.testnet",
-   "Refused: over daily cap", "Request parked", "Approved request 1"), the time, the amount on the right
-   in mono. Refusals carry a coral tint on the icon only, not the whole row; requests amber; payments
-   plain. A row never shouts.
-
-Motion: the request card's time bar drains in real time; a decided card collapses upward; the balance
-counts on load. Nothing else moves. `prefers-reduced-motion` turns all of it off.
-
-## Data and actions
-
-Reads go straight to the contract's views over RPC, by owner account from the URL (`/frankolien.testnet`),
-so a judge can open anyone's dashboard read-only. Writes need the owner's wallet through HOT Connect:
-approve, deny, pause, resume, revoke, dismiss, deposit (an `ft_transfer_call` on the token), withdraw.
-No server. The page polls every ten seconds while open.
-
-## Copy rules
-
-Refusals are good news, written as such: "Refused: over daily cap. Nothing moved." Keys are called by
-the agent's name; the public key appears only in mono under it. Never "transaction", "gas" or "wallet"
-in the main flow; "vault", "agent", "request", "paid", "refused", "waiting on you".
+- Overview: the vault as a large numeral on the left with facts and the kill switch; on the right,
+  a photograph holding every request and proposal as white panels. On phones the waiting scene comes
+  first, because it is the decision.
+- Agents: one card per key with what is left today, a bar, and the limits as rows. Revoke is quiet
+  until needed.
+- Activity: 40/60, a ruled list of on-chain events with toned icons. Refusals are listed with the
+  amount struck through, since nothing moved.
+- Adding and withdrawing money use a native dialog, not a browser prompt.

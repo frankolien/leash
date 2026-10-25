@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Dashboard from "@/components/Dashboard";
+import Dashboard from "@/components/dashboard/Dashboard";
 
 type Params = { owner: string };
 type Search = { contract?: string };
@@ -20,7 +20,7 @@ async function Owner({ params, searchParams }: { params: Promise<Params>; search
 
 export default function OwnerPage(props: { params: Promise<Params>; searchParams: Promise<Search> }) {
   return (
-    <Suspense fallback={<main className="page"><p className="quiet">Reading the chain…</p></main>}>
+    <Suspense fallback={null}>
       <Owner {...props} />
     </Suspense>
   );

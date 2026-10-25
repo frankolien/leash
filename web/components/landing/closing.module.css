@@ -1,0 +1,61 @@
+.shell { max-width: 1440px; margin: 0 auto; padding-inline: 64px; }
+
+.worksSection { padding: 64px 0; }
+.worksSplit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: hidden; background: var(--surface-dark); color: var(--surface-dark-ink); }
+.worksPhoto { position: relative; isolation: isolate; min-height: 485px; padding: 96px 96px 64px; background: #1b2230 url("/scenes/dusk.jpg") center / cover; }
+.worksPhoto::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(140deg, #0009, #0002); }
+.worksPhoto h2 { margin: 0; max-width: 420px; font-size: clamp(32px, 2.9vw + 14.2px, 56px); font-weight: 400; line-height: .95; letter-spacing: -.02em; text-wrap: balance; }
+.worksList { display: flex; flex-direction: column; justify-content: center; gap: 16px; margin: 0; padding: 80px 70px 80px 48px; list-style: none; }
+.worksList li { display: flex; align-items: flex-start; gap: 16px; padding: 16px; }
+.worksList li > svg { flex: 0 0 22px; opacity: .6; }
+.worksList h3 { margin: 0; font-size: 20px; font-weight: 400; line-height: 1.15; letter-spacing: -.01em; }
+.worksList p { margin: 14px 0 0; font-size: 14px; line-height: 1.35; opacity: .8; }
+
+.faqSection { max-width: 1440px; margin: 0 auto; padding: 128px 64px; scroll-margin-top: var(--header-height); }
+.faqInner { display: grid; grid-template-columns: 40fr 60fr; align-items: start; gap: 64px; }
+.faqIntro { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; padding: 32px 0; }
+.faqIntro h2 { margin: 0; font-size: clamp(20px, 1.07vw + 16.6px, 32px); font-weight: 500; line-height: 1.1; }
+.faqIntro p { margin: 0; max-width: 340px; font-size: 16px; line-height: 1.3; letter-spacing: -.02em; }
+.question { border-bottom: 1px solid var(--ink); }
+.question summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 0; font-size: 16px; font-weight: 500; line-height: 1.3; letter-spacing: -.02em; list-style: none; cursor: pointer; }
+.question summary::-webkit-details-marker { display: none; }
+.question summary > svg { flex: 0 0 18px; align-self: center; transition: transform 200ms var(--ease-out); }
+.question[open] summary { padding-bottom: 16px; }
+.question[open] summary > svg { transform: rotate(180deg); }
+.question p { max-width: 648px; margin: 0; padding-bottom: 24px; font-size: 16px; line-height: 1.35; letter-spacing: -.02em; }
+
+.invitation { background: var(--invitation-bg); scroll-margin-top: var(--header-height); }
+.invitationInner { max-width: 1440px; margin: 0 auto; padding: 128px 64px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: end; }
+.invitationInner h2 { margin: 0; max-width: 640px; font-size: clamp(32px, 2.9vw + 14.2px, 56px); font-weight: 400; line-height: .95; letter-spacing: -.02em; text-wrap: balance; }
+.openForm { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 480px; justify-self: end; }
+.openForm label { font-size: 14px; font-weight: 500; letter-spacing: -.02em; }
+.openForm > div { display: flex; gap: 8px; padding: 6px; border-radius: 1000px; background: var(--card); box-shadow: var(--panel-shadow); }
+.openForm input { flex: 1; min-width: 0; padding: 0 16px; border: 0; background: transparent; font-size: 15px; letter-spacing: -.01em; outline: none; }
+.openForm > div:focus-within { box-shadow: 0 0 0 2px var(--ink); }
+.openForm small { color: #4d5559; font-size: 12px; letter-spacing: -.01em; }
+
+@media (hover: hover) and (pointer: fine) { .question summary:hover { color: var(--muted); } }
+
+@media (max-width: 1200px) {
+  .worksPhoto { padding: 64px 48px 48px; }
+  .worksList { padding: 48px 32px 48px 24px; }
+}
+@media (max-width: 991px) {
+  .worksSplit { grid-template-columns: minmax(0, 1fr); }
+  .worksPhoto { min-height: 340px; }
+  .faqSection { padding: 96px 64px; }
+  .faqInner { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .faqIntro { padding: 0; gap: 20px; }
+  .invitationInner { grid-template-columns: minmax(0, 1fr); row-gap: 40px; padding: 96px 64px; }
+  .openForm { justify-self: start; }
+}
+@media (max-width: 767px) {
+  .shell { padding-inline: 20px; }
+  .worksSection { padding: 48px 0; }
+  .worksPhoto { min-height: 280px; padding: 40px 24px; }
+  .worksList { padding: 20px 4px; }
+  .worksList h3 { font-size: 17px; }
+  .faqSection { padding: 80px 24px; }
+  .question summary, .question p, .faqIntro p { font-size: 14px; }
+  .invitationInner { padding: 72px 24px; }
+}
