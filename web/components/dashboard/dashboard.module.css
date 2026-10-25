@@ -125,31 +125,35 @@ a.row:hover { background: #1c1c1c; }
 .agentIcon[data-off] { opacity: .45; }
 .row[data-off] .rowMain strong { color: var(--grey); }
 
-/* Overview: one screen. A header, the vault across two columns, the decision as a full-height
-   column on the right, agents and activity underneath. Cards scroll inside themselves rather than
-   pushing the page. */
-.overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(320px, .9fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; width: 100%; max-width: 1440px; height: calc(100vh - 80px); min-height: 680px; margin: 0 auto; }
+/* Overview: one screen. A header, the vault across the top, agents and activity underneath. Cards
+   scroll inside themselves rather than pushing the page. Approvals arrive as a pop-up. */
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; width: 100%; max-width: 1440px; height: calc(100vh - 80px); min-height: 680px; margin: 0 auto; }
 .ovHead { grid-column: 1 / -1; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .ovHead h1 { margin: 4px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
 .ovActions { display: flex; gap: 10px; }
 .whiteSm { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 43px; padding: 0 20px; border: 0; border-radius: 999px; background: #fff; color: #000; font-family: inherit; font-size: 15px; font-weight: 600; white-space: nowrap; }
 .whiteSm:hover:not(:disabled) { background: #e9e9e9; }
-.vault { grid-column: 1 / 3; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.4fr); gap: 28px; min-height: 0; color: #fff; }
+.vault { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.4fr); gap: 28px; min-height: 0; color: #fff; }
 .vaultCopy { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .vaultCopy .muted { overflow-wrap: anywhere; }
 .balance { margin-top: 2px; font-size: clamp(40px, 3.6vw, 56px); font-weight: 700; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .today { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--edge); color: var(--grey); font-size: 14px; }
 .today b { color: #fff; font-size: 18px; font-weight: 700; }
 .vaultCopy .sectionLink { display: inline-flex; align-items: center; gap: 5px; }
-.ovWaiting { grid-column: 3; grid-row: 2 / 4; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-.ovWaiting > section { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-.noApproval { display: flex; flex-direction: column; }
-/* In the overview's column the decision sits at the bottom of the card, under everything it rests on. */
-.ovWaiting .decide { margin-top: auto; padding-top: 18px; }
-.ovWaiting .approval .amount { font-size: 56px; margin-top: 22px; }
-.noApprovalBody { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px 12px; text-align: center; }
-.noApprovalBody strong { margin-top: 8px; font-size: 18px; font-weight: 600; }
-.noApprovalBody > span:last-child { max-width: 280px; color: var(--grey); font-size: 14px; line-height: 1.45; }
+.waitingPill { display: inline-flex; align-items: center; gap: 9px; min-height: 43px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--raised); color: #fff; font-family: inherit; font-size: 15px; font-weight: 600; }
+.waitingPill:hover { background: #2e2e2e; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 0 rgba(255, 255, 255, .6); animation: pulse 1.8s ease-out infinite; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
+.approvalDialog { width: min(460px, calc(100vw - 24px)); max-height: calc(100svh - 24px); padding: 0; border: 0; background: transparent; color: #fff; font-family: var(--font-app), sans-serif; overflow: visible; }
+.approvalDialog::backdrop { background: rgba(0, 0, 0, .66); backdrop-filter: blur(6px); }
+.approvalDialog[open] { animation: popIn 320ms cubic-bezier(.2, .9, .3, 1.15); }
+@keyframes popIn { from { opacity: 0; transform: translateY(18px) scale(.96); } }
+.approvalDialog .approval { box-shadow: 0 0 0 1px var(--edge), 0 40px 90px rgba(0, 0, 0, .7); max-height: calc(100svh - 140px); overflow-y: auto; }
+.approvalDialog .decide { margin-top: 22px; }
+.popupBar { display: flex; align-items: center; justify-content: space-between; margin: 0 6px 12px; color: var(--text-2); font-size: 14px; font-weight: 500; }
+.popupBar button { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--raised); color: #fff; }
+.laterButton { display: block; margin: 14px auto 0; padding: 6px 12px; border: 0; background: none; color: var(--grey); font-family: inherit; font-size: 14px; font-weight: 500; }
+.laterButton:hover { color: #fff; }
 .ask { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 0 0 12px 52px; padding: 11px 14px; border-radius: 14px; background: var(--raised); color: var(--text-2); font-size: 14px; line-height: 1.4; }
 .ask b { color: #fff; font-weight: 600; }
 .ask .sectionLink { flex-shrink: 0; padding: 0; }
@@ -158,7 +162,6 @@ a.row:hover { background: #1c1c1c; }
 .miniRow .rowMain strong { font-size: 15px; }
 .miniRow b { font-size: 15px; font-weight: 600; }
 .miniNote { margin: 10px 0 0; color: var(--grey); font-size: 13px; }
-.ovWaiting .caughtUp { justify-content: center; }
 .panel { display: flex; flex-direction: column; min-height: 0; }
 .panelBody { flex: 1; min-height: 0; overflow-y: auto; }
 .overview .activityCard { padding: 24px 22px 8px; display: flex; flex-direction: column; min-height: 0; }
@@ -286,13 +289,11 @@ button.listRow:hover { background: #1c1c1c; }
 @media (max-width: 1180px), (max-height: 720px) {
   .overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto; height: auto; min-height: 0; }
   .vault { grid-column: 1 / -1; }
-  .ovWaiting { grid-column: 1 / -1; grid-row: auto; order: 0; }
-  .ovWaiting > section, .panelBody { overflow: visible; }
+  .panelBody { overflow: visible; }
 }
 @media (max-width: 900px) {
   .overview { grid-template-columns: minmax(0, 1fr); }
   .vault { grid-template-columns: minmax(0, 1fr); }
-  .ovWaiting { order: -1; grid-row: 2; }
 }
 /* Phones: a top bar with the wallet, and the views as a tab bar along the bottom. */
 @media (max-width: 760px) {

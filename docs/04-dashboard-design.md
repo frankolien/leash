@@ -62,10 +62,12 @@ The owner's page is an app on live chain data. Its structure takes PayBox's app 
 how an agent wallet is navigated, mapped onto what Leash is:
 
 The overview fits one screen, in the layout of the landing preview: a header with Pause all and Add
-money, the vault and its seven-day chart across two columns, the payment waiting for approval as a
-full-height column on the right (an empty approval state when there is none; an agent's request for
-a wider limit sits under its row in Agents), and agents and activity side by
-side underneath. Cards scroll inside themselves; below 1180px wide or 720px tall the overview stacks.
+money, the vault and its seven-day chart across the top, agents and activity side by side
+underneath. An agent's request for a wider limit sits under its row in Agents.
+
+A payment above a limit arrives as a pop-up over whatever page is open: the live poll brings it in,
+approving or denying shows the next, "Decide later" snoozes the queue behind an "N waiting" button
+in the header, and the tab title carries the count. Cards scroll inside themselves; below 1180px wide or 720px tall the overview stacks.
 
 | PayBox | Leash |
 | --- | --- |

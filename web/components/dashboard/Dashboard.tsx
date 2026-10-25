@@ -21,6 +21,7 @@ import AgentList from "./AgentList";
 import AgentsCard from "./AgentsCard";
 import AmountDialog, { type AmountAsk } from "./AmountDialog";
 import ApprovalCard from "./ApprovalCard";
+import ApprovalPopup, { useApprovalQueue } from "./ApprovalPopup";
 import ConnectCard from "./ConnectCard";
 import PageHeader from "./PageHeader";
 import ProposalCard from "./ProposalCard";
@@ -56,6 +57,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const view = useView();
   const [ask, setAsk] = useState<AmountAsk | null>(null);
   const [setup, setSetup] = useState<SetupAgent | null>(null);
+  const queue = useApprovalQueue(snap?.requests);
 
   const { act, call, busy } = wallet;
   const approve = useCallback((r: Request) => act("approve", () => call(contract, "approve", { request_id: r.id }), `Approved ${toUsdc(r.amount)} USDC to ${r.to}`), [act, call, contract]);
@@ -115,6 +117,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
           <header className={styles.ovHead}>
             <div><span className={styles.muted}>{new Date(now).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span><h1>{greeting(now)}</h1></div>
             <div className={styles.ovActions}>
+              {queue.pending.length > 0 && <button className={styles.waitingPill} onClick={queue.reopen}><span className={styles.pulse} aria-hidden="true" />{queue.pending.length} waiting</button>}
               {snap.paused
                 ? <button className={styles.dark} onClick={resume} disabled={busy !== null || !wallet.isOwner}><Play size={16} /> Resume</button>
                 : <button className={styles.dark} onClick={pause} disabled={busy !== null || !wallet.isOwner} title="Stops every agent key at once"><Pause size={16} /> Pause all</button>}
@@ -122,21 +125,6 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
             </div>
           </header>
           <VaultCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} />
-          <div className={styles.ovWaiting}>
-            {snap.requests.length ? (
-              <ApprovalCard request={snap.requests[0]} agent={snap.agents.find((x) => x.key === snap.requests[0].key)} names={names} now={now} busy={busy} onApprove={() => approve(snap.requests[0])} onDeny={() => deny(snap.requests[0])} />
-            ) : (
-              <section className={`${styles.card} ${styles.noApproval}`} aria-label="Approvals">
-                <div className={styles.cardHead}><strong>Approvals</strong><span className={styles.muted}>{Math.round(snap.requestTtl / 60)} min to decide</span></div>
-                <div className={styles.noApprovalBody}>
-                  <span className={styles.caughtBadge} aria-hidden="true"><Check size={20} /></span>
-                  <strong>Nothing to approve</strong>
-                  <span>When an agent asks to pay above its limit, the payment appears here with what you need to decide.</span>
-                </div>
-              </section>
-            )}
-            {snap.requests.length > 1 && <a className={styles.more} href="#approvals">{snap.requests.length - 1} more waiting</a>}
-          </div>
           <AgentsCard agents={snap.agents} names={names} paused={snap.paused} proposals={snap.proposals} busy={busy} onDismiss={dismiss} onAdd={openSetup} />
           <ActivityCard log={snap.log} names={names} limit={6} />
         </div>
@@ -216,6 +204,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         {!snap && !error && <Skeleton />}
         {page}
       </main>
+      {snap && <ApprovalPopup request={queue.next} total={queue.pending.length} agents={snap.agents} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onLater={queue.later} />}
       <AmountDialog ask={ask} onClose={() => setAsk(null)} />
       <SetupDialog agent={setup} onClose={() => setSetup(null)} onSwitch={setSetup} />
       {toast && <div className={styles.toast} data-bad={toast.bad || undefined} role="status">{toast.text}</div>}
