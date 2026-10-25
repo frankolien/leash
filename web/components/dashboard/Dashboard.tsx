@@ -5,7 +5,7 @@
 // State lives in the hooks; the cards only draw and call back.
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, Plus } from "lucide-react";
+import { Check, Pause, Play, Plus } from "lucide-react";
 import SetupDialog from "@/components/setup/SetupDialog";
 import type { Agent as SetupAgent } from "@/components/setup/agents";
 import { useNames } from "@/hooks/useNames";
@@ -13,7 +13,7 @@ import { useNow, useSnapshot } from "@/hooks/useSnapshot";
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { agentLabel, toUnits, toUsdc } from "@/lib/format";
-import { recipients } from "@/lib/insights";
+import { greeting, recipients } from "@/lib/insights";
 import { contractOf, networkOf } from "@/lib/reader";
 import type { Agent, Proposal, Request, Snapshot } from "@/lib/types";
 import ActivityCard from "./ActivityCard";
@@ -21,16 +21,15 @@ import AgentList from "./AgentList";
 import AgentsCard from "./AgentsCard";
 import AmountDialog, { type AmountAsk } from "./AmountDialog";
 import ApprovalCard from "./ApprovalCard";
-import BalanceHero from "./BalanceHero";
 import ConnectCard from "./ConnectCard";
 import PageHeader from "./PageHeader";
 import ProposalCard from "./ProposalCard";
+import RecipientsCard from "./RecipientsCard";
 import RecipientsView from "./RecipientsView";
 import SettingsView from "./SettingsView";
 import Sidebar from "./Sidebar";
 import Skeleton from "./Skeleton";
-import Section from "./Section";
-import SpendCard from "./SpendCard";
+import VaultCard from "./VaultCard";
 import { viewFromHash, type View } from "./views";
 import styles from "./dashboard.module.css";
 
@@ -113,22 +112,24 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
     const revoked = snap.agents.length - active;
     if (view === "overview") {
       page = (
-        <div className={styles.column}>
-          <BalanceHero vault={snap.vault} contract={snap.contract} busy={busy} onDeposit={deposit} onSetup={openSetup} />
-          {waiting > 0 && (
-            <Section title="Waiting on you" count={waiting} aside={waiting > 1 ? <a className={styles.sectionLink} href="#approvals">See all</a> : undefined}>
-              {waitingCards(snap, 1)}
-            </Section>
-          )}
-          <Section title="Spending" aside={<button className={styles.sectionLink} onClick={withdraw} disabled={busy !== null || snap.vault === BigInt(0)}>Withdraw</button>}>
-            <SpendCard snapshot={snap} now={now} />
-          </Section>
-          <Section title="Your agents" count={active} aside={<a className={styles.sectionLink} href="#agents">Manage</a>}>
-            <AgentsCard agents={snap.agents} names={names} paused={snap.paused} />
-          </Section>
-          <Section title="Recent activity" aside={<a className={styles.sectionLink} href="#activity">See all</a>}>
-            <ActivityCard log={snap.log} names={names} limit={5} />
-          </Section>
+        <div className={styles.overview}>
+          <header className={styles.ovHead}>
+            <div><span className={styles.muted}>{new Date(now).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span><h1>{greeting(now)}</h1></div>
+            <div className={styles.ovActions}>
+              {snap.paused
+                ? <button className={styles.dark} onClick={resume} disabled={busy !== null || !wallet.isOwner}><Play size={16} /> Resume</button>
+                : <button className={styles.dark} onClick={pause} disabled={busy !== null || !wallet.isOwner} title="Stops every agent key at once"><Pause size={16} /> Pause all</button>}
+              <button className={styles.whiteSm} onClick={deposit} disabled={busy !== null}><Plus size={16} /> Add money</button>
+            </div>
+          </header>
+          <VaultCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} />
+          <div className={styles.ovWaiting}>
+            {waiting ? waitingCards(snap, 1) : caughtUp}
+            {waiting > 1 && <a className={styles.more} href="#approvals">{waiting - 1} more waiting</a>}
+            {snap.requests.length === 0 && <RecipientsCard agents={snap.agents} log={snap.log} names={names} />}
+          </div>
+          <AgentsCard agents={snap.agents} names={names} paused={snap.paused} onAdd={openSetup} />
+          <ActivityCard log={snap.log} names={names} limit={6} />
         </div>
       );
     } else if (view === "agents") {

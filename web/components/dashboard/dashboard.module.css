@@ -71,7 +71,7 @@
 .accountButton { align-self: flex-start; min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--raised); color: #fff; font-family: inherit; font-size: 13px; font-weight: 500; }
 
 /* Main column */
-.main { min-width: 0; padding: 44px 40px 90px; }
+.main { min-width: 0; padding: 32px 36px 40px; }
 .column { width: 100%; max-width: 952px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
 .phoneBar { display: none; }
 .banner { max-width: 952px; margin: 0 auto 20px; padding: 13px 18px; border-radius: 16px; background: var(--bad); color: #000; font-size: 15px; font-weight: 600; }
@@ -125,6 +125,49 @@ a.row:hover { background: #1c1c1c; }
 .agentIcon[data-off] { opacity: .45; }
 .row[data-off] .rowMain strong { color: var(--grey); }
 
+/* Overview: one screen. A header, the vault across two columns, the decision as a full-height
+   column on the right, agents and activity underneath. Cards scroll inside themselves rather than
+   pushing the page. */
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(320px, .9fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; width: 100%; max-width: 1440px; height: calc(100vh - 80px); min-height: 680px; margin: 0 auto; }
+.ovHead { grid-column: 1 / -1; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.ovHead h1 { margin: 4px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+.ovActions { display: flex; gap: 10px; }
+.whiteSm { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 43px; padding: 0 20px; border: 0; border-radius: 999px; background: #fff; color: #000; font-family: inherit; font-size: 15px; font-weight: 600; white-space: nowrap; }
+.whiteSm:hover:not(:disabled) { background: #e9e9e9; }
+.vault { grid-column: 1 / 3; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.4fr); gap: 28px; min-height: 0; color: #fff; }
+.vaultCopy { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.vaultCopy .muted { overflow-wrap: anywhere; }
+.balance { margin-top: 2px; font-size: clamp(40px, 3.6vw, 56px); font-weight: 700; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.today { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--edge); color: var(--grey); font-size: 14px; }
+.today b { color: #fff; font-size: 18px; font-weight: 700; }
+.vaultCopy .sectionLink { display: inline-flex; align-items: center; gap: 5px; }
+.ovWaiting { grid-column: 3; grid-row: 2 / 4; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.ovWaiting > section { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+/* A short proposal takes its own height and recipients fill the rest; an approval fills the column. */
+.ovWaiting > .proposal, .ovWaiting > .caughtUp { flex: 0 0 auto; }
+.miniRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--edge); }
+.miniRow .recipientMark { width: 36px; height: 36px; }
+.miniRow .rowMain strong { font-size: 15px; }
+.miniRow b { font-size: 15px; font-weight: 600; }
+.miniNote { margin: 10px 0 0; color: var(--grey); font-size: 13px; }
+.ovWaiting .caughtUp { justify-content: center; }
+.panel { display: flex; flex-direction: column; min-height: 0; }
+.panelBody { flex: 1; min-height: 0; overflow-y: auto; }
+.overview .activityCard { padding: 24px 22px 8px; display: flex; flex-direction: column; min-height: 0; }
+.overview .feedIcon { width: 38px; height: 38px; }
+.overview .feedRow { padding: 12px 0; }
+.overview .feedTitle { font-size: 15px; }
+.agentRow { display: grid; grid-template-columns: auto minmax(0, 1.6fr) minmax(70px, .8fr) 60px; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--edge); }
+.agentRow .rowMain strong { font-size: 16px; }
+.agentRow[data-off] .rowMain strong { color: var(--grey); }
+.budget { display: flex; flex-direction: column; color: var(--grey); font-size: 13px; }
+.budget b { color: #fff; font-weight: 600; }
+.budget .track { margin-top: 7px; }
+.addRow { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 0 4px; border: 0; border-top: 1px solid var(--edge); background: none; color: var(--grey); font-family: inherit; font-size: 15px; font-weight: 500; text-align: left; }
+.addRow:hover { color: #fff; }
+.addRow :global(.mono) { margin-left: auto; font-size: 13px; }
+.addIcon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--edge); }
+
 /* Waiting on you */
 .approval, .proposal { display: flex; flex-direction: column; }
 .who { display: inline-flex; align-items: center; gap: 10px; min-width: 0; font-size: 16px; font-weight: 600; }
@@ -149,6 +192,7 @@ a.row:hover { background: #1c1c1c; }
 
 /* Activity: one card with divided rows, as PayBox lists plugins. */
 .activityCard { padding: 4px 22px; }
+.activityCard .cardHead { margin-bottom: 6px; }
 .feedRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 16px 0; border-top: 1px solid var(--edge); }
 .feedRow:first-child { border-top: 0; }
 .activityCard > p { padding: 18px 0; margin: 0; }
@@ -229,8 +273,17 @@ button.listRow:hover { background: #1c1c1c; }
 .toast { position: fixed; left: 50%; bottom: 24px; z-index: 50; max-width: calc(100vw - 32px); padding: 14px 22px; border-radius: 999px; background: #fff; color: #000; font-family: var(--font-app), sans-serif; font-size: 15px; font-weight: 500; transform: translateX(-50%); box-shadow: 0 20px 50px rgba(0, 0, 0, .5); }
 .toast[data-bad] { background: var(--bad); color: #000; }
 
-@media (max-width: 1100px) {
-  .spend { grid-template-columns: minmax(0, 1fr); }
+/* Too narrow or too short for one screen: the overview stacks and the page scrolls. */
+@media (max-width: 1180px), (max-height: 720px) {
+  .overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto; height: auto; min-height: 0; }
+  .vault { grid-column: 1 / -1; }
+  .ovWaiting { grid-column: 1 / -1; grid-row: auto; order: 0; }
+  .ovWaiting > section, .panelBody { overflow: visible; }
+}
+@media (max-width: 900px) {
+  .overview { grid-template-columns: minmax(0, 1fr); }
+  .vault { grid-template-columns: minmax(0, 1fr); }
+  .ovWaiting { order: -1; grid-row: 2; }
 }
 /* Phones: a top bar with the wallet, and the views as a tab bar along the bottom. */
 @media (max-width: 760px) {
@@ -245,9 +298,9 @@ button.listRow:hover { background: #1c1c1c; }
   .phoneBar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
   .phoneBar :global(.wordmark) { color: #fff; font-family: var(--font-app), sans-serif; font-size: 21px; font-weight: 600; font-stretch: 100%; }
   .phoneBar .white { min-height: 42px; font-size: 14px; padding: 0 18px; }
-  .heroBalance { font-size: 46px; }
-  .heroActions { grid-template-columns: minmax(0, 1fr); }
-  .chip { display: none; }
+  .ovHead { flex-direction: column; align-items: flex-start; }
+  .agentRow { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .agentRow .budget { display: none; }
   .row, .listRow { grid-template-columns: auto minmax(0, 1fr) auto; }
   .row .chev, .listRow .state, .recipientAgents { display: none; }
   .listDetail { padding-left: 20px; }

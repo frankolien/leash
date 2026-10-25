@@ -52,6 +52,8 @@ export default function ActivityCard({ log, names, limit, full }: { log: LogEntr
       </div>
     )}
     <section className={`${styles.card} ${styles.activityCard}`} data-full={full || undefined} aria-label="Activity">
+      {!full && <div className={styles.cardHead}><strong>Activity</strong><a className={styles.sectionLink} href="#activity">See all</a></div>}
+      <div className={styles.panelBody}>
       {rows.length === 0 && <p className={styles.muted}>{log.length ? "Nothing matches." : "Nothing yet. The first payment, refusal or request lands here."}</p>}
       {rows.map((e, i) => {
         const who = e.key ? agentLabel(e.key, names) : "you";
@@ -68,6 +70,7 @@ export default function ActivityCard({ log, names, limit, full }: { log: LogEntr
           </div>
         );
       })}
+      </div>
     </section>
     </>
   );

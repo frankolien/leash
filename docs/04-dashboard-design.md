@@ -61,6 +61,11 @@ of "nothing waiting". The landing keeps its own light editorial look.
 The owner's page is an app on live chain data. Its structure takes PayBox's app as a reference for
 how an agent wallet is navigated, mapped onto what Leash is:
 
+The overview fits one screen, in the layout of the landing preview: a header with Pause all and Add
+money, the vault and its seven-day chart across two columns, the waiting payment as a full-height
+column on the right (a short proposal shares it with recipients), and agents and activity side by
+side underneath. Cards scroll inside themselves; below 1180px wide or 720px tall the overview stacks.
+
 | PayBox | Leash |
 | --- | --- |
 | Portfolio | Overview: the balance (hideable), Add money and Connect an agent, then spending, what waits, agents, activity |
