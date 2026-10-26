@@ -65,7 +65,8 @@ requests.
 cargo install cargo-near             # the sandbox tests build the contract with it
 cd contract && cargo test           # 15 unit tests and 3 sandbox tests against a real node
 cd ../cli && npm install && npm test   # amount and ttl parsing
-cd ../web && npm install && npm test   # 15 tests for the dashboard's logic
+cd ../mcp && npm install && npm test   # lookalike detection and units
+cd ../web && npm install && npm test   # 21 tests for the dashboard's logic and payment safety checks
 ```
 
 The sandbox tests deploy the contract and a mock USDC to a local NEAR node and run the whole story:
@@ -128,7 +129,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | `contract/src/views.rs` | The read side |
 | `contract/src/internals.rs` | The policy check, the ledger moves, the log, the storage billing |
 | `contract/tests/` | Sandbox tests against a real node with a mock USDC |
-| `mcp/src/index.ts` | The six tools and the one envelope |
+| `mcp/src/` | `tools` (the six tools), `leash` (policy, verdicts, warnings, calls), `safety` (lookalikes), `envelope`, `key`, `units` |
 | `cli/src/` | The owner's commands: `config`, `units`, `chain`, and `commands/` (setup, money, agents, decisions, read) |
 | `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `insights` (today's spend, the week, request facts, recipients), `types` |
 | `web/lib/session.ts`, `privySigner.ts`, `config.ts` | One signing session for NEAR wallets and embedded wallets; the shared contract per network |
