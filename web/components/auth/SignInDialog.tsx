@@ -66,8 +66,8 @@ function NamePicker({ suggestion, claim }: { suggestion: string; claim: (name: s
   return (
     <>
       <span className={styles.mark} aria-hidden="true" />
-      <h2 id="signin-title">Pick your name</h2>
-      <p>Your account on NEAR. You can share it to get paid.</p>
+      <h2 id="signin-title">Choose your NEAR name</h2>
+      <p>Every NEAR account has one. It is how people and agents pay you.</p>
       <form
         className={styles.options}
         onSubmit={async (e) => {
@@ -88,10 +88,10 @@ function NamePicker({ suggestion, claim }: { suggestion: string; claim: (name: s
           <span>.{REGISTRAR[DEFAULT_NETWORK]}</span>
         </label>
         <span id="name-note" className={styles.nameNote} data-free={(state === "free" && !invalid && !!name) || undefined}>{note}</span>
-        <button className={styles.white} disabled={!canClaim}>{busy && <Loader2 size={19} className={styles.spin} />}{busy ? `Creating ${account}…` : name && !invalid ? `Claim ${account}` : "Claim name"}</button>
+        <button className={styles.white} disabled={!canClaim}>{busy && <Loader2 size={19} className={styles.spin} />}{busy ? `Creating ${account}…` : name && !invalid ? `Create ${account}` : "Create account"}</button>
       </form>
       {problem && <p className={styles.error} role="alert">{problem}</p>}
-      <small className={styles.fine}>We create it and cover its first fees. It signs with the account you just used.</small>
+      <small className={styles.fine}>Free. We pay the network fee to create it, and you sign in to it with the account you just used.</small>
     </>
   );
 }

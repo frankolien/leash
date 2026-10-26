@@ -5,6 +5,7 @@
 // through NEAR Connect. Either way pages get one OwnerSession.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { DEFAULT_NETWORK } from "@/lib/config";
 import { walletSession, type OwnerSession } from "@/lib/session";
 import { connect as connectWallet, connectedAccount, disconnect as disconnectWallet } from "@/lib/wallet";
@@ -73,8 +74,10 @@ export function AuthCore({ embedded, children }: { embedded: Embedded | null; ch
     [embedded?.session, walletAccount],
   );
 
-  // A new owner must pick a name before anything else, wherever they signed in from.
-  const needsName = embedded?.naming != null;
+  // A new owner picks a name before anything else.
+  // The landing page stays a landing page; the app's own pages ask.
+  const pathname = usePathname();
+  const needsName = embedded?.naming != null && pathname !== "/";
   useEffect(() => {
     if (needsName) setDialog(true);
   }, [needsName]);
@@ -120,4 +123,10 @@ export function AuthCore({ embedded, children }: { embedded: Embedded | null; ch
       {inline === 0 && <SignInDialog open={dialog} onClose={() => setDialog(false)} {...card} />}
     </AuthContext.Provider>
   );
+}
+
+/// Where "Get started" and "Sign in" lead: a signed-in owner goes straight to their dashboard.
+export function useAppHref(): { href: string; signedIn: boolean } {
+  const { session } = useAuth();
+  return session ? { href: `/${encodeURIComponent(session.accountId)}`, signedIn: true } : { href: "/app", signedIn: false };
 }

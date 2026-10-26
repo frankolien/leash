@@ -145,6 +145,7 @@ function Bridge({ children }: { children: ReactNode }) {
     if (!address || !identityToken) throw new Error("sign in first");
     const res = await fetch("/api/name", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${identityToken}` }, body: JSON.stringify({ name, wallet: address }) });
     const body = (await res.json().catch(() => ({}))) as { accountId?: string; error?: string };
+    if (!res.ok) console.error("Leash: claiming a name failed", res.status, body);
     // A key that already has a name keeps it; the picker just steps aside.
     if (!res.ok && !(res.status === 409 && body.accountId && body.error?.startsWith("you already have"))) throw new Error(body.error ?? "that name could not be claimed");
     const accountId = body.accountId!;

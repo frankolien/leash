@@ -5,15 +5,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, SquareTerminal } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { siClaude, siCursor, siGithubcopilot, siGooglegemini } from "simple-icons";
+import { useAppHref } from "@/components/auth/AuthContext";
+import { CODEX } from "@/components/dashboard/AgentIcon";
 import GlassMark from "./GlassMark";
 import { FILM, agentAt, type AgentName } from "./film";
 import styles from "./film.module.css";
 
 const ICON: Record<AgentName, React.ReactNode> = {
   Claude: <svg viewBox="0 0 24 24" aria-hidden="true"><path d={siClaude.path} /></svg>,
-  Codex: <SquareTerminal aria-hidden="true" strokeWidth={1.8} />,
+  Codex: <svg viewBox="0 0 24 24" aria-hidden="true"><path d={CODEX} fillRule="evenodd" /></svg>,
   Cursor: <svg viewBox="0 0 24 24" aria-hidden="true"><path d={siCursor.path} /></svg>,
   Gemini: <svg viewBox="0 0 24 24" aria-hidden="true"><path d={siGooglegemini.path} /></svg>,
   Copilot: <svg viewBox="0 0 24 24" aria-hidden="true"><path d={siGithubcopilot.path} /></svg>,
@@ -45,6 +47,7 @@ export function Film({ onTime }: { onTime: (seconds: number) => void }) {
 
 export function FilmCaption({ seconds }: { seconds: number }) {
   const agent = agentAt(seconds);
+  const app = useAppHref();
   return (
     <div className={styles.overlay}>
       <h1 className={`${styles.caption} display`}>
@@ -64,7 +67,7 @@ export function FilmCaption({ seconds }: { seconds: number }) {
       <div className={styles.aside}>
         <p>Daily limits, approvals above them, and a key you can revoke in one tap. Enforced on NEAR.</p>
         <div className={styles.actions}>
-          <a className="btn light" href="/app">Get started</a>
+          <a className="btn light" href={app.href}>{app.signedIn ? "Open your dashboard" : "Get started"}</a>
           <a className="btn glass" href="#stories">See how <ArrowDown size={16} /></a>
         </div>
       </div>

@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ accountId, ...ready, storageCredit: ready.storageCredit.toString() });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    console.error(`Leash: claiming ${accountId} failed:`, message);
     return NextResponse.json({ error: message }, { status: message === "that name is taken" ? 409 : 502 });
   }
 }

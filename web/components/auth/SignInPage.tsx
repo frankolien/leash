@@ -26,7 +26,7 @@ export default function SignInPage() {
       <div className={styles.side}>
         <a href="/" className={styles.home}><span className={styles.homeMark} aria-hidden="true" />Leash</a>
         <section className={`${styles.card} ${styles.inline}`} aria-labelledby="signin-title">
-          {session ? <p className={styles.pageNote}>Opening your dashboard…</p> : <SignInCard {...card} />}
+          {session || !card.ready ? <p className={styles.pageNote}>{session ? "Opening your dashboard…" : ""}</p> : <SignInCard {...card} />}
         </section>
         <small className={styles.network}>Runs on NEAR testnet. Payments are in test USDC.</small>
       </div>

@@ -4,8 +4,9 @@
 // what it works with, the owner's side, questions, and the way in.
 
 import { useCallback, useState } from "react";
-import { SquareTerminal } from "lucide-react";
 import { siClaude, siCursor } from "simple-icons";
+import { useAppHref } from "@/components/auth/AuthContext";
+import { BrandLogo } from "@/components/dashboard/AgentIcon";
 import SiteFooter from "@/components/site/SiteFooter";
 import SiteHeader from "@/components/site/SiteHeader";
 import Atmosphere from "@/components/site/Atmosphere";
@@ -19,12 +20,13 @@ import { AGENTS, type Agent } from "@/components/setup/agents";
 
 const ICONS: Record<Agent, React.ReactNode> = {
   claude: <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d={siClaude.path} fill="currentColor" /></svg>,
-  codex: <SquareTerminal size={15} aria-hidden="true" />,
+  codex: <BrandLogo name="codex" size={15} />,
   cursor: <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d={siCursor.path} fill="currentColor" /></svg>,
 };
 
 export default function Landing() {
   const [setup, setSetup] = useState<Agent | null>(null);
+  const app = useAppHref();
   const [onFilm, setOnFilm] = useState(true);
   const handleFilm = useCallback((over: boolean) => setOnFilm(over), []);
   return (
@@ -38,7 +40,7 @@ export default function Landing() {
             {(Object.keys(AGENTS) as Agent[]).map((a) => (
               <button key={a} className="btn glass hide-sm" onClick={() => setSetup(a)}>{ICONS[a]}{AGENTS[a].label}</button>
             ))}
-            <a className="btn ink" href="/app">Sign in</a>
+            <a className="btn ink" href={app.href}>{app.signedIn ? "Dashboard" : "Sign in"}</a>
           </>
         }
       />

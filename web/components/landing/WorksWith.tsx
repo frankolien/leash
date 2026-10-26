@@ -1,15 +1,15 @@
 // Every MCP client can hold a Leash key, and these are the ones people use. NEAR and Circle close
 // the wall because they are what the money runs on.
 
-import { SquareTerminal } from "lucide-react";
+import { CODEX } from "@/components/dashboard/AgentIcon";
 import { siClaude, siCline, siCircle, siCursor, siGithubcopilot, siGooglegemini, siJetbrains, siNear, siRaycast, siWindsurf, siZedindustries } from "simple-icons";
 import styles from "./sections.module.css";
 
-type Tile = { name: string; path?: string };
+type Tile = { name: string; path: string; evenOdd?: boolean };
 
 const TILES: Tile[] = [
   { name: "Claude", path: siClaude.path },
-  { name: "Codex" },
+  { name: "Codex", path: CODEX, evenOdd: true },
   { name: "Cursor", path: siCursor.path },
   { name: "Windsurf", path: siWindsurf.path },
   { name: "Zed", path: siZedindustries.path },
@@ -33,11 +33,7 @@ export default function WorksWith() {
         <ul className={styles.tiles}>
           {TILES.map((t) => (
             <li key={t.name}>
-              {t.path ? (
-                <svg className={styles.brand} viewBox="0 0 24 24" aria-hidden="true"><path d={t.path} /></svg>
-              ) : (
-                <SquareTerminal size={34} strokeWidth={1.6} aria-hidden="true" />
-              )}
+              <svg className={styles.brand} viewBox="0 0 24 24" aria-hidden="true"><path d={t.path} fillRule={t.evenOdd ? "evenodd" : undefined} /></svg>
               <span>{t.name}</span>
             </li>
           ))}
