@@ -42,9 +42,11 @@ export function walletSession(accountId: string, network: Network): OwnerSession
   };
 }
 
-export function embeddedSession(accountId: string, network: Network, signRawHash: SignRawHash, label?: string): OwnerSession {
+/// accountId is the owner's account, named or implicit; wallet is the Privy wallet's implicit
+/// address, which names the key that signs for it.
+export function embeddedSession(accountId: string, network: Network, signRawHash: SignRawHash, label?: string, wallet: string = accountId): OwnerSession {
   const provider = new JsonRpcProvider({ url: RPC[network] });
-  const account = new Account(accountId, provider, new PrivySigner(accountId, publicKeyOfImplicit(accountId), signRawHash));
+  const account = new Account(accountId, provider, new PrivySigner(wallet, publicKeyOfImplicit(wallet), signRawHash));
   return {
     accountId,
     network,

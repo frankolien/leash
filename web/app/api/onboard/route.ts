@@ -1,5 +1,6 @@
-// POST /api/onboard: readies a new embedded-wallet account. The caller proves with a Privy identity
-// token that it holds the account; outside development a request without one is refused.
+// POST /api/onboard: readies an embedded-wallet owner's account, named or implicit. The caller
+// proves with a Privy identity token that its key controls the account; every step is skipped when
+// already done, so a returning owner on a new device costs nothing.
 
 import { NextResponse } from "next/server";
 import { DEFAULT_NETWORK } from "@/lib/config";
@@ -11,7 +12,7 @@ const limited = rateLimiter(5, 10 * 60_000);
 export async function POST(request: Request) {
   if (limited(request)) return NextResponse.json({ error: "too many sign-ups from this address; try again in a few minutes" }, { status: 429 });
   const { accountId } = (await request.json().catch(() => ({}))) as { accountId?: string };
-  const refusal = await provenOwner(request, accountId);
+  const refusal = await provenOwner(request, accountId, DEFAULT_NETWORK);
   if (refusal) return NextResponse.json({ error: refusal.error }, { status: refusal.status });
 
   try {

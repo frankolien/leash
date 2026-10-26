@@ -1,13 +1,16 @@
 "use client";
 
-// Turns a Privy sign-in into a ready NEAR account. After sign-in it makes the user's NEAR wallet if
-// there is none, asks the sponsor to ready the account (NEAR for gas, USDC registration, Leash
-// storage), and hands up a session that signs with the embedded wallet.
+// Turns a Privy sign-in into a ready NEAR account. After sign-in it makes the user's NEAR key if
+// there is none, finds the named account that key controls (or asks the owner to pick a name,
+// which the sponsor creates), makes sure the account is readied, and hands up a session that signs
+// for it with the embedded key.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PrivyProvider, useIdentityToken, useLoginWithEmail, useLoginWithOAuth, usePrivy } from "@privy-io/react-auth";
 import { useCreateWallet, useSignRawHash } from "@privy-io/react-auth/extended-chains";
 import { DEFAULT_NETWORK } from "@/lib/config";
+import { namesOfKey, suggestName } from "@/lib/names";
+import { publicKeyOfImplicit } from "@/lib/privySigner";
 import { embeddedSession } from "@/lib/session";
 import { AuthCore, type Embedded } from "./AuthContext";
 
@@ -34,6 +37,26 @@ function rememberReadied(address: string) {
   }
 }
 
+// Each key's name, so a returning owner skips the lookup. A new device finds it from the key.
+const NAMES = "leash.names";
+
+function rememberedName(wallet: string): string | null {
+  try {
+    return (JSON.parse(localStorage.getItem(NAMES) ?? "{}") as Record<string, string>)[wallet] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberName(wallet: string, accountId: string) {
+  try {
+    const known = JSON.parse(localStorage.getItem(NAMES) ?? "{}") as Record<string, string>;
+    localStorage.setItem(NAMES, JSON.stringify({ ...known, [wallet]: accountId }));
+  } catch {
+    // Without storage the name is looked up again next time.
+  }
+}
+
 function Bridge({ children }: { children: ReactNode }) {
   const { ready, authenticated, user, logout } = usePrivy();
   // Headless flows, so a click goes straight to the provider instead of through Privy's modal.
@@ -42,6 +65,8 @@ function Bridge({ children }: { children: ReactNode }) {
   const { createWallet } = useCreateWallet();
   const { signRawHash } = useSignRawHash();
   const { identityToken } = useIdentityToken();
+  const [owner, setOwner] = useState<string | null>(null);
+  const [needsName, setNeedsName] = useState(false);
   const [readied, setReadied] = useState<string | null>(null);
   const [preparing, setPreparing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,21 +86,51 @@ function Bridge({ children }: { children: ReactNode }) {
   }, [ready, authenticated, address, createWallet]);
 
   useEffect(() => {
-    if (!address || readied === address) return;
-    if (readiedHere(address)) {
-      setReadied(address);
+    setOwner(null);
+    setNeedsName(false);
+    if (!address) return;
+    const known = rememberedName(address);
+    if (known) {
+      setOwner(known);
+      return;
+    }
+    let cancelled = false;
+    setPreparing("Getting your account ready");
+    const unnamed = () => {
+      if (cancelled) return;
+      setNeedsName(true);
+      setPreparing(null);
+    };
+    namesOfKey(publicKeyOfImplicit(address).toString(), DEFAULT_NETWORK)
+      .then((names) => {
+        if (cancelled) return;
+        if (!names[0]) return unnamed();
+        rememberName(address, names[0]);
+        setOwner(names[0]);
+      })
+      .catch(unnamed);
+    return () => {
+      cancelled = true;
+    };
+  }, [address]);
+
+  useEffect(() => {
+    if (!owner || readied === owner) return;
+    if (readiedHere(owner)) {
+      setReadied(owner);
+      setPreparing(null);
       return;
     }
     if (!identityToken) return;
     let cancelled = false;
     setPreparing("Getting your account ready");
-    fetch("/api/onboard", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${identityToken}` }, body: JSON.stringify({ accountId: address }) })
+    fetch("/api/onboard", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${identityToken}` }, body: JSON.stringify({ accountId: owner }) })
       .then(async (res) => {
         const body = await res.json();
         if (!res.ok) throw new Error(body.error ?? "your account could not be readied");
-        rememberReadied(address);
+        rememberReadied(owner);
         if (!cancelled) {
-          setReadied(address);
+          setReadied(owner);
           setError(null);
         }
       })
@@ -84,15 +139,31 @@ function Bridge({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [address, identityToken, readied]);
+  }, [owner, identityToken, readied]);
+
+  async function claim(name: string) {
+    if (!address || !identityToken) throw new Error("sign in first");
+    const res = await fetch("/api/name", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${identityToken}` }, body: JSON.stringify({ name, wallet: address }) });
+    const body = (await res.json().catch(() => ({}))) as { accountId?: string; error?: string };
+    // A key that already has a name keeps it; the picker just steps aside.
+    if (!res.ok && !(res.status === 409 && body.accountId && body.error?.startsWith("you already have"))) throw new Error(body.error ?? "that name could not be claimed");
+    const accountId = body.accountId!;
+    rememberName(address, accountId);
+    if (res.ok) {
+      rememberReadied(accountId);
+      setReadied(accountId);
+    }
+    setOwner(accountId);
+    setNeedsName(false);
+  }
 
   useEffect(() => {
     if (oauth.status === "error") setError(oauth.error?.message ?? "Sign-in did not finish. Try again.");
   }, [oauth]);
 
   const session = useMemo(
-    () => (authenticated && address && readied === address ? embeddedSession(address, DEFAULT_NETWORK, signRawHash as never, label) : null),
-    [authenticated, address, readied, signRawHash, label],
+    () => (authenticated && address && owner && readied === owner ? embeddedSession(owner, DEFAULT_NETWORK, signRawHash as never, label, address) : null),
+    [authenticated, address, owner, readied, signRawHash, label],
   );
 
   const embedded: Embedded = {
@@ -100,6 +171,7 @@ function Bridge({ children }: { children: ReactNode }) {
     session,
     preparing: authenticated ? preparing : oauth.status === "loading" ? "Signing you in" : null,
     error,
+    naming: authenticated && needsName ? { suggestion: suggestName(label), claim } : null,
     oauth: async (provider) => {
       setError(null);
       await initOAuth({ provider });
@@ -107,14 +179,16 @@ function Bridge({ children }: { children: ReactNode }) {
     sendEmailCode: (email) => sendCode({ email }),
     verifyEmailCode: (code) => loginWithCode({ code }),
     requestTestUsdc: async () => {
-      if (!address || !identityToken) throw new Error("sign in first");
-      const res = await fetch("/api/test-usdc", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${identityToken}` }, body: JSON.stringify({ accountId: address }) });
+      if (!owner || !identityToken) throw new Error("sign in first");
+      const res = await fetch("/api/test-usdc", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${identityToken}` }, body: JSON.stringify({ accountId: owner }) });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error ?? "no test USDC was sent");
     },
     logout: async () => {
       await logout();
       setReadied(null);
+      setOwner(null);
+      setNeedsName(false);
     },
   };
 

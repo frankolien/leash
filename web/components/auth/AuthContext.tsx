@@ -19,6 +19,8 @@ export type Embedded = {
   /// Set while a new account is being made and readied.
   preparing: string | null;
   error: string | null;
+  /// Set when the signed-in owner has no name yet: a first guess, and the call that claims one.
+  naming: { suggestion: string; claim: (name: string) => Promise<void> } | null;
   /// Sends the browser straight to Google's or Apple's account picker; sign-in finishes on return.
   oauth: (provider: OAuthProvider) => Promise<void>;
   /// Email sign-in inside our own card: send a one-time code, then check it.
@@ -70,6 +72,12 @@ export function AuthCore({ embedded, children }: { embedded: Embedded | null; ch
     () => embedded?.session ?? (walletAccount ? walletSession(walletAccount, DEFAULT_NETWORK) : null),
     [embedded?.session, walletAccount],
   );
+
+  // A new owner must pick a name before anything else, wherever they signed in from.
+  const needsName = embedded?.naming != null;
+  useEffect(() => {
+    if (needsName) setDialog(true);
+  }, [needsName]);
 
   // Close the dialog once a session exists, whichever way it arrived.
   useEffect(() => {

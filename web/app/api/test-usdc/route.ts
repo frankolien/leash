@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (DEFAULT_NETWORK !== "testnet") return NextResponse.json({ error: "test USDC exists only on testnet" }, { status: 404 });
   if (limited(request)) return NextResponse.json({ error: "too many requests from this address; try again later" }, { status: 429 });
   const { accountId } = (await request.json().catch(() => ({}))) as { accountId?: string };
-  const refusal = await provenOwner(request, accountId);
+  const refusal = await provenOwner(request, accountId, DEFAULT_NETWORK);
   if (refusal) return NextResponse.json({ error: refusal.error }, { status: refusal.status });
 
   const outcome = await giveTestUsdc(accountId!).catch((e: unknown) => ({ given: null, reason: e instanceof Error ? e.message : String(e) }));

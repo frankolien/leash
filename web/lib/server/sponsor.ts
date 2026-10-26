@@ -1,9 +1,10 @@
-// The sign-up sponsor. A new embedded-wallet owner starts with an account that holds nothing; the
-// sponsor sends it enough NEAR for gas and its agents' keys, registers it on USDC, and pays its
-// Leash storage credit, so the first screen it sees is ready to use.
+// The sign-up sponsor. A new embedded-wallet owner starts with nothing; the sponsor creates their
+// named account (or funds their implicit one) with enough NEAR for gas and their agents' keys,
+// registers it on USDC, and pays its Leash storage credit, so the first screen it sees is ready.
 
 import { Account, JsonRpcProvider, KeyPairSigner } from "near-api-js";
 import { CONTRACT, RPC, USDC } from "@/lib/config";
+import { REGISTRAR, accountExists } from "@/lib/names";
 import type { Network } from "@/lib/types";
 
 const NEAR = BigInt(10) ** BigInt(24);
@@ -28,6 +29,17 @@ function sponsorAccount(network: Network): Account {
   const key = process.env.SPONSOR_PRIVATE_KEY;
   if (!id || !key) throw new Error("the sponsor is not configured");
   return new Account(id, new JsonRpcProvider({ url: RPC[network] }), KeyPairSigner.fromSecretKey(key as `ed25519:${string}`));
+}
+
+/// Creates accountId (a direct child of the registrar) with publicKey as its only full-access key,
+/// funded with ONBOARD_NEAR, then readies it like any other owner.
+export async function claimName(accountId: string, publicKey: string, network: Network): Promise<Readiness> {
+  if (await accountExists(accountId, network)) throw new Error("that name is taken");
+  const sponsor = sponsorAccount(network);
+  const created = await sponsor.callFunction({ contractId: REGISTRAR[network], methodName: "create_account", args: { new_account_id: accountId, new_public_key: publicKey }, deposit: ONBOARD_NEAR, gas: BigInt(100) * TGAS });
+  // The registrar refunds and answers false when it cannot create the account.
+  if (created !== true || !(await accountExists(accountId, network))) throw new Error("that name could not be created; try another");
+  return onboard(accountId, network);
 }
 
 export async function readiness(accountId: string, network: Network): Promise<Readiness> {

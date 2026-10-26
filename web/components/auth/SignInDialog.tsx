@@ -7,6 +7,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Mail, X } from "lucide-react";
 import { siApple, siNear } from "simple-icons";
+import { DEFAULT_NETWORK } from "@/lib/config";
+import { plainError } from "@/lib/errors";
+import { REGISTRAR, accountExists, fullName, nameProblem } from "@/lib/names";
 import type { Embedded } from "./AuthContext";
 import styles from "./auth.module.css";
 
@@ -31,6 +34,66 @@ type Step = { at: "options" } | { at: "email" } | { at: "code"; email: string };
 
 function message(e: unknown) {
   return e instanceof Error ? e.message : String(e);
+}
+
+type Availability = "checking" | "free" | "taken" | "unknown";
+
+/// The step after a first sign-in: the owner picks the name their account will carry.
+function NamePicker({ suggestion, claim }: { suggestion: string; claim: (name: string) => Promise<void> }) {
+  const [name, setName] = useState(suggestion);
+  const [state, setState] = useState<Availability>("checking");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const invalid = name ? nameProblem(name) : null;
+  const account = fullName(name, DEFAULT_NETWORK);
+
+  useEffect(() => {
+    if (!name || invalid) return;
+    setState("checking");
+    let current = true;
+    const timer = window.setTimeout(() => {
+      accountExists(account, DEFAULT_NETWORK).then((taken) => current && setState(taken ? "taken" : "free"), () => current && setState("unknown"));
+    }, 300);
+    return () => {
+      current = false;
+      window.clearTimeout(timer);
+    };
+  }, [name, invalid, account]);
+
+  const note = !name ? "Letters and numbers, at least 2." : invalid ?? { checking: "Checking…", free: `${account} is yours to take.`, taken: `${account} is taken. Try another.`, unknown: "Couldn't check that name just now." }[state];
+  const canClaim = !!name && !invalid && state !== "taken" && state !== "checking" && !busy;
+
+  return (
+    <>
+      <span className={styles.mark} aria-hidden="true" />
+      <h2 id="signin-title">Pick your name</h2>
+      <p>Your account on NEAR. You can share it to get paid.</p>
+      <form
+        className={styles.options}
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!canClaim) return;
+          setBusy(true);
+          setProblem(null);
+          try {
+            await claim(name);
+          } catch (error) {
+            setProblem(plainError(error));
+            setBusy(false);
+          }
+        }}
+      >
+        <label className={styles.nameField} data-bad={(!!invalid || state === "taken") || undefined}>
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value.toLowerCase().trim())} spellCheck={false} autoCapitalize="none" autoComplete="off" maxLength={32} aria-label="Name" aria-describedby="name-note" placeholder="yourname" />
+          <span>.{REGISTRAR[DEFAULT_NETWORK]}</span>
+        </label>
+        <span id="name-note" className={styles.nameNote} data-free={(state === "free" && !invalid && !!name) || undefined}>{note}</span>
+        <button className={styles.white} disabled={!canClaim}>{busy && <Loader2 size={19} className={styles.spin} />}{busy ? `Creating ${account}…` : name && !invalid ? `Claim ${account}` : "Claim name"}</button>
+      </form>
+      {problem && <p className={styles.error} role="alert">{problem}</p>}
+      <small className={styles.fine}>We create it and cover its first fees. It signs with the account you just used.</small>
+    </>
+  );
 }
 
 export function SignInCard({ ready, embedded, preparing, error, onWallet }: SignInProps) {
@@ -62,6 +125,8 @@ export function SignInCard({ ready, embedded, preparing, error, onWallet }: Sign
   const checkCode = (value: string) => run("verify", () => embedded!.verifyEmailCode(value));
 
   const shown = problem ?? error;
+
+  if (embedded?.naming && !preparing) return <NamePicker suggestion={embedded.naming.suggestion} claim={embedded.naming.claim} />;
 
   return (
     <>
