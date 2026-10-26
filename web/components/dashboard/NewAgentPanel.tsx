@@ -3,12 +3,13 @@
 // Creates an agent from the dashboard's side panel, so an owner who signed in with Google never
 // needs the CLI.
 // The key pair is made in this browser; the owner signs twice (add the key to their account, set
-// its limits on Leash); then the key file is handed over once, with the config for their agent.
+// its limits on Leash); then the key is handed over once, inside the line (or Cursor link) that
+// installs Leash in their agent.
 
 import { useState } from "react";
-import { Check, Copy, Download } from "lucide-react";
+import { ArrowUpRight, Check, Copy, Download } from "lucide-react";
 import { KeyPair } from "near-api-js";
-import { AGENTS, mcpConfig, type Agent as AgentKind } from "@/components/setup/agents";
+import { AGENTS, inlineKey, mcpConfig, type Agent as AgentKind } from "@/components/setup/agents";
 import { AGENT_ALLOWANCE, AGENT_METHODS } from "@/lib/config";
 import { plainError } from "@/lib/errors";
 import { toUnits } from "@/lib/format";
@@ -76,7 +77,7 @@ export default function NewAgentPanel(props: { kind: AgentKind; session: OwnerSe
     URL.revokeObjectURL(url);
   }
 
-  const setup = made ? mcpConfig(made.kind, `~/.leash/${made.name}.json`) : null;
+  const setup = made ? mcpConfig(made.kind, inlineKey(made.file)) : null;
 
   return (
     <SidePanel title={made ? `${made.name} is on a leash` : "New agent"} onClose={onClose}>
@@ -114,13 +115,9 @@ export default function NewAgentPanel(props: { kind: AgentKind; session: OwnerSe
         <div className={styles.made}>
           <ol className={styles.madeSteps}>
             <li>
-              <strong>Save the key file to <span className="mono">~/.leash/{made.name}.json</span></strong>
-              <span className={styles.muted}>It is shown once. It can only pay, ask and request on your vault, within the limits you set.</span>
-              <button className={styles.dark} onClick={download}><Download size={16} /> Download {made.name}.json</button>
-            </li>
-            <li>
               <strong>Add Leash to {AGENTS[made.kind].label}</strong>
-              <span className={styles.muted}>{setup.where}</span>
+              <span className={styles.muted}>{setup.where}. The key is inside; it is shown once.</span>
+              {setup.link && <a className={`${styles.white} ${styles.wide}`} href={setup.link.href}>{setup.link.label} <ArrowUpRight size={16} /></a>}
               <div className={styles.codeBox}>
                 <pre>{setup.code}</pre>
                 <button aria-label="Copy" onClick={async () => { await navigator.clipboard.writeText(setup.code); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? <Check size={15} /> : <Copy size={15} />}</button>
@@ -128,7 +125,8 @@ export default function NewAgentPanel(props: { kind: AgentKind; session: OwnerSe
             </li>
             <li><strong>Ask it to pay</strong><span className={styles.muted}>Under ${perPayment} it pays on its own. Above, it shows up here for you to approve.</span></li>
           </ol>
-          <button className={`${styles.white} ${styles.wide}`} onClick={onClose}>Done</button>
+          <button className={styles.sectionLink} onClick={download}><Download size={14} /> Keep a copy of the key file</button>
+          <button className={styles.white} onClick={onClose}>Done</button>
         </div>
       )}
     </SidePanel>

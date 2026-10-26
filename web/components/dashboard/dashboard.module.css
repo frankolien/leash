@@ -393,3 +393,5 @@ button.listRow:hover { background: #1c1c1c; }
 .spin { animation: spin 900ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .faucet svg { margin-left: 4px; vertical-align: -2px; }
+.panelCard .codeBox pre { max-height: 190px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+.panelCard .made > .white:last-child { margin-top: auto; }

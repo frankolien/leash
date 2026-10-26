@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// leash-mcp: the tools an agent uses to pay from a Leash-bounded account.
+// leash-near-mcp: the tools an agent uses to pay from a Leash-bounded account.
 //
 // The server holds the agent's key and nothing else. That key is a function-call key on the owner's
 // account restricted to the Leash contract, so even a compromised server can only do what the owner's

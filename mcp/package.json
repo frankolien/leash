@@ -1,16 +1,22 @@
 {
-  "name": "leash-mcp",
+  "name": "leash-near-mcp",
   "version": "0.1.0",
-  "description": "MCP server that lets an AI agent pay from a Leash-bounded NEAR account",
+  "description": "MCP server that lets an AI agent pay in USDC on NEAR, inside limits its owner sets with Leash",
   "type": "module",
   "bin": {
-    "leash-mcp": "dist/index.js"
+    "leash-near-mcp": "dist/index.js"
   },
+  "files": [
+    "dist/**/*.js",
+    "!dist/**/*.test.js",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "tsc -p tsconfig.json && node --test \"dist/**/*.test.js\""
+    "test": "tsc -p tsconfig.json && node --test \"dist/**/*.test.js\"",
+    "prepublishOnly": "npm run build && node --test \"dist/**/*.test.js\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
@@ -24,5 +30,14 @@
   "engines": {
     "node": ">=20"
   },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "near",
+    "usdc",
+    "agent",
+    "payments",
+    "leash"
+  ],
   "license": "MIT"
 }

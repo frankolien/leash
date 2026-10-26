@@ -79,13 +79,16 @@ agent's budget, the week's spending and the on-chain activity. Signing in as the
 testnet wallet, or Google, Apple or email when a Privy app id is configured) turns on approve, deny,
 pause, revoke, add money and new agent. A payment above an agent's limit opens a panel on the right.
 
-**4. An agent paying.** Sign in, create an agent in the dashboard (New agent: Claude Code), save the
-key file to `~/.leash/claude.json`, and add the MCP server:
+**4. An agent paying.** Sign in, create an agent in the dashboard (New agent: Claude Code). The
+panel hands you one line with the agent's key inside; paste it in a terminal (Cursor gets an Add to
+Cursor button instead):
 
 ```bash
-cd mcp && npm install && npm run build
-claude mcp add leash -e LEASH_KEY_FILE=~/.leash/claude.json -- node "$PWD/dist/index.js"
+claude mcp add leash -e LEASH_KEY=<key from the dashboard> -- npx -y leash-near-mcp
 ```
+
+From a checkout instead of npm: `cd mcp && npm install && npm run build`, then use
+`node "$PWD/dist/index.js"` in place of `npx -y leash-near-mcp`.
 
 Ask Claude Code to pay `vendor.testnet` $1: it pays, and the dashboard shows it within ten seconds.
 Ask for $5: it is over the agent's limit, so it parks a request and the approval panel opens.
