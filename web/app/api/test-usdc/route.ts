@@ -1,13 +1,18 @@
 // POST /api/test-usdc: a few test USDC from the sponsor, so a new testnet owner can fund a vault and
 // watch an agent pay without finding a faucet first. Testnet only, and only for an account that
-// holds almost none.
+// holds almost none. GET says whether the tap has stock.
 
 import { NextResponse } from "next/server";
 import { DEFAULT_NETWORK } from "@/lib/config";
 import { provenOwner, rateLimiter } from "@/lib/server/owner";
-import { giveTestUsdc } from "@/lib/server/sponsor";
+import { giveTestUsdc, testUsdcInStock } from "@/lib/server/sponsor";
 
 const limited = rateLimiter(3, 60 * 60_000);
+
+export async function GET() {
+  const available = DEFAULT_NETWORK === "testnet" && (await testUsdcInStock().catch(() => false));
+  return NextResponse.json({ available });
+}
 
 export async function POST(request: Request) {
   if (DEFAULT_NETWORK !== "testnet") return NextResponse.json({ error: "test USDC exists only on testnet" }, { status: 404 });

@@ -38,7 +38,12 @@ export async function claimName(accountId: string, publicKey: string, network: N
   const sponsor = sponsorAccount(network);
   const created = await sponsor.callFunction({ contractId: REGISTRAR[network], methodName: "create_account", args: { new_account_id: accountId, new_public_key: publicKey }, deposit: ONBOARD_NEAR, gas: BigInt(100) * TGAS });
   // The registrar refunds and answers false when it cannot create the account.
-  if (created !== true || !(await accountExists(accountId, network))) throw new Error("that name could not be created; try another");
+  if (created !== true) throw new Error("that name could not be created; try another");
+  // Final state trails the receipt that made the account by a block or two.
+  for (let tries = 0; !(await accountExists(accountId, network)); tries++) {
+    if (tries === 10) throw new Error("the name was created but has not appeared yet; refresh in a moment");
+    await new Promise((r) => setTimeout(r, 700));
+  }
   return onboard(accountId, network);
 }
 
@@ -68,6 +73,13 @@ export async function onboard(accountId: string, network: Network): Promise<Read
 async function usdcBalance(provider: JsonRpcProvider, accountId: string): Promise<bigint> {
   const balance = await provider.callFunction({ contractId: USDC.testnet, method: "ft_balance_of", args: { account_id: accountId } });
   return BigInt((balance as string) ?? "0");
+}
+
+/// Whether the tap can pay out right now, so the page offers it only when it works.
+export async function testUsdcInStock(): Promise<boolean> {
+  const id = process.env.SPONSOR_ACCOUNT_ID;
+  if (!id) return false;
+  return (await usdcBalance(new JsonRpcProvider({ url: RPC.testnet }), id)) >= TEST_USDC;
 }
 
 /// Sends TEST_USDC from the sponsor's own stock, which is topped up from Circle's faucet. Refuses,

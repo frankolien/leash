@@ -32,7 +32,17 @@ export function ReceiveAddress({ owner, scan = false }: { owner: string; scan?: 
 }
 
 /// The empty state of Add money: nothing in the owner's account yet.
+function useTapInStock(enabled: boolean) {
+  const [inStock, setInStock] = useState(false);
+  useEffect(() => {
+    if (!enabled) return;
+    fetch("/api/test-usdc").then((r) => r.json()).then((b: { available?: boolean }) => setInStock(!!b.available), () => setInStock(false));
+  }, [enabled]);
+  return inStock;
+}
+
 export function FundAccount({ owner, testnet, testUsdc, onFunded }: { owner: string; testnet: boolean; testUsdc: (() => Promise<void>) | null; onFunded: (text: string, bad?: boolean) => void }) {
+  const inStock = useTapInStock(testnet && testUsdc !== null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -56,7 +66,7 @@ export function FundAccount({ owner, testnet, testUsdc, onFunded }: { owner: str
         <strong>Your account has no USDC yet</strong>
         <span className={styles.muted}>Add some to your account first, then move it into the vault for your agents.</span>
       </div>
-      {testnet && testUsdc && (
+      {testnet && testUsdc && inStock && (
         <button className={`${styles.white} ${styles.wide}`} onClick={tap} disabled={busy}>{busy && <Loader2 size={17} className={styles.spin} />}Get $5 of test USDC</button>
       )}
       {problem && <p className={styles.formError} role="alert">{problem}</p>}
