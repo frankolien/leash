@@ -21,5 +21,18 @@
 .error { margin: 16px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(242, 114, 107, .1); color: #f2726b; font-size: 14px; }
 .fine { display: block; margin-top: 18px; color: #858585; font-size: 12px; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
-.page { box-sizing: border-box; padding: 24px 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0b0b0b; color: #fff; font-family: var(--font-app), sans-serif; }
 .pageNote { color: #858585; font-size: 15px; }
+.page { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(440px, 1fr); gap: 12px; height: 100vh; min-height: 640px; padding: 12px; background: #0b0b0b; color: #fff; font-family: var(--font-app), sans-serif; }
+.side { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 72px 24px; }
+.home { position: absolute; top: 22px; left: 28px; display: inline-flex; align-items: center; gap: 9px; color: #fff; font-size: 20px; font-weight: 600; letter-spacing: -.02em; text-decoration: none; }
+.homeMark { width: 22px; height: 22px; mask: url("/mark.svg") center / contain no-repeat; background: #fff; }
+.inline { width: min(400px, 100%); padding: 0; background: none; box-shadow: none; }
+.inline .mark { display: none; }
+.inline h2 { font-size: 32px; }
+.network { position: absolute; bottom: 22px; color: #5f5f5f; font-size: 12px; }
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; grid-template-rows: minmax(360px, 46vh) auto; height: auto; min-height: 100vh; padding: 10px; }
+  .side { padding: 28px 6px 64px; }
+  .home { display: none; }
+  .inline h2 { font-size: 28px; }
+}
