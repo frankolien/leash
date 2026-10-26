@@ -347,7 +347,12 @@ button.listRow:hover { background: #1c1c1c; }
 /* Phones: a top bar with the wallet, and the views as a tab bar along the bottom. */
 @media (max-width: 760px) {
   .app, .app[data-panel] { grid-template-columns: minmax(0, 1fr); }
-  .approvalPanel { top: auto; left: 8px; right: 8px; bottom: 76px; width: auto; max-height: 78svh; }
+  /* On a phone the panel is a sheet over a dimmed page, above the tab bar, decision pinned below. */
+  .approvalPanel { inset: 0; width: auto; height: auto; justify-content: flex-end; gap: 10px; padding: 56px 8px calc(78px + env(safe-area-inset-bottom)); background: rgba(0, 0, 0, .72); backdrop-filter: blur(4px); }
+  .approvalPanel .approval { flex: 0 1 auto; max-height: 100%; }
+  .approvalPanel .decide { position: sticky; bottom: -22px; margin: 12px -24px -24px; padding: 14px 24px 22px; background: var(--surface); }
+  .approvalPanel .amount { font-size: 44px; margin-top: 14px; }
+  .sidebar .brand { display: none; }
   .sidebar { position: fixed; inset: auto 0 0; z-index: 30; height: auto; flex-direction: row; gap: 0; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--edge); background: rgba(11, 11, 11, .94); backdrop-filter: blur(16px); overflow: visible; }
   .brand, .sideBottom { display: none; }
   .nav { flex: 1; flex-direction: row; justify-content: space-around; gap: 0; }
