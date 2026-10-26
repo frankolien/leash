@@ -26,7 +26,7 @@ Submission window: 1 to 14 November 2026, 23:59 UTC. Judging 16 to 18 November. 
 | 27 Oct | Done 25 Oct: three near-workspaces tests against a sandbox with a mock USDC: the six steps, the refund of a failed transfer, the storage rule; cooldown and expiry also exercised on testnet | `cargo test` covers the cross-contract path, not only the unit path |
 | 28 Oct | Done 25 Oct: storage accounting, owner-paid, measured with `env::storage_usage()` after a flush | A stranger cannot grow the contract's storage for free |
 | 29 Oct | Done 25 Oct: the dashboard, designed from PayBox, PRYDD and Revolut (docs/04), reads the chain over RPC, acts through HOT Connect | The owner never needs the CLI to say yes |
-| 30 Oct | Claude Code and Codex demo: the MCP server in a real agent session, recorded | The demo film's raw footage exists |
+| 30 Oct | Claude Code and Codex demo, recorded from the shot list in docs/06-demo.md | The demo film's raw footage exists |
 | 31 Oct | Done 25 Oct: README as a test script for the AI judges (commands that verify the claims on testnet with no account); `HACKATHON.md` reread still to do | A stranger with the repo and ten minutes reaches step six |
 | 1 to 7 Nov | Mainnet deploy with real USDC, small; agent key TTL and cooldown exercised; refusal log in the dashboard | Mainnet address in the README |
 | 8 to 12 Nov | Stretch: Countersign. A NEAR AI Cloud model signs off on the exact payment payload inside its TEE; the contract checks the signature against the attested signing address | `privacy` track entry is honest |
