@@ -292,10 +292,12 @@ button.listRow:hover { background: #1c1c1c; }
 .amountNote { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -4px; padding: 0 4px; color: var(--grey); font-size: 14px; font-variant-numeric: tabular-nums; }
 .amountField[data-over] + .amountNote span { color: var(--bad); }
 .receive { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border-radius: 18px; background: var(--raised); }
-.qr { display: block; width: 132px; height: 132px; margin-bottom: 8px; padding: 12px; border-radius: 14px; background: #0f0f0f; }
+.qr { display: block; width: 184px; height: 184px; margin-bottom: 10px; padding: 16px; border-radius: 18px; background: #0f0f0f; }
+.receive[data-scan] { align-items: center; padding: 22px 18px 18px; text-align: center; }
+.receive[data-scan] .copyAddress { justify-content: center; max-width: 280px; text-align: center; }
 .qr svg { display: block; width: 100%; height: 100%; }
 .copyAddress { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-width: 0; padding: 0; border: 0; background: none; color: #fff; font-size: 13px; line-height: 1.5; text-align: left; }
-.copyAddress .mono { min-width: 0; overflow-wrap: anywhere; word-break: break-all; }
+.copyAddress :global(.mono) { min-width: 0; overflow-wrap: anywhere; word-break: break-all; }
 .copyAddress svg { flex-shrink: 0; margin-top: 2px; color: var(--grey); }
 .fund { display: flex; flex-direction: column; gap: 14px; }
 .fundHead { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }

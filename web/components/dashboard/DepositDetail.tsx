@@ -21,7 +21,7 @@ export function ReceiveAddress({ owner, scan = false }: { owner: string; scan?: 
   const [copied, setCopied] = useState(false);
   const qr = useQr(owner);
   return (
-    <div className={styles.receive}>
+    <div className={styles.receive} data-scan={scan || undefined}>
       {scan && qr && <span className={styles.qr} role="img" aria-label="Code for your account" dangerouslySetInnerHTML={{ __html: qr }} />}
       <span className={styles.muted}>Send USDC on NEAR to</span>
       <button className={styles.copyAddress} onClick={async () => { await navigator.clipboard.writeText(owner); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label="Copy your account">
