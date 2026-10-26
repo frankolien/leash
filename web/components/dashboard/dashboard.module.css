@@ -145,11 +145,18 @@ a.row:hover { background: #1c1c1c; }
 .pulse { width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 0 rgba(255, 255, 255, .6); animation: pulse 1.8s ease-out infinite; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
 .app[data-panel] { grid-template-columns: 252px minmax(0, 1fr) 408px; }
-.approvalPanel { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 12px; padding: 32px 28px 28px 0; animation: slideIn 380ms cubic-bezier(.2, .9, .3, 1); }
+.approvalPanel, .sidePanel { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 12px; padding: 32px 28px 28px 0; animation: slideIn 380ms cubic-bezier(.2, .9, .3, 1); }
 @keyframes slideIn { from { opacity: 0; transform: translateX(28px); } }
 .approvalPanel .approval { flex: 1; min-height: 0; overflow-y: auto; box-shadow: 0 0 0 1px var(--edge); }
 .approvalPanel .amount { font-size: 56px; margin-top: 22px; }
 .approvalPanel .decide { margin-top: auto; padding-top: 20px; }
+.panelCard { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 24px; overflow-y: auto; border-radius: 24px; background: var(--surface); box-shadow: 0 0 0 1px var(--edge); }
+.panelHint { margin: 0 0 18px; color: var(--grey); font-size: 15px; line-height: 1.45; }
+.amountForm { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.amountForm .depositDetail { margin: 0; }
+.amountForm .dialogActions { margin-top: auto; padding-top: 20px; }
+.panelCard .made { flex: 1; }
+.panelCard .made > .white, .wide { width: 100%; min-height: 52px; }
 .panelBar { display: flex; align-items: center; justify-content: space-between; min-height: 43px; padding-left: 6px; color: var(--text-2); font-size: 15px; font-weight: 600; }
 .panelBar button { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--raised); color: #fff; }
 .panelBar button:hover { background: #2e2e2e; }
@@ -277,10 +284,6 @@ button.listRow:hover { background: #1c1c1c; }
 .bone { display: block; border-radius: 14px; background: linear-gradient(90deg, #151515 25%, #1d1d1d 50%, #151515 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 
-.dialog { width: min(440px, calc(100vw - 32px)); padding: 28px; border: 0; border-radius: 24px; background: var(--surface); color: #fff; font-family: var(--font-app), sans-serif; box-shadow: 0 0 0 1px var(--edge), 0 40px 80px rgba(0, 0, 0, .6); }
-.dialog::backdrop { background: rgba(0, 0, 0, .6); backdrop-filter: blur(4px); }
-.dialog h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.025em; }
-.dialog p { margin: 10px 0 22px; color: var(--grey); font-size: 15px; }
 .amountField { display: flex; align-items: baseline; gap: 6px; padding: 14px 20px; border-radius: 20px; background: var(--raised); }
 .amountField > span { font-size: 30px; font-weight: 600; }
 .amountField input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #fff; font-family: inherit; font-size: 40px; font-weight: 700; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
@@ -294,13 +297,6 @@ button.listRow:hover { background: #1c1c1c; }
 .address { flex-direction: column; align-items: flex-start !important; }
 .address button { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 0; border: 0; background: none; color: #fff; font-size: 13px; text-align: left; }
 .address button .mono { overflow-wrap: anywhere; }
-.sheet { width: min(520px, calc(100vw - 24px)); max-height: calc(100svh - 24px); padding: 26px; border: 0; border-radius: 28px; background: var(--surface); color: #fff; font-family: var(--font-app), sans-serif; box-shadow: 0 0 0 1px var(--edge), 0 40px 90px rgba(0, 0, 0, .7); overflow-y: auto; }
-.sheet::backdrop { background: rgba(0, 0, 0, .66); backdrop-filter: blur(6px); }
-.sheet[open] { animation: popIn 300ms cubic-bezier(.2, .9, .3, 1.1); }
-@keyframes popIn { from { opacity: 0; transform: translateY(14px) scale(.97); } }
-.sheetHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-.sheetHead h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.025em; }
-.iconButton { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--raised); color: #fff; }
 .kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }
 .kinds button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border: 0; border-radius: 18px; background: var(--raised); color: var(--text-2); font-family: inherit; font-size: 14px; font-weight: 500; }
 .kinds button[aria-checked="true"] { background: #fff; color: #000; }
@@ -315,7 +311,7 @@ button.listRow:hover { background: #1c1c1c; }
 .money b { padding-left: 16px; color: var(--grey); font-weight: 500; }
 .money input { flex: 1; min-width: 0; padding-left: 6px; background: transparent; }
 .formError { margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; background: rgba(242, 114, 107, .1); color: var(--bad); font-size: 14px; }
-.sheet > .white, .made > .white { width: 100%; }
+.made > .white { width: 100%; }
 .made { display: flex; flex-direction: column; gap: 16px; }
 .madeSteps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; counter-reset: step; }
 .madeSteps li { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-left: 38px; position: relative; counter-increment: step; }
@@ -331,7 +327,8 @@ button.listRow:hover { background: #1c1c1c; }
 /* Without room for a third column the panel floats over the right edge. */
 @media (max-width: 1240px) {
   .app[data-panel] { grid-template-columns: 252px minmax(0, 1fr); }
-  .approvalPanel { position: fixed; top: 12px; right: 12px; bottom: 12px; z-index: 60; width: min(400px, calc(100vw - 24px)); height: auto; padding: 0; }
+  .approvalPanel, .sidePanel { position: fixed; top: 12px; right: 12px; bottom: 12px; z-index: 60; width: min(400px, calc(100vw - 24px)); height: auto; padding: 0; }
+  .panelCard { box-shadow: 0 0 0 1px var(--edge), 0 30px 80px rgba(0, 0, 0, .7); }
   .approvalPanel .approval { box-shadow: 0 0 0 1px var(--edge), 0 30px 80px rgba(0, 0, 0, .7); }
 }
 /* Too narrow or too short for one screen: the overview stacks and the page scrolls. */
@@ -348,8 +345,8 @@ button.listRow:hover { background: #1c1c1c; }
 @media (max-width: 760px) {
   .app, .app[data-panel] { grid-template-columns: minmax(0, 1fr); }
   /* On a phone the panel is a sheet over a dimmed page, above the tab bar, decision pinned below. */
-  .approvalPanel { inset: 0; width: auto; height: auto; justify-content: flex-end; gap: 10px; padding: 56px 8px calc(78px + env(safe-area-inset-bottom)); background: rgba(0, 0, 0, .72); backdrop-filter: blur(4px); }
-  .approvalPanel .approval { flex: 0 1 auto; max-height: 100%; }
+  .approvalPanel, .sidePanel { inset: 0; width: auto; height: auto; justify-content: flex-end; gap: 10px; padding: 56px 8px calc(78px + env(safe-area-inset-bottom)); background: rgba(0, 0, 0, .72); backdrop-filter: blur(4px); }
+  .approvalPanel .approval, .panelCard { flex: 0 1 auto; max-height: 100%; }
   .approvalPanel .decide { position: sticky; bottom: -22px; margin: 12px -24px -24px; padding: 14px 24px 22px; background: var(--surface); }
   .approvalPanel .amount { font-size: 44px; margin-top: 14px; }
   .sidebar .brand { display: none; }

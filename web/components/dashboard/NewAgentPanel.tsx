@@ -1,26 +1,27 @@
 "use client";
 
-// Creates an agent from the dashboard, so an owner who signed in with Google never needs the CLI.
+// Creates an agent from the dashboard's side panel, so an owner who signed in with Google never
+// needs the CLI.
 // The key pair is made in this browser; the owner signs twice (add the key to their account, set
 // its limits on Leash); then the key file is handed over once, with the config for their agent.
 
-import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Download, X } from "lucide-react";
+import { useState } from "react";
+import { Check, Copy, Download } from "lucide-react";
 import { KeyPair } from "near-api-js";
 import { AGENTS, mcpConfig, type Agent as AgentKind } from "@/components/setup/agents";
 import { AGENT_ALLOWANCE, AGENT_METHODS } from "@/lib/config";
 import { toUnits } from "@/lib/format";
 import type { OwnerSession } from "@/lib/session";
 import { BrandLogo } from "./AgentIcon";
+import SidePanel from "./SidePanel";
 import styles from "./dashboard.module.css";
 
 type Made = { name: string; file: string; kind: AgentKind };
 
-export default function NewAgentDialog(props: { kind: AgentKind | null; session: OwnerSession | null; owner: string; contract: string; token: string; onClose: () => void; onSignIn: () => void; onCreated: (name: string) => Promise<void> }) {
+export default function NewAgentPanel(props: { kind: AgentKind; session: OwnerSession | null; owner: string; contract: string; token: string; onClose: () => void; onSignIn: () => void; onCreated: (name: string) => Promise<void> }) {
   const { kind, session, owner, contract, token, onClose, onSignIn, onCreated } = props;
-  const ref = useRef<HTMLDialogElement>(null);
-  const [agent, setAgent] = useState<AgentKind>("claude");
-  const [name, setName] = useState("claude");
+  const [agent, setAgent] = useState<AgentKind>(kind);
+  const [name, setName] = useState<string>(kind);
   const [daily, setDaily] = useState("5");
   const [perPayment, setPerPayment] = useState("2");
   const [recipients, setRecipients] = useState("");
@@ -28,18 +29,6 @@ export default function NewAgentDialog(props: { kind: AgentKind | null; session:
   const [error, setError] = useState<string | null>(null);
   const [made, setMade] = useState<Made | null>(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (kind) {
-      setAgent(kind);
-      setName(kind);
-      setMade(null);
-      setError(null);
-      if (!d.open) d.showModal();
-    } else if (d.open) d.close();
-  }, [kind]);
 
   const owns = session?.accountId === owner;
   const valid = /^[a-z0-9-]{1,32}$/.test(name) && Number(daily) > 0 && Number(perPayment) > 0 && Number(perPayment) <= Number(daily);
@@ -88,11 +77,7 @@ export default function NewAgentDialog(props: { kind: AgentKind | null; session:
   const setup = made ? mcpConfig(made.kind, `~/.leash/${made.name}.json`) : null;
 
   return (
-    <dialog ref={ref} className={styles.sheet} onClose={onClose} aria-labelledby="new-agent-title">
-      <div className={styles.sheetHead}>
-        <h2 id="new-agent-title">{made ? `${made.name} is on a leash` : "New agent"}</h2>
-        <button className={styles.iconButton} onClick={onClose} aria-label="Close"><X size={18} /></button>
-      </div>
+    <SidePanel title={made ? `${made.name} is on a leash` : "New agent"} onClose={onClose}>
 
       {!made && (
         <>
@@ -114,11 +99,11 @@ export default function NewAgentDialog(props: { kind: AgentKind | null; session:
           </div>
           {error && <p className={styles.formError} role="alert">{error}</p>}
           {!session ? (
-            <button className={styles.white} onClick={onSignIn}>Sign in to create an agent</button>
+            <button className={`${styles.white} ${styles.wide}`} onClick={onSignIn}>Sign in to create an agent</button>
           ) : !owns ? (
             <p className={styles.formError}>You are signed in as another account; only the owner can add agents here.</p>
           ) : (
-            <button className={styles.white} onClick={create} disabled={!valid || step !== null}>{step ? `${step}…` : `Create ${name || "agent"}`}</button>
+            <button className={`${styles.white} ${styles.wide}`} onClick={create} disabled={!valid || step !== null}>{step ? `${step}…` : `Create ${name || "agent"}`}</button>
           )}
         </>
       )}
@@ -141,9 +126,9 @@ export default function NewAgentDialog(props: { kind: AgentKind | null; session:
             </li>
             <li><strong>Ask it to pay</strong><span className={styles.muted}>Under ${perPayment} it pays on its own. Above, it shows up here for you to approve.</span></li>
           </ol>
-          <button className={styles.white} onClick={onClose}>Done</button>
+          <button className={`${styles.white} ${styles.wide}`} onClick={onClose}>Done</button>
         </div>
       )}
-    </dialog>
+    </SidePanel>
   );
 }

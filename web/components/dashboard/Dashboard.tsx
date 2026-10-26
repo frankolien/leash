@@ -20,9 +20,9 @@ import type { Agent, Proposal, Request, Snapshot } from "@/lib/types";
 import ActivityCard from "./ActivityCard";
 import AgentList from "./AgentList";
 import AgentsCard from "./AgentsCard";
-import AmountDialog, { type AmountAsk } from "./AmountDialog";
+import AmountPanel, { type AmountAsk } from "./AmountPanel";
 import ApprovalCard from "./ApprovalCard";
-import NewAgentDialog from "./NewAgentDialog";
+import NewAgentPanel from "./NewAgentPanel";
 import ApprovalPanel, { useApprovalQueue } from "./ApprovalPanel";
 import ConnectCard from "./ConnectCard";
 import PageHeader from "./PageHeader";
@@ -75,9 +75,14 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const pause = useCallback(() => act("pause", () => call(contract, "pause", {}), "Paused. No agent can pay until you resume."), [act, call, contract]);
   const resume = useCallback(() => act("resume", () => call(contract, "resume", {}), "Resumed"), [act, call, contract]);
   const setWindow = useCallback((secs: number) => act("set the approval window", () => call(contract, "set_request_ttl", { secs }), `Requests now wait ${Math.round(secs / 60)} minutes`), [act, call, contract]);
+  // One side panel: opening a task replaces whatever task was open.
+  const openAsk = useCallback((a: AmountAsk) => {
+    setSetup(null);
+    setAsk(a);
+  }, []);
   const deposit = useCallback(() => {
     if (!snap) return;
-    setAsk({
+    openAsk({
       title: "Add money",
       hint: "Moves USDC from your account into the vault your agents spend from.",
       detail: <DepositDetail owner={owner} held={snap.held} />,
@@ -85,18 +90,31 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
       initial: snap.held > BigInt(0) ? toUsdc(snap.held) : "10",
       onConfirm: (usdc) => act("deposit", () => call(snap.token, "ft_transfer_call", { receiver_id: contract, amount: toUnits(usdc).toString(), msg: "" }, ONE_YOCTO), `Added ${usdc} USDC`),
     });
-  }, [act, call, contract, snap]);
+  }, [act, call, contract, snap, openAsk, owner]);
   const withdraw = useCallback(() => {
     if (!snap) return;
-    setAsk({
+    openAsk({
       title: "Withdraw",
       hint: "Moves USDC from the vault back to your account. Agents keep their limits.",
       confirm: "Withdraw",
       initial: toUsdc(snap.vault),
       onConfirm: (usdc) => act("withdraw", () => call(contract, "withdraw", { token: snap.token, amount: toUnits(usdc).toString() }), `Withdrew ${usdc} USDC`),
     });
-  }, [act, call, contract, snap]);
-  const openSetup = useCallback(() => setSetup("claude"), []);
+  }, [act, call, contract, snap, openAsk]);
+  const pickSetup = useCallback((kind: SetupAgent) => {
+    setAsk(null);
+    setSetup(kind);
+  }, []);
+  const openSetup = useCallback(() => pickSetup("claude"), [pickSetup]);
+  const closeTask = useCallback(() => {
+    setAsk(null);
+    setSetup(null);
+  }, []);
+  const task = ask !== null || setup !== null;
+  const showApprovals = useCallback(() => {
+    closeTask();
+    queue.reopen();
+  }, [closeTask, queue]);
   const afterAgent = useCallback(async () => { await refresh(); }, [refresh]);
 
   const waiting = snap ? snap.requests.length + snap.proposals.length : 0;
@@ -127,7 +145,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
           <header className={styles.ovHead}>
             <div><span className={styles.muted}>{new Date(now).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span><h1>{greeting(now)}</h1></div>
             <div className={styles.ovActions}>
-              {queue.pending.length > 0 && !queue.next && <button className={styles.waitingPill} onClick={queue.reopen}><span className={styles.pulse} aria-hidden="true" />{queue.pending.length} waiting</button>}
+              {queue.pending.length > 0 && (task || !queue.next) && <button className={styles.waitingPill} onClick={showApprovals}><span className={styles.pulse} aria-hidden="true" />{queue.pending.length} waiting</button>}
               {snap.paused
                 ? <button className={styles.dark} onClick={resume} disabled={busy !== null || !wallet.isOwner}><Play size={16} /> Resume</button>
                 : <button className={styles.dark} onClick={pause} disabled={busy !== null || !wallet.isOwner} title="Stops every agent key at once"><Pause size={16} /> Pause all</button>}
@@ -143,7 +161,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
       page = (
         <div className={styles.column}>
           <PageHeader title="Agents" status={`${active} active${revoked ? `, ${revoked} revoked` : ""}`} action={<button className={styles.dark} onClick={openSetup}><Plus size={17} /> New agent</button>} />
-          <ConnectCard onPick={setSetup} />
+          <ConnectCard onPick={pickSetup} />
           <AgentList agents={snap.agents} names={names} paused={snap.paused} busy={busy} onRevoke={revoke} />
         </div>
       );
@@ -180,7 +198,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   }
 
   return (
-    <div className={styles.app} data-panel={snap && queue.next ? "" : undefined}>
+    <div className={styles.app} data-panel={snap && (task || queue.next) ? "" : undefined}>
       <Sidebar
         view={view}
         waiting={waiting}
@@ -215,9 +233,9 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         {!snap && !error && <Skeleton />}
         {page}
       </main>
-      {snap && queue.next && <ApprovalPanel request={queue.next} total={queue.pending.length} agents={snap.agents} log={snap.log} network={network} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onClose={queue.later} />}
-      <AmountDialog ask={ask} onClose={() => setAsk(null)} />
-      <NewAgentDialog kind={setup} session={wallet.session} owner={owner} contract={contract} token={snap?.token ?? USDC[network]} onClose={() => setSetup(null)} onSignIn={wallet.onConnect} onCreated={afterAgent} />
+      {snap && ask && <AmountPanel key={ask.title} ask={ask} onClose={closeTask} />}
+      {snap && setup && <NewAgentPanel key={setup} kind={setup} session={wallet.session} owner={owner} contract={contract} token={snap.token ?? USDC[network]} onClose={closeTask} onSignIn={wallet.onConnect} onCreated={afterAgent} />}
+      {snap && !task && queue.next && <ApprovalPanel request={queue.next} total={queue.pending.length} agents={snap.agents} log={snap.log} network={network} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onClose={queue.later} />}
       {toast && <div className={styles.toast} data-bad={toast.bad || undefined} role="status">{toast.text}</div>}
     </div>
   );
