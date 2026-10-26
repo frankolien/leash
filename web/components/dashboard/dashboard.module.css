@@ -28,7 +28,9 @@
 }
 .app ::selection { background: #fff; color: #000; }
 .app :global(.mono) { font-family: var(--font-mono), ui-monospace, monospace; }
-.app a:focus-visible, .app button:focus-visible, .app input:focus-visible, .app select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.app a:focus-visible, .app button:focus-visible, .app select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* Fields show focus as a lifted surface, not a ring; the caret already says where typing goes. */
+.app input:focus-visible { outline: none; }
 
 /* Buttons. White for the main action, raised grey for the rest; the global button classes are
    mapped onto the same two so every card speaks one language. */
@@ -320,7 +322,9 @@ button.listRow:hover { background: #1c1c1c; }
 .form label { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--grey); }
 .form label i { font-style: normal; color: #5f5f5f; }
 .form input { min-height: 48px; padding: 0 16px; border: 0; border-radius: 16px; background: var(--raised); color: #fff; font-family: inherit; font-size: 16px; outline: none; }
-.form input:focus { box-shadow: 0 0 0 1px #4a4a4a; }
+.form input:focus { background: #2e2e2e; }
+.money:focus-within { background: #2e2e2e; }
+.money input:focus { background: transparent; }
 .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .pair label, .money { min-width: 0; }
 .money { display: flex; align-items: center; border-radius: 16px; background: var(--raised); }
