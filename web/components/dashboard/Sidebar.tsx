@@ -32,12 +32,16 @@ export default function Sidebar(props: {
   canAct: boolean;
   busy: string | null;
   onConnect: () => void;
+  /// False until the sign-in providers have restored any session, so a returning owner never sees
+  /// "Sign in" flash; preparing names the account setup running in the background.
+  authReady: boolean;
+  preparing: string | null;
   onDisconnect: () => void;
   onPause: () => void;
   onResume: () => void;
   onSetup: () => void;
 }) {
-  const { view, waiting, owner, network, account, accountLabel, paused, canAct, busy, onConnect, onDisconnect, onPause, onResume, onSetup } = props;
+  const { view, waiting, owner, network, account, accountLabel, paused, canAct, busy, onConnect, onDisconnect, onPause, onResume, onSetup, authReady, preparing } = props;
   const [promo, setPromo] = useState(false);
   useEffect(() => {
     try { setPromo(window.localStorage.getItem(PROMO_KEY) !== "1"); } catch { setPromo(true); }
@@ -82,6 +86,8 @@ export default function Sidebar(props: {
               <span className={styles.accountId}>{accountLabel ?? shortAccount(account)}<small>{account === owner ? (accountLabel ? `${shortAccount(account)}, ${network}` : network === "mainnet" ? "Mainnet" : "Testnet") : `Viewing ${shortAccount(owner)}`}</small></span>
               <button className={styles.accountButton} onClick={onDisconnect}>Sign out</button>
             </>
+          ) : !authReady || preparing ? (
+            <span className={styles.accountId}>{shortAccount(owner)}<small>{preparing ? `${preparing}…` : "Signing you in…"}</small></span>
           ) : (
             <>
               <span className={styles.accountId}>{shortAccount(owner)}<small>{network === "mainnet" ? "Mainnet" : "Testnet"}, read only</small></span>

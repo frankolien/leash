@@ -153,7 +153,6 @@ a.row:hover { background: #1c1c1c; }
 .panelCard { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 24px; overflow-y: auto; border-radius: 24px; background: var(--surface); box-shadow: 0 0 0 1px var(--edge); }
 .panelHint { margin: 0 0 18px; color: var(--grey); font-size: 15px; line-height: 1.45; }
 .amountForm { flex: 1; display: flex; flex-direction: column; gap: 14px; }
-.amountForm .depositDetail { margin: 0; }
 .amountForm .dialogActions { margin-top: auto; padding-top: 20px; }
 .panelCard .made { flex: 1; }
 .panelCard .made > .white, .wide { width: 100%; min-height: 52px; }
@@ -289,16 +288,25 @@ button.listRow:hover { background: #1c1c1c; }
 .amountField input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #fff; font-family: inherit; font-size: 40px; font-weight: 700; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .amountField small { color: var(--grey); font-size: 14px; }
 .app .amountField input:focus-visible { outline: none; }
+.amountField[data-over], .amountField[data-over]:focus-within { box-shadow: inset 0 0 0 1px var(--bad); }
+.amountNote { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -4px; padding: 0 4px; color: var(--grey); font-size: 14px; font-variant-numeric: tabular-nums; }
+.amountField[data-over] + .amountNote span { color: var(--bad); }
+.receive { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border-radius: 18px; background: var(--raised); }
+.qr { display: block; width: 132px; height: 132px; margin-bottom: 8px; padding: 12px; border-radius: 14px; background: #0f0f0f; }
+.qr svg { display: block; width: 100%; height: 100%; }
+.copyAddress { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-width: 0; padding: 0; border: 0; background: none; color: #fff; font-size: 13px; line-height: 1.5; text-align: left; }
+.copyAddress .mono { min-width: 0; overflow-wrap: anywhere; word-break: break-all; }
+.copyAddress svg { flex-shrink: 0; margin-top: 2px; color: var(--grey); }
+.fund { display: flex; flex-direction: column; gap: 14px; }
+.fundHead { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.fundHead strong { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+.fundHead .muted { font-size: 15px; line-height: 1.45; }
+.faucet { display: block; color: var(--grey); font-size: 13px; line-height: 1.45; text-decoration: none; }
+.faucet:hover { color: #fff; }
 .amountField:focus-within { box-shadow: inset 0 0 0 1px #4a4a4a; }
 .dialogActions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 22px; }
 .dialogActions :global(.btn) { min-height: 52px; }
 
-.depositDetail { display: flex; flex-direction: column; gap: 12px; margin: -8px 0 18px; padding: 14px 16px; border-radius: 16px; background: var(--raised); }
-.depositDetail > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.depositDetail b { font-size: 16px; font-weight: 600; }
-.address { flex-direction: column; align-items: flex-start !important; }
-.address button { display: flex; align-items: flex-start; width: 100%; min-width: 0; gap: 8px; max-width: 100%; padding: 0; border: 0; background: none; color: #fff; font-size: 13px; text-align: left; }
-.address button .mono { min-width: 0; overflow-wrap: anywhere; word-break: break-all; }
 .kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }
 .kinds button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border: 0; border-radius: 18px; background: var(--raised); color: var(--text-2); font-family: inherit; font-size: 14px; font-weight: 500; }
 .kinds button[aria-checked="true"] { background: #fff; color: #000; }
@@ -372,3 +380,6 @@ button.listRow:hover { background: #1c1c1c; }
   .setting { flex-direction: column; align-items: flex-start; }
   .pageHeader h1 { font-size: 30px; }
 }
+.spin { animation: spin 900ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.faucet svg { margin-left: 4px; vertical-align: -2px; }

@@ -120,7 +120,8 @@ export function SignInCard({ ready, embedded, preparing, error, onWallet }: Sign
 
 export default function SignInDialog({ open, onClose, ...card }: SignInProps & { open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const showing = open || !!card.preparing;
+  // Account setup shows here only when the visitor asked to sign in; otherwise it runs quietly.
+  const showing = open;
   useEffect(() => {
     const d = ref.current;
     if (!d) return;

@@ -2,13 +2,14 @@
 
 import { useCallback, useState } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
+import { plainError } from "@/lib/errors";
 
 export type Act = (label: string, run: () => Promise<unknown>, done: string) => Promise<void>;
 
 /// The signed-in owner and a single way to run a write: refuses when the session is not the
 /// owner's, reports the outcome, and refreshes the page afterwards.
 export function useWallet(owner: string, afterWrite: () => Promise<void>, say: (text: string, bad?: boolean) => void) {
-  const { session, openSignIn, signOut } = useAuth();
+  const { session, ready, preparing, openSignIn, signOut } = useAuth();
   const [busy, setBusy] = useState<string | null>(null);
   const account = session?.accountId ?? null;
   const isOwner = account === owner;
@@ -26,7 +27,8 @@ export function useWallet(owner: string, afterWrite: () => Promise<void>, say: (
         say(done);
         await afterWrite();
       } catch (e) {
-        say(e instanceof Error ? e.message : String(e), true);
+        console.error(`Leash: ${label} failed`, e);
+        say(plainError(e), true);
       } finally {
         setBusy(null);
       }
@@ -42,5 +44,5 @@ export function useWallet(owner: string, afterWrite: () => Promise<void>, say: (
     [session],
   );
 
-  return { account, session, isOwner, busy, onConnect: openSignIn, onDisconnect: signOut, act, call };
+  return { account, session, isOwner, busy, ready, preparing, onConnect: openSignIn, onDisconnect: signOut, act, call };
 }

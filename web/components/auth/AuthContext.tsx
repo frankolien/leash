@@ -24,6 +24,8 @@ export type Embedded = {
   /// Email sign-in inside our own card: send a one-time code, then check it.
   sendEmailCode: (email: string) => Promise<void>;
   verifyEmailCode: (code: string) => Promise<void>;
+  /// Asks the sponsor for a few test USDC on testnet.
+  requestTestUsdc: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -36,6 +38,8 @@ type Auth = {
   openSignIn: () => void;
   signOut: () => Promise<void>;
   card: SignInProps;
+  /// Set when the signed-in owner can ask the sponsor for test USDC.
+  testUsdc: (() => Promise<void>) | null;
   /// A page that shows the sign-in card itself calls this while mounted, so the dialog stays shut.
   showInline: () => () => void;
 };
@@ -99,7 +103,8 @@ export function AuthCore({ embedded, children }: { embedded: Embedded | null; ch
   const preparing = embedded?.preparing ?? null;
   const error = embedded?.error ?? walletError;
   const card: SignInProps = { ready, embedded, preparing, error, onWallet: signInWithWallet };
-  const value: Auth = { session, ready, preparing, error, embeddedEnabled: embedded !== null, openSignIn, signOut, card, showInline };
+  const testUsdc = embedded?.session ? embedded.requestTestUsdc : null;
+  const value: Auth = { session, ready, preparing, error, embeddedEnabled: embedded !== null, openSignIn, signOut, card, showInline, testUsdc };
 
   return (
     <AuthContext.Provider value={value}>

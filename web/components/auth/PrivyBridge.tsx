@@ -13,6 +13,27 @@ import { AuthCore, type Embedded } from "./AuthContext";
 
 type Linked = { type: string; chainType?: string; address?: string; email?: string };
 
+// Accounts this browser has already seen readied. A returning owner gets their session at once
+// instead of waiting on the sponsor again; a new device checks once, in the background.
+const READIED = "leash.readied";
+
+function readiedHere(address: string): boolean {
+  try {
+    return (JSON.parse(localStorage.getItem(READIED) ?? "[]") as string[]).includes(address);
+  } catch {
+    return false;
+  }
+}
+
+function rememberReadied(address: string) {
+  try {
+    const known = JSON.parse(localStorage.getItem(READIED) ?? "[]") as string[];
+    if (!known.includes(address)) localStorage.setItem(READIED, JSON.stringify([...known, address]));
+  } catch {
+    // Without storage the owner just waits for the check next time.
+  }
+}
+
 function Bridge({ children }: { children: ReactNode }) {
   const { ready, authenticated, user, logout } = usePrivy();
   // Headless flows, so a click goes straight to the provider instead of through Privy's modal.
@@ -40,13 +61,19 @@ function Bridge({ children }: { children: ReactNode }) {
   }, [ready, authenticated, address, createWallet]);
 
   useEffect(() => {
-    if (!address || !identityToken || readied === address) return;
+    if (!address || readied === address) return;
+    if (readiedHere(address)) {
+      setReadied(address);
+      return;
+    }
+    if (!identityToken) return;
     let cancelled = false;
     setPreparing("Getting your account ready");
     fetch("/api/onboard", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${identityToken}` }, body: JSON.stringify({ accountId: address }) })
       .then(async (res) => {
         const body = await res.json();
         if (!res.ok) throw new Error(body.error ?? "your account could not be readied");
+        rememberReadied(address);
         if (!cancelled) {
           setReadied(address);
           setError(null);
@@ -79,6 +106,12 @@ function Bridge({ children }: { children: ReactNode }) {
     },
     sendEmailCode: (email) => sendCode({ email }),
     verifyEmailCode: (code) => loginWithCode({ code }),
+    requestTestUsdc: async () => {
+      if (!address || !identityToken) throw new Error("sign in first");
+      const res = await fetch("/api/test-usdc", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${identityToken}` }, body: JSON.stringify({ accountId: address }) });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? "no test USDC was sent");
+    },
     logout: async () => {
       await logout();
       setReadied(null);

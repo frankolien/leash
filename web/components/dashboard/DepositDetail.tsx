@@ -1,23 +1,71 @@
 "use client";
 
-// What sits in the owner's own account, ready to go into the vault, and where to send more.
+// Where USDC comes from before it goes into the vault: the owner's own account. Shows the account
+// to send to (with a code a phone wallet can scan) and, on testnet, a tap for test USDC.
 
-import { useState } from "react";
-import { Check, Copy } from "lucide-react";
-import { toUsdc } from "@/lib/format";
+import { useEffect, useState } from "react";
+import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
+import QRCode from "qrcode";
+import { plainError } from "@/lib/errors";
 import styles from "./dashboard.module.css";
 
-export default function DepositDetail({ owner, held }: { owner: string; held: bigint }) {
+function useQr(text: string) {
+  const [svg, setSvg] = useState<string | null>(null);
+  useEffect(() => {
+    QRCode.toString(text, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#ffffff", light: "#00000000" } }).then(setSvg, () => setSvg(null));
+  }, [text]);
+  return svg;
+}
+
+export function ReceiveAddress({ owner, scan = false }: { owner: string; scan?: boolean }) {
   const [copied, setCopied] = useState(false);
+  const qr = useQr(owner);
   return (
-    <div className={styles.depositDetail}>
-      <div><span className={styles.muted}>In your account</span><b className="tabular">${toUsdc(held)} USDC</b></div>
-      <div className={styles.address}>
-        <span className={styles.muted}>Send USDC on NEAR to</span>
-        <button onClick={async () => { await navigator.clipboard.writeText(owner); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label="Copy your account">
-          <span className="mono">{owner}</span>{copied ? <Check size={14} /> : <Copy size={14} />}
-        </button>
+    <div className={styles.receive}>
+      {scan && qr && <span className={styles.qr} role="img" aria-label="Code for your account" dangerouslySetInnerHTML={{ __html: qr }} />}
+      <span className={styles.muted}>Send USDC on NEAR to</span>
+      <button className={styles.copyAddress} onClick={async () => { await navigator.clipboard.writeText(owner); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label="Copy your account">
+        <span className="mono">{owner}</span>{copied ? <Check size={15} /> : <Copy size={15} />}
+      </button>
+    </div>
+  );
+}
+
+/// The empty state of Add money: nothing in the owner's account yet.
+export function FundAccount({ owner, testnet, testUsdc, onFunded }: { owner: string; testnet: boolean; testUsdc: (() => Promise<void>) | null; onFunded: (text: string, bad?: boolean) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  async function tap() {
+    if (!testUsdc) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      await testUsdc();
+      onFunded("$5 of test USDC is in your account");
+    } catch (e) {
+      setProblem(plainError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className={styles.fund}>
+      <div className={styles.fundHead}>
+        <strong>Your account has no USDC yet</strong>
+        <span className={styles.muted}>Add some to your account first, then move it into the vault for your agents.</span>
       </div>
+      {testnet && testUsdc && (
+        <button className={`${styles.white} ${styles.wide}`} onClick={tap} disabled={busy}>{busy && <Loader2 size={17} className={styles.spin} />}Get $5 of test USDC</button>
+      )}
+      {problem && <p className={styles.formError} role="alert">{problem}</p>}
+      <ReceiveAddress owner={owner} scan />
+      {testnet && (
+        <a className={styles.faucet} href="https://faucet.circle.com" target="_blank" rel="noreferrer">
+          Or use Circle's testnet faucet: pick NEAR Testnet and paste your account <ExternalLink size={14} />
+        </a>
+      )}
     </div>
   );
 }

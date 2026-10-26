@@ -15,6 +15,11 @@ export const USDC_STORAGE = BigInt(125) * (MILLI / BigInt(100));
 /// Leash storage credit: enough for a handful of agents, their requests and the log.
 export const LEASH_STORAGE = BigInt(100) * MILLI;
 const TGAS = BigInt(10) ** BigInt(12);
+const ONE_YOCTO = BigInt(1);
+/// Test USDC handed to a new testnet owner, in the token's 6-decimal units: $5.
+export const TEST_USDC = BigInt(5_000_000);
+/// An account holding at least $1 already has something to try Leash with.
+const ENOUGH_USDC = BigInt(1_000_000);
 
 export type Readiness = { exists: boolean; usdcRegistered: boolean; storageCredit: bigint };
 
@@ -46,4 +51,24 @@ export async function onboard(accountId: string, network: Network): Promise<Read
     await sponsor.callFunction({ contractId: CONTRACT[network], methodName: "deposit_storage", args: { account_id: accountId }, deposit: LEASH_STORAGE, gas: BigInt(30) * TGAS });
   }
   return readiness(accountId, network);
+}
+
+async function usdcBalance(provider: JsonRpcProvider, accountId: string): Promise<bigint> {
+  const balance = await provider.callFunction({ contractId: USDC.testnet, method: "ft_balance_of", args: { account_id: accountId } });
+  return BigInt((balance as string) ?? "0");
+}
+
+/// Sends TEST_USDC from the sponsor's own stock, which is topped up from Circle's faucet. Refuses,
+/// with a reason the owner can act on, when the account already holds some or the stock is out.
+export async function giveTestUsdc(accountId: string): Promise<{ given: string; reason?: undefined } | { given: null; reason: string }> {
+  const sponsor = sponsorAccount("testnet");
+  const provider = new JsonRpcProvider({ url: RPC.testnet });
+  if ((await usdcBalance(provider, accountId)) >= ENOUGH_USDC) return { given: null, reason: "your account already has test USDC" };
+  if ((await usdcBalance(provider, sponsor.accountId)) < TEST_USDC) return { given: null, reason: "the test USDC tap is empty right now" };
+  const ready = await readiness(accountId, "testnet");
+  if (!ready.usdcRegistered) {
+    await sponsor.callFunction({ contractId: USDC.testnet, methodName: "storage_deposit", args: { account_id: accountId, registration_only: true }, deposit: USDC_STORAGE, gas: BigInt(30) * TGAS });
+  }
+  await sponsor.callFunction({ contractId: USDC.testnet, methodName: "ft_transfer", args: { receiver_id: accountId, amount: TEST_USDC.toString(), memo: "Leash test USDC" }, deposit: ONE_YOCTO, gas: BigInt(30) * TGAS });
+  return { given: TEST_USDC.toString() };
 }

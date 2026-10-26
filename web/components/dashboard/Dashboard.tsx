@@ -15,7 +15,8 @@ import { useWallet } from "@/hooks/useWallet";
 import { agentLabel, toUnits, toUsdc } from "@/lib/format";
 import { greeting, recipients } from "@/lib/insights";
 import { USDC, contractOf, networkOf } from "@/lib/config";
-import DepositDetail from "./DepositDetail";
+import { FundAccount, ReceiveAddress } from "./DepositDetail";
+import { useAuth } from "@/components/auth/AuthContext";
 import type { Agent, Proposal, Request, Snapshot } from "@/lib/types";
 import ActivityCard from "./ActivityCard";
 import AgentList from "./AgentList";
@@ -57,7 +58,8 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const names = useNames(owner, snap?.agents);
   const now = useNow();
   const view = useView();
-  const [ask, setAsk] = useState<AmountAsk | null>(null);
+  const [moving, setMoving] = useState<"deposit" | "withdraw" | null>(null);
+  const { testUsdc } = useAuth();
   const [setup, setSetup] = useState<SetupAgent | null>(null);
   const queue = useApprovalQueue(snap?.requests);
   useLiveActivity(snap?.log, names, say);
@@ -76,41 +78,55 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const resume = useCallback(() => act("resume", () => call(contract, "resume", {}), "Resumed"), [act, call, contract]);
   const setWindow = useCallback((secs: number) => act("set the approval window", () => call(contract, "set_request_ttl", { secs }), `Requests now wait ${Math.round(secs / 60)} minutes`), [act, call, contract]);
   // One side panel: opening a task replaces whatever task was open.
-  const openAsk = useCallback((a: AmountAsk) => {
-    setSetup(null);
-    setAsk(a);
-  }, []);
   const deposit = useCallback(() => {
-    if (!snap) return;
-    openAsk({
+    setSetup(null);
+    setMoving("deposit");
+  }, []);
+  const withdraw = useCallback(() => {
+    setSetup(null);
+    setMoving("withdraw");
+  }, []);
+  const funded = useCallback(async (text: string, bad?: boolean) => {
+    say(text, bad);
+    await refresh();
+  }, [say, refresh]);
+
+  // Built from the latest snapshot on every render, so the panel sees money as it arrives.
+  let ask: AmountAsk | null = null;
+  if (snap && moving === "deposit") {
+    ask = {
       title: "Add money",
       hint: "Moves USDC from your account into the vault your agents spend from.",
-      detail: <DepositDetail owner={owner} held={snap.held} />,
+      detail: <ReceiveAddress owner={owner} />,
       confirm: "Add to vault",
-      initial: snap.held > BigInt(0) ? toUsdc(snap.held) : "10",
-      onConfirm: (usdc) => act("deposit", () => call(snap.token, "ft_transfer_call", { receiver_id: contract, amount: toUnits(usdc).toString(), msg: "" }, ONE_YOCTO), `Added ${usdc} USDC`),
-    });
-  }, [act, call, contract, snap, openAsk, owner]);
-  const withdraw = useCallback(() => {
-    if (!snap) return;
-    openAsk({
+      initial: toUsdc(snap.held < toUnits("10") ? snap.held : toUnits("10")),
+      max: snap.held,
+      source: "in your account",
+      empty: <FundAccount owner={owner} testnet={network === "testnet"} testUsdc={wallet.isOwner ? testUsdc : null} onFunded={funded} />,
+      onConfirm: (usdc) => act("deposit", () => call(snap.token, "ft_transfer_call", { receiver_id: contract, amount: toUnits(usdc).toString(), msg: "" }, ONE_YOCTO), `Added ${usdc} USDC to the vault`),
+    };
+  } else if (snap && moving === "withdraw") {
+    ask = {
       title: "Withdraw",
       hint: "Moves USDC from the vault back to your account. Agents keep their limits.",
       confirm: "Withdraw",
       initial: toUsdc(snap.vault),
+      max: snap.vault,
+      source: "in the vault",
+      empty: <p className={styles.panelHint}>The vault is empty, so there is nothing to withdraw.</p>,
       onConfirm: (usdc) => act("withdraw", () => call(contract, "withdraw", { token: snap.token, amount: toUnits(usdc).toString() }), `Withdrew ${usdc} USDC`),
-    });
-  }, [act, call, contract, snap, openAsk]);
+    };
+  }
   const pickSetup = useCallback((kind: SetupAgent) => {
-    setAsk(null);
+    setMoving(null);
     setSetup(kind);
   }, []);
   const openSetup = useCallback(() => pickSetup("claude"), [pickSetup]);
   const closeTask = useCallback(() => {
-    setAsk(null);
+    setMoving(null);
     setSetup(null);
   }, []);
-  const task = ask !== null || setup !== null;
+  const task = moving !== null || setup !== null;
   const showApprovals = useCallback(() => {
     closeTask();
     queue.reopen();
@@ -210,6 +226,8 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         canAct={wallet.isOwner}
         busy={busy}
         onConnect={wallet.onConnect}
+        authReady={wallet.ready}
+        preparing={wallet.preparing}
         onDisconnect={wallet.onDisconnect}
         onPause={pause}
         onResume={resume}
@@ -220,7 +238,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
           <a href="/" className="wordmark" aria-label="Leash home"><span className="mark" aria-hidden="true" />Leash</a>
           {wallet.account
             ? <button className={styles.dark} onClick={wallet.onDisconnect}>Sign out</button>
-            : <button className={styles.white} onClick={wallet.onConnect}>Sign in</button>}
+            : wallet.ready && !wallet.preparing && <button className={styles.white} onClick={wallet.onConnect}>Sign in</button>}
         </div>
         {snap?.paused && <div className={styles.banner}>Paused. No agent can pay until you resume.</div>}
         {!snap && error && (
@@ -233,7 +251,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         {!snap && !error && <Skeleton />}
         {page}
       </main>
-      {snap && ask && <AmountPanel key={ask.title} ask={ask} onClose={closeTask} />}
+      {ask && <AmountPanel key={`${moving}-${ask.max > BigInt(0)}`} ask={ask} onClose={closeTask} />}
       {snap && setup && <NewAgentPanel key={setup} kind={setup} session={wallet.session} owner={owner} contract={contract} token={snap.token ?? USDC[network]} onClose={closeTask} onSignIn={wallet.onConnect} onCreated={afterAgent} />}
       {snap && !task && queue.next && <ApprovalPanel request={queue.next} total={queue.pending.length} agents={snap.agents} log={snap.log} network={network} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onClose={queue.later} />}
       {toast && <div className={styles.toast} data-bad={toast.bad || undefined} role="status">{toast.text}</div>}

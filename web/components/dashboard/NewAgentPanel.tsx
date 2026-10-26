@@ -10,6 +10,7 @@ import { Check, Copy, Download } from "lucide-react";
 import { KeyPair } from "near-api-js";
 import { AGENTS, mcpConfig, type Agent as AgentKind } from "@/components/setup/agents";
 import { AGENT_ALLOWANCE, AGENT_METHODS } from "@/lib/config";
+import { plainError } from "@/lib/errors";
 import { toUnits } from "@/lib/format";
 import type { OwnerSession } from "@/lib/session";
 import { BrandLogo } from "./AgentIcon";
@@ -58,7 +59,8 @@ export default function NewAgentPanel(props: { kind: AgentKind; session: OwnerSe
       setMade({ name, file, kind: agent });
       await onCreated(name);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      console.error("Leash: creating an agent failed", e);
+      setError(plainError(e));
     } finally {
       setStep(null);
     }
