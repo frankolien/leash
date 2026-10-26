@@ -168,7 +168,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
               <button className={styles.whiteSm} onClick={deposit} disabled={busy !== null}><Plus size={16} /> Add money</button>
             </div>
           </header>
-          <VaultCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} />
+          <VaultCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} onDeposit={deposit} />
           <AgentsCard agents={snap.agents} names={names} paused={snap.paused} proposals={snap.proposals} busy={busy} onDismiss={dismiss} onAdd={openSetup} />
           <ActivityCard log={snap.log} names={names} limit={6} />
         </div>

@@ -1,7 +1,8 @@
 "use client";
 
-// The vault: the balance agents spend from (hideable on a shared screen), what they spent today
-// against their combined limits, and the last seven days from the on-chain log.
+// The vault: the balance agents spend from (hideable on a shared screen), USDC waiting in the
+// owner's own account to go in, what agents spent today against their combined limits, and the
+// last seven days from the on-chain log.
 
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Eye, EyeOff } from "lucide-react";
@@ -17,7 +18,7 @@ function dollars(units: bigint): string {
   return `$${(Number(units) / 1e6).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function VaultCard({ snapshot: s, now, busy, onWithdraw }: { snapshot: Snapshot; now: number; busy: string | null; onWithdraw: () => void }) {
+export default function VaultCard({ snapshot: s, now, busy, onWithdraw, onDeposit }: { snapshot: Snapshot; now: number; busy: string | null; onWithdraw: () => void; onDeposit: () => void }) {
   const [hidden, setHidden] = useState(false);
   useEffect(() => {
     try { setHidden(window.localStorage.getItem(HIDE_KEY) === "1"); } catch {}
@@ -36,7 +37,14 @@ export default function VaultCard({ snapshot: s, now, busy, onWithdraw }: { snap
           <button onClick={toggle} aria-label={hidden ? "Show balance" : "Hide balance"} aria-pressed={hidden}>{hidden ? <EyeOff size={16} /> : <Eye size={16} />}</button>
         </div>
         <strong className={styles.balance} aria-label={hidden ? "Balance hidden" : `${toUsdc(s.vault)} USDC`}>{hidden ? "$••••" : dollars(s.vault)}</strong>
-        <span className={styles.muted}>USDC on NEAR, in {s.contract}</span>
+        {s.held > BigInt(0) ? (
+          <div className={styles.waiting}>
+            <span><b className="tabular">{hidden ? "$••••" : dollars(s.held)}</b> in your account</span>
+            <button className={styles.waitingAdd} onClick={onDeposit} disabled={busy !== null}>Add to vault</button>
+          </div>
+        ) : (
+          <span className={styles.muted}>USDC your agents spend from</span>
+        )}
         <div className={styles.today}>
           <span>Spent today</span><b className="tabular">{dollars(spentToday(s.agents, now))}</b><span>of ${toUsdc(dailyTotal(s.agents))} across agents</span>
         </div>
