@@ -191,6 +191,13 @@ a.row:hover { background: #1c1c1c; }
 .facts > div { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 11px 0; border-top: 1px solid var(--edge); font-size: 14px; }
 .facts dt { color: var(--grey); overflow-wrap: anywhere; }
 .facts dd { margin: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+.checks { list-style: none; margin: 6px 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.checks li { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; line-height: 1.4; color: var(--text-2); }
+.checks li svg { flex-shrink: 0; margin-top: 1px; color: var(--grey); }
+.checks li[data-tone="ok"] svg { color: var(--good); }
+.checks li[data-tone="danger"] { color: var(--bad); }
+.checks li[data-tone="danger"] svg { color: var(--bad); }
+.checkPending { color: var(--grey) !important; }
 .approval .track + .muted { margin-top: 8px; }
 .decide { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; margin-top: 18px; }
 .decide :global(.btn) { min-height: 52px; font-size: 16px; }

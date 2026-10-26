@@ -104,6 +104,11 @@ function editDistance(a: string, b: string): number {
   return rows[a.length][b.length];
 }
 
+/// Folds the characters scammers swap for each other, so vend0r and vendor read the same.
+function skeleton(account: string): string {
+  return account.toLowerCase().replace(/rn/g, "m").replace(/vv/g, "w").replace(/[0]/g, "o").replace(/[1il|]/g, "l").replace(/[5]/g, "s").replace(/[-_]/g, "");
+}
+
 class Leash {
   readonly key: KeyFile;
   readonly provider: JsonRpcProvider;
@@ -147,9 +152,15 @@ class Leash {
       } catch {
         out.push(`could not check whether ${to} is registered on ${policy.token}`);
       }
-      for (const name of policy.allowlist) {
-        const distance = editDistance(name, to);
-        if (distance > 0 && distance <= 2) out.push(`${to} looks like ${name} from the allowlist but is not it`);
+      // Trusted names are the allowlist plus every account the owner's agents have paid.
+      const log = (await this.view<{ event: string; to: string | null }[]>("get_log", { owner: this.key.owner }).catch(() => [])) ?? [];
+      const paid = log.filter((e) => (e.event === "pay" || e.event === "request_approved") && e.to).map((e) => e.to as string);
+      for (const name of new Set([...policy.allowlist, ...paid])) {
+        if (name === to) continue;
+        if (skeleton(name) === skeleton(to) || editDistance(name, to) <= 2) {
+          out.push(`${to} looks like ${name}, which the owner trusts, but it is a different account; do not pay it without asking`);
+          break;
+        }
       }
     }
     return out;

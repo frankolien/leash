@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
-import type { Agent, Names, Request } from "@/lib/types";
+import type { Agent, LogEntry, Names, Network, Request } from "@/lib/types";
 import ApprovalCard from "./ApprovalCard";
 import styles from "./dashboard.module.css";
 
@@ -29,15 +29,15 @@ export function useApprovalQueue(requests: Request[] | undefined) {
   };
 }
 
-export default function ApprovalPanel(props: { request: Request; total: number; agents: Agent[]; names: Names; now: number; busy: string | null; onApprove: (r: Request) => void; onDeny: (r: Request) => void; onClose: () => void }) {
-  const { request: r, total, agents, names, now, busy, onApprove, onDeny, onClose } = props;
+export default function ApprovalPanel(props: { request: Request; total: number; agents: Agent[]; log: LogEntry[]; network: Network; names: Names; now: number; busy: string | null; onApprove: (r: Request) => void; onDeny: (r: Request) => void; onClose: () => void }) {
+  const { request: r, total, agents, log, network, names, now, busy, onApprove, onDeny, onClose } = props;
   return (
     <aside className={styles.approvalPanel} aria-label="Payment waiting for approval">
       <div className={styles.panelBar}>
         <span>{total > 1 ? `1 of ${total} waiting` : "Waiting for you"}</span>
         <button onClick={onClose} aria-label="Hide until later"><X size={17} /></button>
       </div>
-      <ApprovalCard key={r.id} request={r} agent={agents.find((a) => a.key === r.key)} names={names} now={now} busy={busy} onApprove={() => onApprove(r)} onDeny={() => onDeny(r)} />
+      <ApprovalCard key={r.id} request={r} agent={agents.find((a) => a.key === r.key)} log={log} network={network} names={names} now={now} busy={busy} onApprove={() => onApprove(r)} onDeny={() => onDeny(r)} />
     </aside>
   );
 }

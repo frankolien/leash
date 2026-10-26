@@ -88,7 +88,7 @@ claude mcp add leash -e LEASH_KEY_FILE=~/.leash/claude.json -- node "$PWD/dist/i
 
 Ask Claude Code to pay `vendor.testnet` $1: it pays, and the dashboard shows it within ten seconds.
 Ask for $5: it is over the agent's limit, so it parks a request and the approval panel opens.
-Revoke the agent and ask again: NEAR rejects the call with `AccessKeyDoesNotExist`.
+Ask it to pay `vend0r.testnet`: the preflight warns that it imitates `vendor.testnet` and does not exist, and if the agent parks it anyway, the approval panel shows the same warnings. Revoke the agent and ask again: NEAR rejects the call with `AccessKeyDoesNotExist`.
 
 Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `grant`, `approve`,
 `revoke`, `pause`, `status`, `log` (`node cli/dist/index.js` with no arguments lists them).
@@ -99,6 +99,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | --- | --- |
 | A prompt-injected agent tries to drain funds | The daily and per-payment limits in the contract; the key cannot call anything but `pay`, `request`, `ask_more` |
 | The agent pays an unexpected account | The per-agent allowlist; above-limit payments wait for the owner |
+| A lookalike recipient (`vend0r.near` for `vendor.near`) or one that cannot receive USDC | Before paying, the agent's preflight warns; before approving, the owner sees the same checks against every account they have paid, and the button reads Approve anyway |
 | A leaked agent key | Same limits as the agent; revoke deletes the key, and NEAR refuses it before the contract runs |
 | An agent spamming requests | Requests expire after the owner's window; each request costs the owner's storage credit, which is visible |
 | A stranger growing the contract's storage | Every byte is billed to the owner who adds it; freed bytes are credited back |

@@ -3,16 +3,21 @@
 // A payment above an agent's limit, waiting on the owner: who, how much, to whom and why, the
 // facts that decide it, the time left, and the two answers.
 
-import { Check } from "lucide-react";
+import { AlertTriangle, Check, Info } from "lucide-react";
+import { useRecipientFacts } from "@/hooks/useRecipientFacts";
 import { agentLabel, msOf, shareLeft, splitUsdc, toUsdc } from "@/lib/format";
 import { requestFacts } from "@/lib/insights";
-import type { Agent, Names, Request } from "@/lib/types";
+import { assess, hasDanger } from "@/lib/safety";
+import type { Agent, LogEntry, Names, Network, Request } from "@/lib/types";
 import AgentIcon from "./AgentIcon";
 import { Money, Track } from "./parts";
 import styles from "./dashboard.module.css";
 
-export default function ApprovalCard(props: { request: Request; agent: Agent | undefined; names: Names; now: number; busy: string | null; onApprove: () => void; onDeny: () => void }) {
-  const { request: r, agent, names, now, busy, onApprove, onDeny } = props;
+export default function ApprovalCard(props: { request: Request; agent: Agent | undefined; log: LogEntry[]; network: Network; names: Names; now: number; busy: string | null; onApprove: () => void; onDeny: () => void }) {
+  const { request: r, agent, log, network, names, now, busy, onApprove, onDeny } = props;
+  const facts = useRecipientFacts(network, r.token, r.to);
+  const checks = assess(r, agent, log, facts);
+  const danger = hasDanger(checks);
   const who = agentLabel(r.key, names);
   const expires = msOf(r.expires_at);
   const left = Math.max(0, expires - now);
@@ -33,11 +38,20 @@ export default function ApprovalCard(props: { request: Request; agent: Agent | u
       <dl className={styles.facts}>
         {requestFacts(r, agent, names, toUsdc).map((f) => <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>)}
       </dl>
+      <ul className={styles.checks} aria-label="Checks on the recipient">
+        {facts === null && <li className={styles.checkPending}>Checking {r.to} on chain…</li>}
+        {checks.map((c) => (
+          <li key={c.text} data-tone={c.tone}>
+            {c.tone === "danger" ? <AlertTriangle size={15} /> : c.tone === "note" ? <Info size={15} /> : <Check size={15} />}
+            <span>{c.text}</span>
+          </li>
+        ))}
+      </ul>
       <Track share={shareLeft(msOf(r.created_at), expires, now)} />
       <span className={styles.muted}>{left === 0 ? "Expired. It drops on the next change." : `${Math.ceil(left / 60_000)} min left to decide`}</span>
       <div className={styles.decide}>
         <button className="btn" onClick={onDeny} disabled={busy !== null}>Deny</button>
-        <button className="btn ink" onClick={onApprove} disabled={busy !== null || left === 0}><Check size={15} /> Approve</button>
+        <button className="btn ink" onClick={onApprove} disabled={busy !== null || left === 0}><Check size={15} /> {danger ? "Approve anyway" : "Approve"}</button>
       </div>
     </section>
   );

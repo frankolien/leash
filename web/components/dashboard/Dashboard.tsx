@@ -101,7 +101,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
 
   const waitingCards = (s: Snapshot, limit?: number) => {
     const cards = [
-      ...s.requests.map((r) => <ApprovalCard key={`r${r.id}`} request={r} agent={s.agents.find((a) => a.key === r.key)} names={names} now={now} busy={busy} onApprove={() => approve(r)} onDeny={() => deny(r)} />),
+      ...s.requests.map((r) => <ApprovalCard key={`r${r.id}`} request={r} agent={s.agents.find((a) => a.key === r.key)} log={s.log} network={network} names={names} now={now} busy={busy} onApprove={() => approve(r)} onDeny={() => deny(r)} />),
       ...s.proposals.map((p) => <ProposalCard key={`p${p.id}`} proposal={p} names={names} busy={busy} onDismiss={() => dismiss(p)} />),
     ];
     return limit ? cards.slice(0, limit) : cards;
@@ -213,7 +213,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         {!snap && !error && <Skeleton />}
         {page}
       </main>
-      {snap && queue.next && <ApprovalPanel request={queue.next} total={queue.pending.length} agents={snap.agents} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onClose={queue.later} />}
+      {snap && queue.next && <ApprovalPanel request={queue.next} total={queue.pending.length} agents={snap.agents} log={snap.log} network={network} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onClose={queue.later} />}
       <AmountDialog ask={ask} onClose={() => setAsk(null)} />
       <NewAgentDialog kind={setup} session={wallet.session} owner={owner} contract={contract} token={snap?.token ?? USDC[network]} onClose={() => setSetup(null)} onSignIn={wallet.onConnect} onCreated={afterAgent} />
       {toast && <div className={styles.toast} data-bad={toast.bad || undefined} role="status">{toast.text}</div>}
