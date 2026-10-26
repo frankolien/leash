@@ -8,7 +8,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { DEFAULT_NETWORK } from "@/lib/config";
 import { walletSession, type OwnerSession } from "@/lib/session";
 import { connect as connectWallet, connectedAccount, disconnect as disconnectWallet } from "@/lib/wallet";
-import SignInDialog from "./SignInDialog";
+import SignInDialog, { type SignInProps } from "./SignInDialog";
 
 export type EmbeddedMethod = "google" | "apple" | "email";
 
@@ -31,6 +31,9 @@ type Auth = {
   embeddedEnabled: boolean;
   openSignIn: () => void;
   signOut: () => Promise<void>;
+  card: SignInProps;
+  /// A page that shows the sign-in card itself calls this while mounted, so the dialog stays shut.
+  showInline: () => () => void;
 };
 
 const AuthContext = createContext<Auth | null>(null);
@@ -46,6 +49,7 @@ export function AuthCore({ embedded, children }: { embedded: Embedded | null; ch
   const [walletReady, setWalletReady] = useState(false);
   const [dialog, setDialog] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
+  const [inline, setInline] = useState(0);
 
   useEffect(() => {
     connectedAccount(DEFAULT_NETWORK).then((id) => {
@@ -82,21 +86,21 @@ export function AuthCore({ embedded, children }: { embedded: Embedded | null; ch
   }, [embedded, walletAccount]);
 
   const openSignIn = useCallback(() => setDialog(true), []);
+  const showInline = useCallback(() => {
+    setInline((n) => n + 1);
+    return () => setInline((n) => n - 1);
+  }, []);
 
-  const value: Auth = {
-    session,
-    ready: walletReady && (embedded ? embedded.ready : true),
-    preparing: embedded?.preparing ?? null,
-    error: embedded?.error ?? walletError,
-    embeddedEnabled: embedded !== null,
-    openSignIn,
-    signOut,
-  };
+  const ready = walletReady && (embedded ? embedded.ready : true);
+  const preparing = embedded?.preparing ?? null;
+  const error = embedded?.error ?? walletError;
+  const card: SignInProps = { ready, embedded, preparing, error, onWallet: signInWithWallet };
+  const value: Auth = { session, ready, preparing, error, embeddedEnabled: embedded !== null, openSignIn, signOut, card, showInline };
 
   return (
     <AuthContext.Provider value={value}>
       {children}
-      <SignInDialog open={dialog} onClose={() => setDialog(false)} embedded={embedded} preparing={value.preparing} error={value.error} onWallet={signInWithWallet} />
+      {inline === 0 && <SignInDialog open={dialog} onClose={() => setDialog(false)} {...card} />}
     </AuthContext.Provider>
   );
 }
