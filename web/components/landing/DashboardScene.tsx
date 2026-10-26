@@ -3,7 +3,7 @@
 // feed. Illustrative figures; the live one runs on NEAR testnet.
 
 import { forwardRef } from "react";
-import { Activity, ArrowDownLeft, ArrowUpRight, Ban, Bell, Check, KeyRound, LayoutGrid, Pause, Plus, Settings, SquareTerminal, Users } from "lucide-react";
+import { Activity, ArrowDownLeft, ArrowUpRight, Ban, Bell, Check, KeyRound, LayoutGrid, Pause, Plus, Settings, Users } from "lucide-react";
 import SpendChart from "@/components/charts/SpendChart";
 import { BrandLogo } from "@/components/dashboard/AgentIcon";
 import styles from "./dashboard-scene.module.css";
@@ -12,9 +12,9 @@ const WEEK = [1.2, 3.4, 2.1, 4.8, 3.9, 6.4, 5.1];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const AGENTS = [
-  { name: "claude", icon: <BrandLogo name="claude" size={15} />, mode: "Up to $2, then asks", left: 2, cap: 3, state: "Active" },
-  { name: "codex", icon: <SquareTerminal size={15} />, mode: "Pays up to $5", left: 3.6, cap: 10, state: "Active" },
-  { name: "cursor", icon: <BrandLogo name="cursor" size={15} />, mode: "Asks every time", left: 0, cap: 0, state: "Revoked" },
+  { name: "claude", icon: <BrandLogo name="claude" size={20} />, mode: "Up to $2, then asks", left: 2, cap: 3, state: "Active" },
+  { name: "codex", icon: <BrandLogo name="codex" size={20} />, mode: "Pays up to $5", left: 3.6, cap: 10, state: "Active" },
+  { name: "cursor", icon: <BrandLogo name="cursor" size={20} />, mode: "Asks every time", left: 0, cap: 0, state: "Revoked" },
 ];
 
 const FEED = [
@@ -56,7 +56,7 @@ export const DashboardScene = forwardRef<HTMLDivElement>(function DashboardScene
         </section>
 
         <section className={`${styles.card} ${styles.approval}`}>
-          <div className={styles.cardHead}><span className={styles.who}><span className={styles.agentIcon}><BrandLogo name="claude" size={15} /></span>claude wants to pay</span><span className={styles.reason}>over $2 limit</span></div>
+          <div className={styles.cardHead}><span className={styles.who}><span className={styles.agentIcon}><BrandLogo name="claude" size={20} /></span>claude wants to pay</span><span className={styles.reason}>over $2 limit</span></div>
           <strong className={styles.amount}>$5<span>.00</span></strong>
           <span className={styles.sub}>to <span className="mono">vendor.near</span></span>
           <p className={styles.memo}>“Monthly API plan, renews today.”</p>

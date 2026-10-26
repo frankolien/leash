@@ -39,7 +39,7 @@
 .approval { grid-row: 2 / 4; grid-column: 2; display: flex; flex-direction: column; }
 .who { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; }
 .approval .cardHead { flex-wrap: wrap; row-gap: 8px; }
-.agentIcon { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #242424; color: #fff; }
+.agentIcon { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; color: #fff; }
 .reason { padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); font-size: 11px; font-weight: 500; white-space: nowrap; }
 .amount { display: block; margin-top: 14px; font-size: 44px; font-weight: 500; font-stretch: 88%; line-height: 1; letter-spacing: -.05em; }
 .facts { margin: 14px 0 0; }
@@ -56,7 +56,7 @@
 .agents { grid-column: 1; }
 .agentRow { display: grid; grid-template-columns: auto minmax(0, 1.35fr) minmax(0, .9fr) auto; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--hairline); }
 .agentRow[data-off] { color: var(--muted); }
-.agentRow[data-off] .agentIcon { background: #242424; color: #858585; }
+.agentRow[data-off] .agentIcon { color: #858585; }
 .agentName { font-weight: 600; min-width: 0; }
 .agentName small { display: block; color: var(--muted); font-weight: 400; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .budget { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }

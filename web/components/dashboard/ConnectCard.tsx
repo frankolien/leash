@@ -18,7 +18,7 @@ export default function ConnectCard({ onPick }: { onPick: (a: SetupAgent) => voi
       <strong>Connect an agent</strong>
       <span className={styles.muted}>Give the assistant you already use its own key and limits.</span>
       <div className={styles.connectOptions}>
-        {OPTIONS.map((o) => <button key={o.agent} className={styles.white} onClick={() => onPick(o.agent)}><span className={styles.darkLogo}><BrandLogo name={o.logo} size={18} /></span>{o.label}</button>)}
+        {OPTIONS.map((o) => <button key={o.agent} className={styles.white} onClick={() => onPick(o.agent)}><BrandLogo name={o.logo} size={22} />{o.label}</button>)}
       </div>
     </section>
   );

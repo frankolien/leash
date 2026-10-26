@@ -84,7 +84,7 @@ export default function NewAgentPanel(props: { kind: AgentKind; session: OwnerSe
           <div className={styles.kinds} role="radiogroup" aria-label="Agent">
             {(Object.keys(AGENTS) as AgentKind[]).map((k) => (
               <button key={k} role="radio" aria-checked={agent === k} onClick={() => { setAgent(k); setName(k); }}>
-                <span className={styles.darkLogo}><BrandLogo name={k} size={17} /></span>{AGENTS[k].label}
+                <BrandLogo name={k} size={24} />{AGENTS[k].label}
               </button>
             ))}
           </div>
