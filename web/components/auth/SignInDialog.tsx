@@ -4,7 +4,7 @@
 // a NEAR wallet can use it instead. The /app page shows the card in place; elsewhere it opens as a
 // dialog when a signed-out visitor tries to act.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Mail, X } from "lucide-react";
 import { siApple, siNear } from "simple-icons";
 import type { Embedded } from "./AuthContext";
@@ -27,28 +27,92 @@ function GoogleG() {
   );
 }
 
+type Step = { at: "options" } | { at: "email" } | { at: "code"; email: string };
+
+function message(e: unknown) {
+  return e instanceof Error ? e.message : String(e);
+}
+
 export function SignInCard({ ready, embedded, preparing, error, onWallet }: SignInProps) {
+  const [step, setStep] = useState<Step>({ at: "options" });
+  const [busy, setBusy] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+
+  const run = async (what: string, task: () => Promise<void>) => {
+    setBusy(what);
+    setProblem(null);
+    try {
+      await task();
+    } catch (e) {
+      setProblem(message(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const sendCode = (to: string) =>
+    run("send", async () => {
+      await embedded!.sendEmailCode(to);
+      setCode("");
+      setStep({ at: "code", email: to });
+    });
+
+  const checkCode = (value: string) => run("verify", () => embedded!.verifyEmailCode(value));
+
+  const shown = problem ?? error;
+
   return (
     <>
       <span className={styles.mark} aria-hidden="true" />
       <h2 id="signin-title">Sign in to Leash</h2>
-      <p>Give your agents a budget, not your wallet.</p>
+      {step.at === "code" ? <p>Enter the 6-digit code we sent to {step.email}.</p> : <p>Give your agents a budget, not your wallet.</p>}
       {preparing ? (
         <div className={styles.preparing} role="status"><Loader2 size={20} className={styles.spin} />{preparing}…</div>
+      ) : step.at === "email" && embedded ? (
+        <form className={styles.options} onSubmit={(e) => { e.preventDefault(); sendCode(email.trim()); }}>
+          <input className={styles.field} type="email" required autoFocus autoComplete="email" placeholder="you@example.com" aria-label="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <button className={styles.white} disabled={busy !== null}>{busy === "send" && <Loader2 size={19} className={styles.spin} />}Send code</button>
+          <button type="button" className={styles.text} onClick={() => { setProblem(null); setStep({ at: "options" }); }}>Back</button>
+        </form>
+      ) : step.at === "code" && embedded ? (
+        <form className={styles.options} onSubmit={(e) => { e.preventDefault(); checkCode(code); }}>
+          <input
+            className={`${styles.field} ${styles.code}`}
+            autoFocus
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            placeholder="000000"
+            aria-label="Code from your email"
+            value={code}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+              setCode(digits);
+              if (digits.length === 6 && busy === null) checkCode(digits);
+            }}
+          />
+          <button className={styles.white} disabled={busy !== null || code.length < 6}>{busy === "verify" && <Loader2 size={19} className={styles.spin} />}Sign in</button>
+          <div className={styles.row}>
+            <button type="button" className={styles.text} disabled={busy !== null} onClick={() => sendCode(step.email)}>Send a new code</button>
+            <button type="button" className={styles.text} onClick={() => { setProblem(null); setStep({ at: "email" }); }}>Use a different email</button>
+          </div>
+        </form>
       ) : (
         <div className={styles.options}>
           {embedded && (
             <>
-              <button className={styles.white} disabled={!ready} onClick={() => embedded.login("google")}><GoogleG />Continue with Google</button>
-              <button className={styles.white} disabled={!ready} onClick={() => embedded.login("apple")}><Mono path={siApple.path} />Continue with Apple</button>
-              <button className={styles.dark} disabled={!ready} onClick={() => embedded.login("email")}><Mail size={19} />Continue with email</button>
+              <button className={styles.white} disabled={!ready || busy !== null} onClick={() => run("google", () => embedded.oauth("google"))}>{busy === "google" ? <Loader2 size={19} className={styles.spin} /> : <GoogleG />}Continue with Google</button>
+              <button className={styles.white} disabled={!ready || busy !== null} onClick={() => run("apple", () => embedded.oauth("apple"))}>{busy === "apple" ? <Loader2 size={19} className={styles.spin} /> : <Mono path={siApple.path} />}Continue with Apple</button>
+              <button className={styles.dark} disabled={!ready || busy !== null} onClick={() => { setProblem(null); setStep({ at: "email" }); }}><Mail size={19} />Continue with email</button>
               <span className={styles.or}>or</span>
             </>
           )}
-          <button className={styles.dark} disabled={!ready} onClick={onWallet}><Mono path={siNear.path} />Use a NEAR wallet</button>
+          <button className={styles.dark} disabled={!ready || busy !== null} onClick={onWallet}><Mono path={siNear.path} />Use a NEAR wallet</button>
         </div>
       )}
-      {error && <p className={styles.error} role="alert">{error}</p>}
+      {shown && <p className={styles.error} role="alert">{shown}</p>}
       <small className={styles.fine}>{embedded ? "Signing in with Google, Apple or email creates a NEAR account for you. We cover its first fees." : "Sign in with any NEAR wallet."}</small>
     </>
   );

@@ -5,16 +5,19 @@
 // storage), and hands up a session that signs with the embedded wallet.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { PrivyProvider, useIdentityToken, usePrivy } from "@privy-io/react-auth";
+import { PrivyProvider, useIdentityToken, useLoginWithEmail, useLoginWithOAuth, usePrivy } from "@privy-io/react-auth";
 import { useCreateWallet, useSignRawHash } from "@privy-io/react-auth/extended-chains";
 import { DEFAULT_NETWORK } from "@/lib/config";
 import { embeddedSession } from "@/lib/session";
-import { AuthCore, type Embedded, type EmbeddedMethod } from "./AuthContext";
+import { AuthCore, type Embedded } from "./AuthContext";
 
 type Linked = { type: string; chainType?: string; address?: string; email?: string };
 
 function Bridge({ children }: { children: ReactNode }) {
-  const { ready, authenticated, user, login, logout } = usePrivy();
+  const { ready, authenticated, user, logout } = usePrivy();
+  // Headless flows, so a click goes straight to the provider instead of through Privy's modal.
+  const { initOAuth, state: oauth } = useLoginWithOAuth();
+  const { sendCode, loginWithCode } = useLoginWithEmail();
   const { createWallet } = useCreateWallet();
   const { signRawHash } = useSignRawHash();
   const { identityToken } = useIdentityToken();
@@ -56,6 +59,10 @@ function Bridge({ children }: { children: ReactNode }) {
     };
   }, [address, identityToken, readied]);
 
+  useEffect(() => {
+    if (oauth.status === "error") setError(oauth.error?.message ?? "Sign-in did not finish. Try again.");
+  }, [oauth]);
+
   const session = useMemo(
     () => (authenticated && address && readied === address ? embeddedSession(address, DEFAULT_NETWORK, signRawHash as never, label) : null),
     [authenticated, address, readied, signRawHash, label],
@@ -64,9 +71,14 @@ function Bridge({ children }: { children: ReactNode }) {
   const embedded: Embedded = {
     ready,
     session,
-    preparing: authenticated ? preparing : null,
+    preparing: authenticated ? preparing : oauth.status === "loading" ? "Signing you in" : null,
     error,
-    login: (method: EmbeddedMethod) => login({ loginMethods: [method] }),
+    oauth: async (provider) => {
+      setError(null);
+      await initOAuth({ provider });
+    },
+    sendEmailCode: (email) => sendCode({ email }),
+    verifyEmailCode: (code) => loginWithCode({ code }),
     logout: async () => {
       await logout();
       setReadied(null);

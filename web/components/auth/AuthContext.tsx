@@ -10,7 +10,7 @@ import { walletSession, type OwnerSession } from "@/lib/session";
 import { connect as connectWallet, connectedAccount, disconnect as disconnectWallet } from "@/lib/wallet";
 import SignInDialog, { type SignInProps } from "./SignInDialog";
 
-export type EmbeddedMethod = "google" | "apple" | "email";
+export type OAuthProvider = "google" | "apple";
 
 /// What the Privy bridge hands up when the app runs with Privy.
 export type Embedded = {
@@ -19,7 +19,11 @@ export type Embedded = {
   /// Set while a new account is being made and readied.
   preparing: string | null;
   error: string | null;
-  login: (method: EmbeddedMethod) => void;
+  /// Sends the browser straight to Google's or Apple's account picker; sign-in finishes on return.
+  oauth: (provider: OAuthProvider) => Promise<void>;
+  /// Email sign-in inside our own card: send a one-time code, then check it.
+  sendEmailCode: (email: string) => Promise<void>;
+  verifyEmailCode: (code: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
