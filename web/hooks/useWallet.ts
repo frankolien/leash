@@ -27,7 +27,7 @@ export function useWallet(owner: string, afterWrite: () => Promise<void>, say: (
         say(done);
         await afterWrite();
       } catch (e) {
-        console.error(`Leash: ${label} failed`, e);
+        console.warn(`Leash: ${label} failed`, e);
         say(plainError(e), true);
       } finally {
         setBusy(null);

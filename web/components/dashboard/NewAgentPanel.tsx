@@ -59,7 +59,7 @@ export default function NewAgentPanel(props: { kind: AgentKind; session: OwnerSe
       setMade({ name, file, kind: agent });
       await onCreated(name);
     } catch (e) {
-      console.error("Leash: creating an agent failed", e);
+      console.warn("Leash: creating an agent failed", e);
       setError(plainError(e));
     } finally {
       setStep(null);
