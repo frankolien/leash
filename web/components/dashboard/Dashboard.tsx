@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, Pause, Play, Plus } from "lucide-react";
 import type { Agent as SetupAgent } from "@/components/setup/agents";
+import { useLiveActivity } from "@/hooks/useLiveActivity";
 import { useNames } from "@/hooks/useNames";
 import { useNow, useSnapshot } from "@/hooks/useSnapshot";
 import { useToast } from "@/hooks/useToast";
@@ -59,6 +60,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const [ask, setAsk] = useState<AmountAsk | null>(null);
   const [setup, setSetup] = useState<SetupAgent | null>(null);
   const queue = useApprovalQueue(snap?.requests);
+  useLiveActivity(snap?.log, names, say);
 
   const { act, call, busy } = wallet;
   const approve = useCallback((r: Request) => act("approve", () => call(contract, "approve", { request_id: r.id }), `Approved ${toUsdc(r.amount)} USDC to ${r.to}`), [act, call, contract]);
