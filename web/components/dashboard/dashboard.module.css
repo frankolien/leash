@@ -288,6 +288,8 @@ button.listRow:hover { background: #1c1c1c; }
 .amountField > span { font-size: 30px; font-weight: 600; }
 .amountField input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #fff; font-family: inherit; font-size: 40px; font-weight: 700; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .amountField small { color: var(--grey); font-size: 14px; }
+.app .amountField input:focus-visible { outline: none; }
+.amountField:focus-within { box-shadow: inset 0 0 0 1px #4a4a4a; }
 .dialogActions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 22px; }
 .dialogActions :global(.btn) { min-height: 52px; }
 
@@ -295,8 +297,8 @@ button.listRow:hover { background: #1c1c1c; }
 .depositDetail > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .depositDetail b { font-size: 16px; font-weight: 600; }
 .address { flex-direction: column; align-items: flex-start !important; }
-.address button { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 0; border: 0; background: none; color: #fff; font-size: 13px; text-align: left; }
-.address button .mono { overflow-wrap: anywhere; }
+.address button { display: flex; align-items: flex-start; width: 100%; min-width: 0; gap: 8px; max-width: 100%; padding: 0; border: 0; background: none; color: #fff; font-size: 13px; text-align: left; }
+.address button .mono { min-width: 0; overflow-wrap: anywhere; word-break: break-all; }
 .kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }
 .kinds button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border: 0; border-radius: 18px; background: var(--raised); color: var(--text-2); font-family: inherit; font-size: 14px; font-weight: 500; }
 .kinds button[aria-checked="true"] { background: #fff; color: #000; }
