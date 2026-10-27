@@ -7,6 +7,10 @@ import { DEFAULT_NETWORK } from "./config";
 
 export const PHONE_METHODS = ["approve", "deny", "pause", "resume", "revoke", "grant", "end_raise", "dismiss_proposal", "set_policy", "set_request_ttl", "withdraw"];
 
+/// The phone's second key, the brake: it can only stop things, so the phone keeps it readable even
+/// while locked. Pausing from Control Center, Siri or a notification's Deny never waits for Face ID.
+export const BRAKE_METHODS = ["pause", "deny"];
+
 /// Gas the phone may burn from the owner's balance; a decision costs well under 0.001 NEAR.
 export const PHONE_ALLOWANCE = (BigInt(10) ** BigInt(24)).toString();
 
@@ -22,7 +26,9 @@ export async function pairingCode(publicKey: string): Promise<string> {
   return `${code.slice(0, 3)}-${code.slice(3)}`;
 }
 
-export type LinkRequest = { key: string; device: string; callback: URL };
+export type LinkRequest = { key: string; brake: string | null; device: string; callback: URL };
+
+const KEY = /^ed25519:[1-9A-HJ-NP-Za-km-z]{43,44}$/;
 
 export function linkRequest(params: URLSearchParams): LinkRequest | { error: string } {
   const key = params.get("key") ?? "";
@@ -34,8 +40,9 @@ export function linkRequest(params: URLSearchParams): LinkRequest | { error: str
     return { error: "Open this page from the Leash app on your phone." };
   }
   if (callback.protocol !== APP_SCHEME) return { error: "Open this page from the Leash app on your phone." };
-  if (!/^ed25519:[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(key)) return { error: "This link does not carry a valid phone key. Start again from the app." };
-  return { key, device, callback };
+  const brake = params.get("brake");
+  if (!KEY.test(key) || (brake !== null && (!KEY.test(brake) || brake === key))) return { error: "This link does not carry a valid phone key. Start again from the app." };
+  return { key, brake, device, callback };
 }
 
 export function callbackUrl(request: LinkRequest, extra: Record<string, string>): string {

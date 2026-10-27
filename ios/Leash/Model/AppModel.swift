@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import SwiftUI
 import UserNotifications
+import WidgetKit
 
 /// The app's one store: which account this phone is linked to, the latest snapshot of it, and
 /// the owner's decisions. A failed read keeps the last good snapshot on screen.
@@ -27,14 +28,16 @@ final class AppModel {
 
     private let defaults: UserDefaults
     private let keys: DeviceKeyStore
+    private let brake: DeviceKeyStore
     private var refreshTask: Task<Void, Never>?
 
-    init(defaults: UserDefaults = .standard, keys: DeviceKeyStore = DeviceKeyStore()) {
+    init(defaults: UserDefaults = .standard, keys: DeviceKeyStore = .decision, brake: DeviceKeyStore = .brake) {
         self.defaults = defaults
         self.keys = keys
-        if let account = defaults.string(forKey: "leash.account"), !account.isEmpty, let network = Network(rawValue: defaults.string(forKey: "leash.network") ?? "") {
-            phase = .linked(.init(account: account, network: network))
-            snapshot = SnapshotCache.load(account: account, network: network)
+        self.brake = brake
+        if let linked = Shared.linked {
+            phase = .linked(linked)
+            snapshot = SnapshotCache.load(account: linked.account, network: linked.network)
         } else {
             phase = .unlinked
         }
@@ -53,6 +56,7 @@ final class AppModel {
     }
 
     var publicKey: String? { try? keys.loadOrCreate().publicKey }
+    var brakeKey: String? { try? brake.loadOrCreate().publicKey }
     var pairingCode: String { publicKey.map(Pairing.code(for:)) ?? "" }
 
     // MARK: Linking
@@ -61,14 +65,14 @@ final class AppModel {
         linkProblem = nil
         do {
             let key = try keys.loadOrCreate()
-            let callback = try await WebSignIn().start(Pairing.url(site: site, key: key.publicKey, provider: provider))
+            let brakeKey = try brake.loadOrCreate()
+            let callback = try await WebSignIn().start(Pairing.url(site: site, key: key.publicKey, brake: brakeKey.publicKey, provider: provider))
             let linked = try Pairing.parse(callback: callback)
             let access = try await NearRPC(url: linked.network.rpc).accessKey(account: linked.account, publicKey: key.publicKey)
             guard access.receiver == linked.network.contract else {
                 throw Pairing.Failure.refused("That key is not limited to Leash, so the app will not use it.")
             }
-            defaults.set(linked.account, forKey: "leash.account")
-            defaults.set(linked.network.rawValue, forKey: "leash.network")
+            Shared.save(linked)
             snapshot = SnapshotCache.load(account: linked.account, network: linked.network)
             phase = .linked(linked)
             await refresh()
@@ -83,6 +87,8 @@ final class AppModel {
     func unlink() {
         refreshTask?.cancel()
         keys.delete()
+        brake.delete()
+        Shared.save(nil as LinkedAccount?)
         defaults.removeObject(forKey: "leash.account")
         defaults.removeObject(forKey: "leash.network")
         snapshot = nil
@@ -101,6 +107,11 @@ final class AppModel {
             snapshot = fresh
             offline = false
             SnapshotCache.save(fresh)
+            let summary = AgentSummary(fresh)
+            if summary.waiting != Shared.summary()?.waiting || summary.paused != Shared.summary()?.paused || summary.spent != Shared.summary()?.spent {
+                Shared.save(summary)
+                WidgetCenter.shared.reloadAllTimelines()
+            }
             Alerts.shared.noticeWaiting(fresh)
         } catch {
             offline = true
@@ -122,13 +133,15 @@ final class AppModel {
 
     // MARK: Decisions
 
-    private func decide(_ name: String, confirm reason: String?, success: String, _ work: @escaping (LeashClient, NearKey) async throws -> Void) async -> Bool {
+    /// Runs one decision. Those that spend or widen anything take Face ID and the decision key;
+    /// stopping (`braking`) takes the brake key, which works from a locked phone too.
+    private func decide(_ name: String, confirm reason: String?, braking: Bool = false, success: String, _ work: @escaping (LeashClient, NearKey) async throws -> Void) async -> Bool {
         guard let client, busy == nil else { return false }
         busy = name
         defer { busy = nil }
         do {
             if let reason { try await Presence.confirm(reason) }
-            guard let key = try keys.load() else { throw Pairing.Failure.refused("This phone has no key. Link it again.") }
+            guard let key = try (braking ? brake.load() ?? keys.load() : keys.load()) else { throw Pairing.Failure.refused("This phone has no key. Link it again.") }
             try await work(client, key)
             notice = Notice(text: success, failed: false)
             await refresh()
@@ -149,12 +162,12 @@ final class AppModel {
 
     @discardableResult
     func deny(_ r: PayRequest) async -> Bool {
-        await decide("deny-\(r.id)", confirm: nil, success: "Denied. Nothing moved.") { c, k in try await c.act("deny", ["request_id": r.id], key: k) }
+        await decide("deny-\(r.id)", confirm: nil, braking: true, success: "Denied. Nothing moved.") { c, k in try await c.act("deny", ["request_id": r.id], key: k) }
     }
 
     /// Deny from the alert's own button, with no screen to report to: the result is a new alert.
     func denyFromAlert(_ id: UInt64) async {
-        guard let client, let key = try? keys.load() else { return }
+        guard let client, let key = (try? brake.load()) ?? (try? keys.load()) else { return }
         let content = UNMutableNotificationContent()
         do {
             try await client.act("deny", ["request_id": id], key: key)
@@ -180,7 +193,7 @@ final class AppModel {
 
     @discardableResult
     func pauseAll() async -> Bool {
-        await decide("pause", confirm: nil, success: "Every agent is paused") { c, k in try await c.act("pause", [:], key: k) }
+        await decide("pause", confirm: nil, braking: true, success: "Every agent is paused") { c, k in try await c.act("pause", [:], key: k) }
     }
 
     @discardableResult

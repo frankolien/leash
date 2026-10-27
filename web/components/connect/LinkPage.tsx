@@ -10,7 +10,7 @@ import { KeyRound, Loader2, Smartphone } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { SignInCard } from "@/components/auth/SignInDialog";
 import { contractOf, shortAccount } from "@/lib/config";
-import { PHONE_ALLOWANCE, PHONE_METHODS, callbackUrl, linkRequest, pairingCode } from "@/lib/device";
+import { BRAKE_METHODS, PHONE_ALLOWANCE, PHONE_METHODS, callbackUrl, linkRequest, pairingCode } from "@/lib/device";
 import { plainError } from "@/lib/errors";
 import styles from "./connect.module.css";
 
@@ -67,6 +67,10 @@ export default function LinkPage() {
     setStep("Adding your phone's key");
     try {
       await session.addAgentKey(request.key, contractOf(session.accountId), PHONE_METHODS, PHONE_ALLOWANCE);
+      if (request.brake) {
+        setStep("Adding its brake");
+        await session.addAgentKey(request.brake, contractOf(session.accountId), BRAKE_METHODS, PHONE_ALLOWANCE);
+      }
       setStep("Opening Leash on your phone");
       window.location.assign(callbackUrl(request, { account: session.accountId, network: session.network }));
     } catch (e) {
@@ -126,7 +130,7 @@ export default function LinkPage() {
             </div>
             <ul className={styles.terms}>
               <li>It can approve or deny what your agents ask for.</li>
-              <li>It can pause everything and revoke an agent.</li>
+              <li>It can pause everything and revoke an agent. Pausing works even while it is locked.</li>
               <li>It cannot send your money anywhere else or add keys.</li>
             </ul>
             {problem && <p className={styles.error} role="alert">{problem}</p>}

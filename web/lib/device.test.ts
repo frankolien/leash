@@ -15,7 +15,9 @@ describe("linking a phone", () => {
     expect(linkRequest(new URLSearchParams({ key: KEY, callback: "https://evil.example/cb" }))).toHaveProperty("error");
     expect(linkRequest(new URLSearchParams({ key: "ed25519:short", callback: "leash://linked" }))).toHaveProperty("error");
     const ok = linkRequest(new URLSearchParams({ key: KEY, callback: "leash://linked", device: "Frank's iPhone" }));
-    expect(ok).toMatchObject({ key: KEY, device: "Frank's iPhone" });
+    expect(ok).toMatchObject({ key: KEY, brake: null, device: "Frank's iPhone" });
+    expect(linkRequest(new URLSearchParams({ key: KEY, brake: KEY, callback: "leash://linked" }))).toHaveProperty("error");
+    expect(linkRequest(new URLSearchParams({ key: KEY, brake: "ed25519:9C6hybhQ6Aycep9jaUnP6uL9ZYvDjUp1aSkFWPUFJtpj", callback: "leash://linked" }))).toMatchObject({ brake: "ed25519:9C6hybhQ6Aycep9jaUnP6uL9ZYvDjUp1aSkFWPUFJtpj" });
     if ("error" in ok) throw new Error();
     expect(callbackUrl(ok, { account: "olien.testnet" })).toBe("leash://linked?account=olien.testnet&network=testnet");
   });

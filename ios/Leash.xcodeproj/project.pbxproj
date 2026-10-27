@@ -8,32 +8,48 @@
 
 /* Begin PBXBuildFile section */
 		09CE289D0C9175D67A1891D7 /* AgentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5D5FCAC92E7A7C381A3A75 /* AgentDetailView.swift */; };
+		0DA553BCBCAAE2EB5B61B191 /* NearKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0120918EB3924592205A5637 /* NearKey.swift */; };
 		180245EAC01F4B4922B7B705 /* LeashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6EAC8188977DE24585E339 /* LeashApp.swift */; };
 		262AEFD95BF4C934831F7CF8 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F584B82077C5211C97CFC5A /* AccountView.swift */; };
+		26E48DB8EE51848521AAE918 /* NearRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */; };
 		303FE2EC067890DF2CBA64CE /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5CCD7C4595886019F8DEEF /* ActivityView.swift */; };
+		32D6A4EFBF838B29DDAB7682 /* LeashWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2CEAF78BBDA11A095B7F9164 /* LeashWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		34E2265876CEA9F1411ECEFF /* RequestSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 994C853421B7144D1B13E62C /* RequestSheet.swift */; };
+		389DA894954584EC0150065D /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 653DBAC2F6A2C55DB80E65DC /* Shared.swift */; };
 		3A753E4015E3BE4642D3DED1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D189010A09F9DB3B1E8E4E9 /* Theme.swift */; };
 		3DE08DF779A33E2DBEAAA72B /* NearKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0120918EB3924592205A5637 /* NearKey.swift */; };
 		4BB0C767446128C15DA4973A /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FEB6A8A0DA70787EC84C05B /* Activity.swift */; };
 		4FF5DEED7C057A8AE6697B30 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9471C87703B206D9B22DB069 /* Format.swift */; };
 		5030E2972F8F9A5B7A93FC17 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6ED710A00778E56B2516F4F /* HomeView.swift */; };
 		51CE34CECCDDADD2F8ADFCC9 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE19EB96FEB2C20AA3E12632 /* Types.swift */; };
+		5F7B77C6486941818B9897AC /* DeviceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4D08C71A127B7BAC276C61C /* DeviceKey.swift */; };
+		6A875AB57B011077205542E2 /* Base58.swift in Sources */ = {isa = PBXBuildFile; fileRef = F64E0660D25B46A6FE994A67 /* Base58.swift */; };
 		6AD31FFB74D3A0B5006B3677 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 85712734599192B8C128D90D /* Assets.xcassets */; };
 		6B69D333AABC527E496FB429 /* hero.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 6300D6679E279F1C802241F3 /* hero.mp4 */; };
+		6F12C69A45B0793BC51EED08 /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C711A25949A81BC4DC7E3A5 /* Transaction.swift */; };
 		70D0078B025D523591FA7248 /* Alerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABB9A4990D6FB90EC55C2ED6 /* Alerts.swift */; };
+		71C4591C60E6697839BBB233 /* Borsh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F487514CF92F142794A151C /* Borsh.swift */; };
+		76585AB7D97DB2CA7DBA0CCC /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE19EB96FEB2C20AA3E12632 /* Types.swift */; };
 		781253DB4A972DA036F3D0FA /* NearTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D2768E7FD4F12882979AEA /* NearTests.swift */; };
 		79CFEF295F6134F56F7813DB /* LeashClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FFCED3D5FF03749D711F6A /* LeashClient.swift */; };
 		7BB0336B7BF78579362C450E /* Pairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99140712D848E2E4AEE815D /* Pairing.swift */; };
 		883B54DEF8D850C2C6116E8D /* LiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5034997D816EC2EDCCFA9AA9 /* LiveTests.swift */; };
 		8E9F41A9EDB4372F32C2A688 /* NearRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */; };
+		B699CCF5DCC16FE137E0B239 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 653DBAC2F6A2C55DB80E65DC /* Shared.swift */; };
 		B74433AB79E8E86CFFCF6B00 /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C711A25949A81BC4DC7E3A5 /* Transaction.swift */; };
 		C36EDA377744213E76C7E38F /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */; };
+		C77BBEB7EF85DF20F37951D1 /* Shortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA8C04C4966013676DFB0C85 /* Shortcuts.swift */; };
 		C79F411A4A1964F9149FFEF0 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334BF22BDC4D53927EBBF54E /* OnboardingView.swift */; };
-		CD270B25861805CF159F7460 /* DeviceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8272068A41EEF5E0AD6D8611 /* DeviceKey.swift */; };
+		D584E35B7CF8DCB853E1C5A9 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D106FD854808009BD7705EE1 /* Intents.swift */; };
+		D6996C954F29D79313E98666 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D106FD854808009BD7705EE1 /* Intents.swift */; };
+		D97704DB7BCB4E29CF3D1767 /* LeashClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FFCED3D5FF03749D711F6A /* LeashClient.swift */; };
 		E1805225E09F6CF0E278659B /* Borsh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F487514CF92F142794A151C /* Borsh.swift */; };
+		EA0796ADAF02581F1DA80B30 /* LeashWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = A398A7EA2E1C504D48FF2FE6 /* LeashWidgets.swift */; };
 		EBF0812FFD91E480B7D7FB2C /* Base58.swift in Sources */ = {isa = PBXBuildFile; fileRef = F64E0660D25B46A6FE994A67 /* Base58.swift */; };
+		F03D686260EC917357BB54CE /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9471C87703B206D9B22DB069 /* Format.swift */; };
 		F30030882E4916F14DF88F42 /* Safety.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD85F4D2D276D50CA549D56 /* Safety.swift */; };
 		F58571AEEA806E1A1CDADBD5 /* ScreensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAD0F1C4B5EDDC9B6EB5A28 /* ScreensTests.swift */; };
+		F772CA069395639F7E3B7B62 /* DeviceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4D08C71A127B7BAC276C61C /* DeviceKey.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,39 +67,68 @@
 			remoteGlobalIDString = C23E76E69B01B62052C92F7C;
 			remoteInfo = Leash;
 		};
+		D4A96B8B24B7F24676C751E3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8C376C40D12A0FF0819865DB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 236E7F82F0624D6783A1DA46;
+			remoteInfo = LeashWidgets;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0F747CF5EA1D69CA1EF9B36B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				32D6A4EFBF838B29DDAB7682 /* LeashWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0120918EB3924592205A5637 /* NearKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearKey.swift; sourceTree = "<group>"; };
 		1F5CCD7C4595886019F8DEEF /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
+		224C4671E4DA6DFEE9731885 /* LeashWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LeashWidgets.entitlements; sourceTree = "<group>"; };
+		2CEAF78BBDA11A095B7F9164 /* LeashWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = LeashWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F584B82077C5211C97CFC5A /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
 		334BF22BDC4D53927EBBF54E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		33536AA4CA85AE7AB493CAA2 /* LeashUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LeashUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5034997D816EC2EDCCFA9AA9 /* LiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTests.swift; sourceTree = "<group>"; };
 		5C711A25949A81BC4DC7E3A5 /* Transaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
 		6300D6679E279F1C802241F3 /* hero.mp4 */ = {isa = PBXFileReference; path = hero.mp4; sourceTree = "<group>"; };
+		6519CB90C0FA76F4693DE375 /* Leash.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Leash.entitlements; sourceTree = "<group>"; };
+		653DBAC2F6A2C55DB80E65DC /* Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared.swift; sourceTree = "<group>"; };
 		68871D90D17598B41C26CA92 /* Leash.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Leash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C660D2CAA55903ACD8125D4 /* LeashTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LeashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FEB6A8A0DA70787EC84C05B /* Activity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Activity.swift; sourceTree = "<group>"; };
 		7B5D5FCAC92E7A7C381A3A75 /* AgentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDetailView.swift; sourceTree = "<group>"; };
 		7F487514CF92F142794A151C /* Borsh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Borsh.swift; sourceTree = "<group>"; };
-		8272068A41EEF5E0AD6D8611 /* DeviceKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceKey.swift; sourceTree = "<group>"; };
 		84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearRPC.swift; sourceTree = "<group>"; };
 		85712734599192B8C128D90D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8D189010A09F9DB3B1E8E4E9 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		9471C87703B206D9B22DB069 /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
 		994C853421B7144D1B13E62C /* RequestSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestSheet.swift; sourceTree = "<group>"; };
 		A1D2768E7FD4F12882979AEA /* NearTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearTests.swift; sourceTree = "<group>"; };
+		A398A7EA2E1C504D48FF2FE6 /* LeashWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashWidgets.swift; sourceTree = "<group>"; };
 		A49C4511E8EDB2D5BC176F2B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		ABB9A4990D6FB90EC55C2ED6 /* Alerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alerts.swift; sourceTree = "<group>"; };
 		ACD85F4D2D276D50CA549D56 /* Safety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Safety.swift; sourceTree = "<group>"; };
 		B99140712D848E2E4AEE815D /* Pairing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pairing.swift; sourceTree = "<group>"; };
 		BE19EB96FEB2C20AA3E12632 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
+		C16C00C503E8A057521438EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C6FFCED3D5FF03749D711F6A /* LeashClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashClient.swift; sourceTree = "<group>"; };
 		C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		CB6EAC8188977DE24585E339 /* LeashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashApp.swift; sourceTree = "<group>"; };
 		CEAD0F1C4B5EDDC9B6EB5A28 /* ScreensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreensTests.swift; sourceTree = "<group>"; };
+		D106FD854808009BD7705EE1 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		E6ED710A00778E56B2516F4F /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		EA8C04C4966013676DFB0C85 /* Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shortcuts.swift; sourceTree = "<group>"; };
+		F4D08C71A127B7BAC276C61C /* DeviceKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceKey.swift; sourceTree = "<group>"; };
 		F64E0660D25B46A6FE994A67 /* Base58.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Base58.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -93,7 +138,6 @@
 			children = (
 				F64E0660D25B46A6FE994A67 /* Base58.swift */,
 				7F487514CF92F142794A151C /* Borsh.swift */,
-				8272068A41EEF5E0AD6D8611 /* DeviceKey.swift */,
 				0120918EB3924592205A5637 /* NearKey.swift */,
 				84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */,
 				5C711A25949A81BC4DC7E3A5 /* Transaction.swift */,
@@ -108,6 +152,7 @@
 				44DC35F3028968CF2EA7B2C4 /* Model */,
 				0120514616A62FB6F12A324E /* Near */,
 				973799D649E5F7A54F9ABB5E /* Resources */,
+				2B982161DCCF514D38D7DA5A /* Shared */,
 				27287FA672D64209C68CEE85 /* UI */,
 			);
 			path = Leash;
@@ -127,10 +172,21 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		2B982161DCCF514D38D7DA5A /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				F4D08C71A127B7BAC276C61C /* DeviceKey.swift */,
+				D106FD854808009BD7705EE1 /* Intents.swift */,
+				653DBAC2F6A2C55DB80E65DC /* Shared.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		2DCE4CFAE6B50FFA4633C01B /* App */ = {
 			isa = PBXGroup;
 			children = (
 				CB6EAC8188977DE24585E339 /* LeashApp.swift */,
+				EA8C04C4966013676DFB0C85 /* Shortcuts.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -156,6 +212,7 @@
 				68871D90D17598B41C26CA92 /* Leash.app */,
 				6C660D2CAA55903ACD8125D4 /* LeashTests.xctest */,
 				33536AA4CA85AE7AB493CAA2 /* LeashUITests.xctest */,
+				2CEAF78BBDA11A095B7F9164 /* LeashWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -166,6 +223,7 @@
 				24EBDED0AEBEE999275852CB /* Leash */,
 				F5F4E6BE3FEA4B0CE95496C9 /* LeashTests */,
 				EA3F5217502CF01E3363E191 /* LeashUITests */,
+				A06228A46225B70514C8926D /* LeashWidgets */,
 				6DCCC836753A863BC807A2E7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -176,8 +234,19 @@
 				85712734599192B8C128D90D /* Assets.xcassets */,
 				6300D6679E279F1C802241F3 /* hero.mp4 */,
 				A49C4511E8EDB2D5BC176F2B /* Info.plist */,
+				6519CB90C0FA76F4693DE375 /* Leash.entitlements */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		A06228A46225B70514C8926D /* LeashWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				C16C00C503E8A057521438EE /* Info.plist */,
+				224C4671E4DA6DFEE9731885 /* LeashWidgets.entitlements */,
+				A398A7EA2E1C504D48FF2FE6 /* LeashWidgets.swift */,
+			);
+			path = LeashWidgets;
 			sourceTree = "<group>";
 		};
 		EA3F5217502CF01E3363E191 /* LeashUITests */ = {
@@ -200,6 +269,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		236E7F82F0624D6783A1DA46 /* LeashWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B34529B13AB19F39E89E8F3D /* Build configuration list for PBXNativeTarget "LeashWidgets" */;
+			buildPhases = (
+				FD4118A0360E50656CCDB322 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LeashWidgets;
+			packageProductDependencies = (
+			);
+			productName = LeashWidgets;
+			productReference = 2CEAF78BBDA11A095B7F9164 /* LeashWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		A60EE84A83F88BB06B84F723 /* LeashUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F1BAA5E779A2421F6C15F0F6 /* Build configuration list for PBXNativeTarget "LeashUITests" */;
@@ -224,10 +310,12 @@
 			buildPhases = (
 				84694BBD922EB3FE7BB6D682 /* Sources */,
 				FC0A0A1729073DE1AE3720F9 /* Resources */,
+				0F747CF5EA1D69CA1EF9B36B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				16932EE3D798B16EBE0A6E04 /* PBXTargetDependency */,
 			);
 			name = Leash;
 			packageProductDependencies = (
@@ -263,6 +351,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					236E7F82F0624D6783A1DA46 = {
+						DevelopmentTeam = YCKKUWB4WD;
+						ProvisioningStyle = Automatic;
+					};
 					A60EE84A83F88BB06B84F723 = {
 						DevelopmentTeam = YCKKUWB4WD;
 						ProvisioningStyle = Automatic;
@@ -293,6 +385,7 @@
 			projectRoot = "";
 			targets = (
 				C23E76E69B01B62052C92F7C /* Leash */,
+				236E7F82F0624D6783A1DA46 /* LeashWidgets */,
 				CEA7D1447E0F0AE0E5CBD361 /* LeashTests */,
 				A60EE84A83F88BB06B84F723 /* LeashUITests */,
 			);
@@ -341,9 +434,10 @@
 				C36EDA377744213E76C7E38F /* AppModel.swift in Sources */,
 				EBF0812FFD91E480B7D7FB2C /* Base58.swift in Sources */,
 				E1805225E09F6CF0E278659B /* Borsh.swift in Sources */,
-				CD270B25861805CF159F7460 /* DeviceKey.swift in Sources */,
+				5F7B77C6486941818B9897AC /* DeviceKey.swift in Sources */,
 				4FF5DEED7C057A8AE6697B30 /* Format.swift in Sources */,
 				5030E2972F8F9A5B7A93FC17 /* HomeView.swift in Sources */,
+				D6996C954F29D79313E98666 /* Intents.swift in Sources */,
 				180245EAC01F4B4922B7B705 /* LeashApp.swift in Sources */,
 				79CFEF295F6134F56F7813DB /* LeashClient.swift in Sources */,
 				3DE08DF779A33E2DBEAAA72B /* NearKey.swift in Sources */,
@@ -352,15 +446,41 @@
 				7BB0336B7BF78579362C450E /* Pairing.swift in Sources */,
 				34E2265876CEA9F1411ECEFF /* RequestSheet.swift in Sources */,
 				F30030882E4916F14DF88F42 /* Safety.swift in Sources */,
+				389DA894954584EC0150065D /* Shared.swift in Sources */,
+				C77BBEB7EF85DF20F37951D1 /* Shortcuts.swift in Sources */,
 				3A753E4015E3BE4642D3DED1 /* Theme.swift in Sources */,
 				B74433AB79E8E86CFFCF6B00 /* Transaction.swift in Sources */,
 				51CE34CECCDDADD2F8ADFCC9 /* Types.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FD4118A0360E50656CCDB322 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6A875AB57B011077205542E2 /* Base58.swift in Sources */,
+				71C4591C60E6697839BBB233 /* Borsh.swift in Sources */,
+				F772CA069395639F7E3B7B62 /* DeviceKey.swift in Sources */,
+				F03D686260EC917357BB54CE /* Format.swift in Sources */,
+				D584E35B7CF8DCB853E1C5A9 /* Intents.swift in Sources */,
+				D97704DB7BCB4E29CF3D1767 /* LeashClient.swift in Sources */,
+				EA0796ADAF02581F1DA80B30 /* LeashWidgets.swift in Sources */,
+				0DA553BCBCAAE2EB5B61B191 /* NearKey.swift in Sources */,
+				26E48DB8EE51848521AAE918 /* NearRPC.swift in Sources */,
+				B699CCF5DCC16FE137E0B239 /* Shared.swift in Sources */,
+				6F12C69A45B0793BC51EED08 /* Transaction.swift in Sources */,
+				76585AB7D97DB2CA7DBA0CCC /* Types.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		16932EE3D798B16EBE0A6E04 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 236E7F82F0624D6783A1DA46 /* LeashWidgets */;
+			targetProxy = D4A96B8B24B7F24676C751E3 /* PBXContainerItemProxy */;
+		};
 		2C4350F5DDC4CB4DDF28CA11 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C23E76E69B01B62052C92F7C /* Leash */;
@@ -407,6 +527,24 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Leash.app/Leash";
 			};
 			name = Release;
+		};
+		3E7ECC2CAA86A61FD9009BDD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LeashWidgets/LeashWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LeashWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankolien.leash.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
 		};
 		64B5757FE0C98DCEB42FFDAB /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -539,6 +677,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Leash/Resources/Leash.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Leash/Resources/Info.plist;
@@ -556,6 +695,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Leash/Resources/Leash.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Leash/Resources/Info.plist;
@@ -568,6 +708,24 @@
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
+		};
+		C007291AD25C054DFC05813C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LeashWidgets/LeashWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LeashWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankolien.leash.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
 		};
 		DD0E69B3CDE9B2992ABCF641 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -611,6 +769,15 @@
 			buildConfigurations = (
 				9A2ED16238889CDBA9AABF83 /* Debug */,
 				989B46B9AA20C6CD2EFD3BD3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B34529B13AB19F39E89E8F3D /* Build configuration list for PBXNativeTarget "LeashWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E7ECC2CAA86A61FD9009BDD /* Debug */,
+				C007291AD25C054DFC05813C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

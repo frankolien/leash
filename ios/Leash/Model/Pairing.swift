@@ -16,10 +16,11 @@ enum Pairing {
 
     enum Provider: String { case google, apple, passkey }
 
-    static func url(site: URL, key: String, provider: Provider) -> URL {
+    static func url(site: URL, key: String, brake: String, provider: Provider) -> URL {
         var c = URLComponents(url: site.appending(path: "link"), resolvingAgainstBaseURL: false)!
         c.queryItems = [
             .init(name: "key", value: key),
+            .init(name: "brake", value: brake),
             .init(name: "device", value: UIDevice.current.model),
             .init(name: "callback", value: "leash://linked"),
             .init(name: "provider", value: provider.rawValue),
@@ -27,7 +28,7 @@ enum Pairing {
         return c.url!
     }
 
-    struct Linked: Equatable { let account: String; let network: Network }
+    typealias Linked = LinkedAccount
 
     enum Failure: LocalizedError {
         case cancelled, refused(String)

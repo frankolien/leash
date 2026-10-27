@@ -19,21 +19,29 @@ final class PhoneKeyLiveTests: XCTestCase {
         let path = ProcessInfo.processInfo.environment["LEASH_E2E"] ?? ""
         try XCTSkipIf(path.isEmpty, "set TEST_RUNNER_LEASH_E2E to a phone-e2e.json")
         let spec = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: path))) as! [String: String]
-        let seed = Data(stride(from: 0, to: spec["seed"]!.count, by: 2).map { i -> UInt8 in
-            let s = spec["seed"]!; let a = s.index(s.startIndex, offsetBy: i); return UInt8(s[a..<s.index(a, offsetBy: 2)], radix: 16)! })
-        let key = try NearKey(seed: seed)
+        func hex(_ s: String) -> Data { Data(stride(from: 0, to: s.count, by: 2).map { i in let a = s.index(s.startIndex, offsetBy: i); return UInt8(s[a..<s.index(a, offsetBy: 2)], radix: 16)! }) }
+        let key = try NearKey(seed: hex(spec["seed"]!))
+        let brake = try NearKey(seed: hex(spec["brakeSeed"]!))
         XCTAssertEqual(key.publicKey, spec["phone"])
+        XCTAssertEqual(brake.publicKey, spec["brake"])
         let client = LeashClient(owner: spec["owner"]!, network: .testnet)
 
-        try await client.act("pause", [:], key: key)
+        // The brake pauses; it can never undo that, which takes the decision key.
+        try await client.act("pause", [:], key: brake)
         var s = try await client.snapshot()
         XCTAssertTrue(s.paused)
+        do {
+            try await client.act("resume", [:], key: brake)
+            XCTFail("the brake key resumed")
+        } catch {
+            print("live: brake resume refused: \(error.localizedDescription)")
+        }
         try await client.act("resume", [:], key: key)
         s = try await client.snapshot()
         XCTAssertFalse(s.paused)
 
         let request = try XCTUnwrap(s.requests.first)
-        let (hash, _) = try await client.act("deny", ["request_id": request.id], key: key)
+        let (hash, _) = try await client.act("deny", ["request_id": request.id], key: brake)
         print("live: denied request \(request.id) in https://testnet.nearblocks.io/txns/\(hash)")
         s = try await client.snapshot()
         XCTAssertTrue(s.requests.isEmpty)
