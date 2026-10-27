@@ -87,6 +87,11 @@ struct MainView: View {
             }
         }
         .onChange(of: nav.screen) { _, screen in UserDefaults.standard.set(screen.rawValue, forKey: "leash.tab") }
+        // leash://request/<id>, from a Live Activity's Review button.
+        .onOpenURL { url in
+            guard url.host() == "request", let id = UInt64(url.lastPathComponent) else { return }
+            NotificationCenter.default.post(name: .leashOpenRequest, object: id)
+        }
         .onReceive(NotificationCenter.default.publisher(for: .leashOpenRequest)) { note in
             guard let id = note.object as? UInt64 else { return }
             nav.screen = .approvals

@@ -113,6 +113,7 @@ final class AppModel {
                 WidgetCenter.shared.reloadAllTimelines()
             }
             Alerts.shared.noticeWaiting(fresh)
+            LiveRequests.sync(fresh)
         } catch {
             offline = true
         }

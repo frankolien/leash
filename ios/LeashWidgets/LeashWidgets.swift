@@ -7,6 +7,7 @@ struct LeashWidgetsBundle: WidgetBundle {
     var body: some Widget {
         StatusWidget()
         PauseControl()
+        RequestLiveActivity()
     }
 }
 

@@ -69,4 +69,25 @@ final class ScreensTests: XCTestCase {
         sleep(2)
         try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: out).appending(path: "11-alert-actions.png"))
     }
+
+    /// An owner with a parked request (OWNER): the app starts a Live Activity for it, which shows in
+    /// the Dynamic Island once the app is in the background.
+    func testWaitingRequestGoesLive() throws {
+        let out = try XCTUnwrap(ProcessInfo.processInfo.environment["SHOTS"])
+        let owner = try XCTUnwrap(ProcessInfo.processInfo.environment["OWNER"])
+        let app = XCUIApplication()
+        app.launchArguments = ["-leash.account", owner, "-leash.network", "testnet", "-leash.tab", "approvals"]
+        app.launch()
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        if springboard.buttons["Allow"].waitForExistence(timeout: 5) { springboard.buttons["Allow"].tap() }
+        XCTAssertTrue(app.staticTexts["claude wants to pay"].waitForExistence(timeout: 30))
+        sleep(3)
+        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: out).appending(path: "20-approvals.png"))
+        app.staticTexts["claude wants to pay"].tap()
+        sleep(4)
+        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: out).appending(path: "21-request.png"))
+        XCUIDevice.shared.press(.home)
+        sleep(3)
+        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: out).appending(path: "22-island.png"))
+    }
 }

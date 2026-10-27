@@ -19,6 +19,7 @@
 		</dict>
 	</array>
 	<key>LSRequiresIPhoneOS</key><true/>
+	<key>NSSupportsLiveActivities</key><true/>
 	<key>LeashKeychainGroup</key><string>$(AppIdentifierPrefix)com.frankolien.leash.shared</string>
 	<key>LeashSiteURL</key><string>http://localhost:3000</string>
 	<key>NSFaceIDUsageDescription</key><string>Leash asks for Face ID before your phone approves a payment.</string>

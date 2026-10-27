@@ -33,8 +33,11 @@
 		781253DB4A972DA036F3D0FA /* NearTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D2768E7FD4F12882979AEA /* NearTests.swift */; };
 		79CFEF295F6134F56F7813DB /* LeashClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FFCED3D5FF03749D711F6A /* LeashClient.swift */; };
 		7BB0336B7BF78579362C450E /* Pairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99140712D848E2E4AEE815D /* Pairing.swift */; };
+		7D9B371F0CD1ABAF287C4163 /* RequestActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FB1A89E15E805E2664FB77 /* RequestActivity.swift */; };
 		883B54DEF8D850C2C6116E8D /* LiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5034997D816EC2EDCCFA9AA9 /* LiveTests.swift */; };
+		8E15AA6A874B0A269B9583FB /* RequestActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FB1A89E15E805E2664FB77 /* RequestActivity.swift */; };
 		8E9F41A9EDB4372F32C2A688 /* NearRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */; };
+		ADC003550373BE44F7018037 /* LiveRequests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C730B03149307A3DD8F8645D /* LiveRequests.swift */; };
 		B699CCF5DCC16FE137E0B239 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 653DBAC2F6A2C55DB80E65DC /* Shared.swift */; };
 		B74433AB79E8E86CFFCF6B00 /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C711A25949A81BC4DC7E3A5 /* Transaction.swift */; };
 		C36EDA377744213E76C7E38F /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */; };
@@ -50,6 +53,7 @@
 		F30030882E4916F14DF88F42 /* Safety.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD85F4D2D276D50CA549D56 /* Safety.swift */; };
 		F58571AEEA806E1A1CDADBD5 /* ScreensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAD0F1C4B5EDDC9B6EB5A28 /* ScreensTests.swift */; };
 		F772CA069395639F7E3B7B62 /* DeviceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4D08C71A127B7BAC276C61C /* DeviceKey.swift */; };
+		FC3678AB67188A555AE39D2A /* RequestLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C119EFAF932478AE3A04BF2D /* RequestLiveActivity.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -120,13 +124,16 @@
 		ACD85F4D2D276D50CA549D56 /* Safety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Safety.swift; sourceTree = "<group>"; };
 		B99140712D848E2E4AEE815D /* Pairing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pairing.swift; sourceTree = "<group>"; };
 		BE19EB96FEB2C20AA3E12632 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
+		C119EFAF932478AE3A04BF2D /* RequestLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLiveActivity.swift; sourceTree = "<group>"; };
 		C16C00C503E8A057521438EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C6FFCED3D5FF03749D711F6A /* LeashClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashClient.swift; sourceTree = "<group>"; };
+		C730B03149307A3DD8F8645D /* LiveRequests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRequests.swift; sourceTree = "<group>"; };
 		C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		CB6EAC8188977DE24585E339 /* LeashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashApp.swift; sourceTree = "<group>"; };
 		CEAD0F1C4B5EDDC9B6EB5A28 /* ScreensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreensTests.swift; sourceTree = "<group>"; };
 		D106FD854808009BD7705EE1 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		E6ED710A00778E56B2516F4F /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		E6FB1A89E15E805E2664FB77 /* RequestActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestActivity.swift; sourceTree = "<group>"; };
 		EA8C04C4966013676DFB0C85 /* Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shortcuts.swift; sourceTree = "<group>"; };
 		F4D08C71A127B7BAC276C61C /* DeviceKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceKey.swift; sourceTree = "<group>"; };
 		F64E0660D25B46A6FE994A67 /* Base58.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Base58.swift; sourceTree = "<group>"; };
@@ -177,6 +184,7 @@
 			children = (
 				F4D08C71A127B7BAC276C61C /* DeviceKey.swift */,
 				D106FD854808009BD7705EE1 /* Intents.swift */,
+				E6FB1A89E15E805E2664FB77 /* RequestActivity.swift */,
 				653DBAC2F6A2C55DB80E65DC /* Shared.swift */,
 			);
 			path = Shared;
@@ -199,6 +207,7 @@
 				C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */,
 				9471C87703B206D9B22DB069 /* Format.swift */,
 				C6FFCED3D5FF03749D711F6A /* LeashClient.swift */,
+				C730B03149307A3DD8F8645D /* LiveRequests.swift */,
 				B99140712D848E2E4AEE815D /* Pairing.swift */,
 				ACD85F4D2D276D50CA549D56 /* Safety.swift */,
 				BE19EB96FEB2C20AA3E12632 /* Types.swift */,
@@ -245,6 +254,7 @@
 				C16C00C503E8A057521438EE /* Info.plist */,
 				224C4671E4DA6DFEE9731885 /* LeashWidgets.entitlements */,
 				A398A7EA2E1C504D48FF2FE6 /* LeashWidgets.swift */,
+				C119EFAF932478AE3A04BF2D /* RequestLiveActivity.swift */,
 			);
 			path = LeashWidgets;
 			sourceTree = "<group>";
@@ -440,10 +450,12 @@
 				D6996C954F29D79313E98666 /* Intents.swift in Sources */,
 				180245EAC01F4B4922B7B705 /* LeashApp.swift in Sources */,
 				79CFEF295F6134F56F7813DB /* LeashClient.swift in Sources */,
+				ADC003550373BE44F7018037 /* LiveRequests.swift in Sources */,
 				3DE08DF779A33E2DBEAAA72B /* NearKey.swift in Sources */,
 				8E9F41A9EDB4372F32C2A688 /* NearRPC.swift in Sources */,
 				C79F411A4A1964F9149FFEF0 /* OnboardingView.swift in Sources */,
 				7BB0336B7BF78579362C450E /* Pairing.swift in Sources */,
+				7D9B371F0CD1ABAF287C4163 /* RequestActivity.swift in Sources */,
 				34E2265876CEA9F1411ECEFF /* RequestSheet.swift in Sources */,
 				F30030882E4916F14DF88F42 /* Safety.swift in Sources */,
 				389DA894954584EC0150065D /* Shared.swift in Sources */,
@@ -467,6 +479,8 @@
 				EA0796ADAF02581F1DA80B30 /* LeashWidgets.swift in Sources */,
 				0DA553BCBCAAE2EB5B61B191 /* NearKey.swift in Sources */,
 				26E48DB8EE51848521AAE918 /* NearRPC.swift in Sources */,
+				8E15AA6A874B0A269B9583FB /* RequestActivity.swift in Sources */,
+				FC3678AB67188A555AE39D2A /* RequestLiveActivity.swift in Sources */,
 				B699CCF5DCC16FE137E0B239 /* Shared.swift in Sources */,
 				6F12C69A45B0793BC51EED08 /* Transaction.swift in Sources */,
 				76585AB7D97DB2CA7DBA0CCC /* Types.swift in Sources */,
