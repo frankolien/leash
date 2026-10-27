@@ -5,6 +5,8 @@
 // State lives in the hooks; the cards only draw and call back.
 
 import { useCallback, useEffect, useState } from "react";
+import type { PhoneKey } from "@/lib/device";
+import { LeashReader } from "@/lib/reader";
 import { Check, Pause, Play, Plus } from "lucide-react";
 import type { Agent as SetupAgent } from "@/components/setup/agents";
 import { useLiveActivity } from "@/hooks/useLiveActivity";
@@ -82,6 +84,15 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   }, `${agentLabel(a.key, names)} can no longer pay`), [act, call, contract, names, wallet.session]);
   const pause = useCallback(() => act("pause", () => call(contract, "pause", {}), "Paused. No agent can pay until you resume."), [act, call, contract]);
   const resume = useCallback(() => act("resume", () => call(contract, "resume", {}), "Resumed"), [act, call, contract]);
+  // A phone's keys are removed from the account itself, so NEAR refuses them at once.
+  const [phones, setPhones] = useState<PhoneKey[] | null>(null);
+  useEffect(() => {
+    new LeashReader(network).phoneKeys(owner, contract).then(setPhones, () => setPhones([]));
+  }, [owner, network, contract]);
+  const unlink = useCallback((p: PhoneKey) => act("remove the phone's key", async () => {
+    await wallet.session?.deleteKey(p.key);
+    setPhones((list) => list?.filter((k) => k.key !== p.key) ?? null);
+  }, p.brake ? "Removed the phone's brake key" : "Removed the phone's decision key. It can no longer approve."), [act, wallet.session]);
   const setWindow = useCallback((secs: number) => act("set the approval window", () => call(contract, "set_request_ttl", { secs }), `Requests now wait ${Math.round(secs / 60)} minutes`), [act, call, contract]);
   // One side panel: opening a task replaces whatever task was open.
   const deposit = useCallback(() => {
@@ -222,7 +233,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
       page = (
         <div className={styles.column}>
           <PageHeader title="Settings" status="How your vault behaves and where it lives" />
-          <SettingsView snapshot={snap} busy={busy} canAct={wallet.isOwner} onWindow={setWindow} onPause={pause} onResume={resume} />
+          <SettingsView snapshot={snap} busy={busy} canAct={wallet.isOwner} phones={phones} onWindow={setWindow} onPause={pause} onResume={resume} onUnlink={unlink} />
         </div>
       );
     }

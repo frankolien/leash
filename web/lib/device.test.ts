@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { callbackUrl, linkRequest, pairingCode } from "./device";
+import { callbackUrl, linkRequest, pairingCode, phoneKeysOf } from "./device";
 
 const KEY = "ed25519:6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp";
 
@@ -20,5 +20,17 @@ describe("linking a phone", () => {
     expect(linkRequest(new URLSearchParams({ key: KEY, brake: "ed25519:9C6hybhQ6Aycep9jaUnP6uL9ZYvDjUp1aSkFWPUFJtpj", callback: "leash://linked" }))).toMatchObject({ brake: "ed25519:9C6hybhQ6Aycep9jaUnP6uL9ZYvDjUp1aSkFWPUFJtpj" });
     if ("error" in ok) throw new Error();
     expect(callbackUrl(ok, { account: "olien.testnet" })).toBe("leash://linked?account=olien.testnet&network=testnet");
+  });
+
+  it("finds a linked phone's two keys and nothing else", () => {
+    const fc = (methods: string[], receiver = "leash.frankolien.testnet") => ({ FunctionCall: { allowance: null, receiver_id: receiver, method_names: methods } });
+    const keys = [
+      { public_key: "ed25519:full", access_key: { permission: "FullAccess" } },
+      { public_key: "ed25519:agent", access_key: { permission: fc(["pay", "request", "ask_more"]) } },
+      { public_key: "ed25519:phone", access_key: { permission: fc(["approve", "deny", "pause", "resume"]) } },
+      { public_key: "ed25519:brake", access_key: { permission: fc(["deny", "pause"]) } },
+      { public_key: "ed25519:other", access_key: { permission: fc(["approve"], "someone.testnet") } },
+    ];
+    expect(phoneKeysOf(keys, "leash.frankolien.testnet")).toEqual([{ key: "ed25519:phone", brake: false }, { key: "ed25519:brake", brake: true }]);
   });
 });

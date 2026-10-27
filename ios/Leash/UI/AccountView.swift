@@ -203,7 +203,7 @@ struct ConnectSheet: View {
             .disabled(local)
             .opacity(local ? 0.4 : 1)
             if let owner = model.linked?.account {
-                Link(destination: site.appending(path: owner).appending(queryItems: [.init(name: "view", value: "agents")])) {
+                Link(destination: URL(string: site.appending(path: owner).absoluteString + "#agents")!) {
                     HStack(spacing: 10) { Image("brand-chatgpt").resizable().frame(width: 20, height: 20); Text("ChatGPT, Codex, Cursor and more") }
                 }
                 .buttonStyle(.pill(.secondary))

@@ -51,3 +51,22 @@ export function callbackUrl(request: LinkRequest, extra: Record<string, string>)
   if (!url.searchParams.has("network")) url.searchParams.set("network", DEFAULT_NETWORK);
   return url.toString();
 }
+
+/// A phone's key as the owner's account lists it: the decision key or the brake.
+export type PhoneKey = { key: string; brake: boolean };
+
+type KeyView = { public_key: string; access_key: { permission: unknown } };
+
+/// The phone keys among an account's access keys: function-call keys on this Leash contract whose
+/// methods are a phone's. Agent keys (pay, request, ask_more) and full-access keys are left out.
+export function phoneKeysOf(keys: KeyView[], contract: string): PhoneKey[] {
+  const out: PhoneKey[] = [];
+  for (const k of keys) {
+    const fc = (k.access_key.permission as { FunctionCall?: { receiver_id: string; method_names: string[] } }).FunctionCall;
+    if (!fc || fc.receiver_id !== contract) continue;
+    const methods = [...fc.method_names].sort();
+    if (methods.includes("approve")) out.push({ key: k.public_key, brake: false });
+    else if (methods.join() === [...BRAKE_METHODS].sort().join()) out.push({ key: k.public_key, brake: true });
+  }
+  return out;
+}

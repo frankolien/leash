@@ -3,6 +3,7 @@
 
 import { JsonRpcProvider } from "near-api-js";
 import { RPC, USDC, contractOf } from "./config";
+import { phoneKeysOf, type PhoneKey } from "./device";
 import type { LogEntry, Network, Policy, Proposal, Raise, Request, Snapshot, Task } from "./types";
 
 export { contractOf, networkOf } from "./config";
@@ -17,6 +18,17 @@ export class LeashReader {
   async view<T>(contractId: string, method: string, args: Record<string, unknown>): Promise<T> {
     const result = await this.provider.callFunction({ contractId, method, args });
     return result as unknown as T;
+  }
+
+  /// The owner's linked phones, from the access keys on their account.
+  async phoneKeys(owner: string, contract = contractOf(owner)): Promise<PhoneKey[]> {
+    const res = await fetch(RPC[this.network], {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: "leash", method: "query", params: { request_type: "view_access_key_list", finality: "optimistic", account_id: owner } }),
+    });
+    const body = (await res.json()) as { result?: { keys: Parameters<typeof phoneKeysOf>[0] } };
+    return phoneKeysOf(body.result?.keys ?? [], contract);
   }
 
   async snapshot(owner: string, contract = contractOf(owner)): Promise<Snapshot> {
