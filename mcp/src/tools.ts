@@ -131,7 +131,9 @@ export function registerTools(server: McpServer, leash: Leash) {
           remaining_today_usdc: toUsdc(outcome.remaining_today),
           ...(from ? { task: task, task_left_usdc: toUsdc(outcome.remaining_today) } : {}),
           transaction: leash.explorer(tx),
-          next: outcome.accepted ? (repeat ? "this payment_id was already paid; nothing moved again" : null) : "if the reason is a cap, the allowlist or a cooldown, leash_request can park it for the owner",
+          next: outcome.accepted
+            ? repeat ? "this payment_id was already paid; nothing moved again" : null
+            : from ? "a task cannot go past its budget or recipients; ask the agent that opened it for a new task" : "if the reason is a cap, the allowlist or a cooldown, leash_request can park it for the owner",
         },
         {
           kind: outcome.accepted ? "paid" : "refused",
