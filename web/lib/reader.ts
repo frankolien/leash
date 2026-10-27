@@ -3,7 +3,7 @@
 
 import { JsonRpcProvider } from "near-api-js";
 import { RPC, USDC, contractOf } from "./config";
-import type { LogEntry, Network, Policy, Proposal, Raise, Request, Snapshot } from "./types";
+import type { LogEntry, Network, Policy, Proposal, Raise, Request, Snapshot, Task } from "./types";
 
 export { contractOf, networkOf } from "./config";
 
@@ -20,7 +20,7 @@ export class LeashReader {
   }
 
   async snapshot(owner: string, contract = contractOf(owner)): Promise<Snapshot> {
-    const [policies, requests, proposals, log, paused, storage, requestTtl, raises] = await Promise.all([
+    const [policies, requests, proposals, log, paused, storage, requestTtl, raises, tasks] = await Promise.all([
       this.view<[string, Policy][]>(contract, "get_policies", { owner }),
       this.view<Request[]>(contract, "get_requests", { owner }),
       this.view<Proposal[]>(contract, "get_proposals", { owner }),
@@ -29,6 +29,7 @@ export class LeashReader {
       this.view<string>(contract, "get_storage", { owner }),
       this.view<number>(contract, "get_request_ttl", { owner }),
       this.view<[string, Raise][]>(contract, "get_raises", { owner }).catch(() => [] as [string, Raise][]),
+      this.view<Task[]>(contract, "get_tasks", { owner }).catch(() => [] as Task[]),
     ]);
     const raiseOf = new Map(raises);
     const token = policies[0]?.[1].token ?? USDC[this.network];
@@ -50,6 +51,7 @@ export class LeashReader {
       agents: policies.map(([key, policy], i) => ({ key, policy, remaining: BigInt(remaining[i]?.remaining_today ?? "0"), raise: raiseOf.get(key) })),
       requests: [...requests].sort((a, b) => a.id - b.id),
       proposals: [...proposals].sort((a, b) => a.id - b.id),
+      tasks: [...tasks].sort((a, b) => b.id - a.id),
       log: [...log].reverse(),
       fetchedAt: Date.now(),
     };

@@ -1,18 +1,19 @@
 "use client";
 
 // Every agent as a row: its mark, how it behaves, what it has left today. A row opens to show the
-// limits it runs under, any temporary raise and when it ends, and the actions: End raise, Revoke.
+// limits it runs under, any temporary raise, the tasks it opened for sub-agents, and the actions:
+// End raise, Close task, Revoke.
 
 import { useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { agentLabel, modeOf, shortKey, toUsdc } from "@/lib/format";
-import type { Agent, Names } from "@/lib/types";
+import type { Agent, Names, Task } from "@/lib/types";
 import { caps, untilText } from "@/lib/raise";
 import AgentIcon from "./AgentIcon";
 import { Track } from "./parts";
 import styles from "./dashboard.module.css";
 
-export default function AgentList({ agents, names, paused, busy, onRevoke, onEndRaise }: { agents: Agent[]; names: Names; paused: boolean; busy: string | null; onRevoke: (a: Agent) => void; onEndRaise: (a: Agent) => void }) {
+export default function AgentList({ agents, tasks, names, paused, busy, onRevoke, onEndRaise, onCloseTask }: { agents: Agent[]; tasks: Task[]; names: Names; paused: boolean; busy: string | null; onRevoke: (a: Agent) => void; onEndRaise: (a: Agent) => void; onCloseTask: (t: Task) => void }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const q = query.trim().toLowerCase();
@@ -52,6 +53,7 @@ export default function AgentList({ agents, names, paused, busy, onRevoke, onEnd
                     {expires && <div><dt>Key expires</dt><dd>{expires.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</dd></div>}
                     <div><dt>Key</dt><dd className="mono" title={a.key}>{shortKey(a.key)}</dd></div>
                   </dl>
+                  <TaskList tasks={tasks.filter((t) => t.parent === a.key)} busy={busy} onClose={onCloseTask} />
                   <div className={styles.listActions}>
                     {a.raise && <button className="btn line" onClick={() => onEndRaise(a)} disabled={busy !== null}>End raise now</button>}
                     {a.policy.active && <button className="btn line danger" onClick={() => onRevoke(a)} disabled={busy !== null}>Revoke key</button>}
@@ -63,5 +65,29 @@ export default function AgentList({ agents, names, paused, busy, onRevoke, onEnd
         })}
       </div>
     </>
+  );
+}
+
+/// The budgets this agent set aside for sub-agents: open ones first, with what each has spent.
+function TaskList({ tasks, busy, onClose }: { tasks: Task[]; busy: string | null; onClose: (t: Task) => void }) {
+  if (!tasks.length) return null;
+  const now = Date.now() * 1e6;
+  const open = (t: Task) => t.active && t.expires_at > now;
+  const shown = [...tasks.filter(open), ...tasks.filter((t) => !open(t))].slice(0, 6);
+  return (
+    <div className={styles.tasks}>
+      <span className={styles.tasksHead}>Tasks for sub-agents</span>
+      {shown.map((t) => {
+        const budget = BigInt(t.budget), spent = BigInt(t.spent);
+        const live = open(t);
+        return (
+          <div key={t.id} className={styles.taskRow} data-off={!live || undefined}>
+            <span className={styles.rowMain}><strong>{t.label}</strong><small>{live ? `Ends ${untilText(t.expires_at)}` : t.active ? "Ended" : "Closed"}{t.allow.length ? `, only ${t.allow.join(", ")}` : ""}</small></span>
+            <span className={styles.budget}><span><b className="tabular">${toUsdc(spent)}</b> of ${toUsdc(budget)}</span><Track share={budget === BigInt(0) ? 0 : Number(((budget - spent) * BigInt(1000)) / budget) / 1000} /></span>
+            {live ? <button className={styles.sectionLink} onClick={() => onClose(t)} disabled={busy !== null}>Close</button> : <span />}
+          </div>
+        );
+      })}
+    </div>
   );
 }

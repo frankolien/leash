@@ -32,3 +32,16 @@ export type Ask = { daily_cap?: string; per_payment_cap?: string; allow?: string
 export type Proposal = { id: number; key: string; note: string; created_at: number; ask?: Ask | null };
 export type Raise = { daily_cap: string | null; per_payment_cap: string | null; allow: string[]; until: number };
 export type LogEntry = { at: number; key: string | null; event: string; to: string | null; amount: string | null; detail: string | null };
+
+export type Task = {
+  id: number;
+  parent: string;
+  child: string;
+  label: string;
+  budget: string;
+  spent: string;
+  allow: string[];
+  created_at: number;
+  expires_at: number;
+  active: boolean;
+};

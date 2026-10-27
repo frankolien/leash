@@ -6,7 +6,7 @@ import type { Relayed, SignedMethod } from "leash-near-mcp";
 import { CONTRACT, DEFAULT_NETWORK } from "@/lib/config";
 import { sponsorAccount } from "./sponsor";
 
-const METHODS: SignedMethod[] = ["pay_signed", "request_signed", "ask_more_signed"];
+const METHODS: SignedMethod[] = ["pay_signed", "request_signed", "ask_more_signed", "open_task_signed", "close_task_signed"];
 const GAS = BigInt(100) * BigInt(10) ** BigInt(12);
 // Per owner per hour on one instance; enough for a busy agent, too few to drain the sponsor.
 const OWNER_LIMIT = 120;

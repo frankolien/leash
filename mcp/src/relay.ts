@@ -2,7 +2,7 @@
 // The relayer can neither forge nor repeat a payment: the contract checks the signature and the
 // payment id. The hosted Leash server relays in process; a laptop agent uses LEASH_RELAY_URL.
 
-export type SignedMethod = "pay_signed" | "request_signed" | "ask_more_signed";
+export type SignedMethod = "pay_signed" | "request_signed" | "ask_more_signed" | "open_task_signed" | "close_task_signed";
 export type Relayed = { result: unknown; tx?: string };
 export type Relay = (method: SignedMethod, args: { intent: string; signature: string }) => Promise<Relayed>;
 

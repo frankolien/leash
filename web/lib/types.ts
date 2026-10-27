@@ -32,6 +32,9 @@ export type Request = {
 /// The exact terms an agent asked for beside its note; values are what the caps become for a while.
 export type Ask = { daily_cap?: string | null; per_payment_cap?: string | null; allow: string[]; for_secs: number };
 export type Proposal = { id: number; owner: string; key: string; note: string; created_at: number; ask?: Ask | null };
+/// A budget an agent set aside for one job, spent by a sub-agent's key within the agent's own limits.
+export type Task = { id: number; owner: string; parent: string; child: string; label: string; budget: string; spent: string; allow: string[]; created_at: number; expires_at: number; active: boolean };
+
 /// A granted ask in force until `until` (nanoseconds); it lapses on its own.
 export type Raise = { daily_cap: string | null; per_payment_cap: string | null; allow: string[]; until: number };
 
@@ -66,6 +69,7 @@ export type Snapshot = {
   agents: Agent[];
   requests: Request[];
   proposals: Proposal[];
+  tasks: Task[];
   log: LogEntry[];
   fetchedAt: number;
 };

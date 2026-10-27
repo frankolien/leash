@@ -5,14 +5,15 @@
 
 import { Plus } from "lucide-react";
 import { agentLabel, modeOf, toUsdc } from "@/lib/format";
-import type { Agent, Names, Proposal } from "@/lib/types";
+import type { Agent, Names, Proposal, Task } from "@/lib/types";
 import { askChanges, askLength, caps, duration, untilText } from "@/lib/raise";
 import AgentIcon from "./AgentIcon";
 import { Track } from "./parts";
 import styles from "./dashboard.module.css";
 
-export default function AgentsCard(props: { agents: Agent[]; names: Names; paused: boolean; proposals: Proposal[]; busy: string | null; onGrant: (p: Proposal) => void; onDismiss: (p: Proposal) => void; onAdd: () => void }) {
-  const { agents, names, paused, proposals, busy, onGrant, onDismiss, onAdd } = props;
+export default function AgentsCard(props: { agents: Agent[]; names: Names; paused: boolean; proposals: Proposal[]; tasks: Task[]; busy: string | null; onGrant: (p: Proposal) => void; onDismiss: (p: Proposal) => void; onAdd: () => void }) {
+  const { agents, names, paused, proposals, tasks, busy, onGrant, onDismiss, onAdd } = props;
+  const openTasks = (key: string) => tasks.filter((t) => t.parent === key && t.active && t.expires_at > Date.now() * 1e6).length;
   return (
     <section className={`${styles.card} ${styles.panel}`} aria-label="Agents">
       <div className={styles.cardHead}><strong>Agents</strong><a className={styles.sectionLink} href="#agents">Manage</a></div>
@@ -26,7 +27,7 @@ export default function AgentsCard(props: { agents: Agent[]; names: Names; pause
             <div key={a.key}>
             <div className={styles.agentRow} data-off={off || undefined}>
               <AgentIcon name={who} size={38} off={off} />
-              <span className={styles.rowMain}><strong>{who}</strong><small>{off ? "Key deleted" : a.raise ? `Raised until ${untilText(a.raise.until)}` : modeOf(a.policy)}</small></span>
+              <span className={styles.rowMain}><strong>{who}</strong><small>{off ? "Key deleted" : a.raise ? `Raised until ${untilText(a.raise.until)}` : openTasks(a.key) ? `${openTasks(a.key)} task${openTasks(a.key) === 1 ? "" : "s"} open for sub-agents` : modeOf(a.policy)}</small></span>
               <span className={styles.budget}>
                 {off ? null : <><span><b className="tabular">${toUsdc(a.remaining)}</b> of ${toUsdc(daily)}</span><Track share={daily === BigInt(0) ? 0 : Number((a.remaining * BigInt(1000)) / daily) / 1000} /></>}
               </span>

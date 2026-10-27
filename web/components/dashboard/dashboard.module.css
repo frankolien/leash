@@ -406,3 +406,8 @@ button.listRow:hover { background: #1c1c1c; }
 .askActions { display: flex; flex-shrink: 0; align-items: center; gap: 12px; }
 .grantLink { padding: 6px 12px; border: 0; border-radius: 999px; background: #fff; color: #000; font-family: inherit; font-size: 13px; font-weight: 600; }
 .listActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tasks { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 16px; background: var(--raised); }
+.tasksHead { margin-bottom: 4px; color: var(--grey); font-size: 13px; font-weight: 500; }
+.taskRow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(90px, 1fr) 48px; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--edge); }
+.taskRow:first-of-type { border-top: 0; }
+.taskRow[data-off] { opacity: .5; }
