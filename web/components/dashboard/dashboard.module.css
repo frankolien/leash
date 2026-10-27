@@ -401,3 +401,8 @@ button.listRow:hover { background: #1c1c1c; }
 .faucet svg { margin-left: 4px; vertical-align: -2px; }
 .panelCard .codeBox pre { max-height: 190px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
 .panelCard .made > .white:last-child { margin-top: auto; }
+.changes { display: flex; flex-direction: column; gap: 6px; margin: 0 0 16px; padding: 12px 14px; border-radius: 14px; background: var(--raised); list-style: none; color: #fff; font-size: 14px; font-weight: 500; }
+.ask em { display: block; margin-top: 4px; color: var(--text-2); font-style: normal; }
+.askActions { display: flex; flex-shrink: 0; align-items: center; gap: 12px; }
+.grantLink { padding: 6px 12px; border: 0; border-radius: 999px; background: #fff; color: #000; font-family: inherit; font-size: 13px; font-weight: 600; }
+.listActions { display: flex; flex-wrap: wrap; gap: 8px; }

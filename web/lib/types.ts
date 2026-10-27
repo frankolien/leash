@@ -29,7 +29,11 @@ export type Request = {
   expires_at: number;
 };
 
-export type Proposal = { id: number; owner: string; key: string; note: string; created_at: number };
+/// The exact terms an agent asked for beside its note; values are what the caps become for a while.
+export type Ask = { daily_cap?: string | null; per_payment_cap?: string | null; allow: string[]; for_secs: number };
+export type Proposal = { id: number; owner: string; key: string; note: string; created_at: number; ask?: Ask | null };
+/// A granted ask in force until `until` (nanoseconds); it lapses on its own.
+export type Raise = { daily_cap: string | null; per_payment_cap: string | null; allow: string[]; until: number };
 
 export type LogEntry = {
   at: number;
@@ -44,6 +48,7 @@ export type Agent = {
   key: string;
   policy: Policy;
   remaining: bigint;
+  raise?: Raise;
 };
 
 /// One read of everything the page shows, taken at `fetchedAt`.

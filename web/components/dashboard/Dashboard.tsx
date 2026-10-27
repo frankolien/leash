@@ -13,6 +13,7 @@ import { useNow, useSnapshot } from "@/hooks/useSnapshot";
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { agentLabel, toUnits, toUsdc } from "@/lib/format";
+import { askLength, duration } from "@/lib/raise";
 import { greeting, recipients } from "@/lib/insights";
 import { USDC, contractOf, networkOf } from "@/lib/config";
 import { FundAccount, ReceiveAddress } from "./DepositDetail";
@@ -70,6 +71,8 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const approve = useCallback((r: Request) => act("approve", () => call(contract, "approve", { request_id: r.id }), `Approved ${toUsdc(r.amount)} USDC to ${r.to}`), [act, call, contract]);
   const deny = useCallback((r: Request) => act("deny", () => call(contract, "deny", { request_id: r.id }), `Denied request ${r.id}. Nothing moved.`), [act, call, contract]);
   const dismiss = useCallback((p: Proposal) => act("dismiss", () => call(contract, "dismiss_proposal", { proposal_id: p.id }), "Dismissed"), [act, call, contract]);
+  const grant = useCallback((p: Proposal) => act("grant", () => call(contract, "grant", { proposal_id: p.id }), `Granted to ${agentLabel(p.key, names)} for ${duration(askLength(p.ask ?? { allow: [], for_secs: 0 }))}. It ends on its own.`), [act, call, contract, names]);
+  const endRaise = useCallback((a: Agent) => act("end the raise", () => call(contract, "end_raise", { public_key: a.key }), `${agentLabel(a.key, names)} is back to its usual limits`), [act, call, contract, names]);
   // Revoke stops the policy on Leash, then deletes the key from the owner's account, so NEAR
   // rejects the agent's next call before the contract runs.
   const revoke = useCallback((a: Agent) => act("revoke", async () => {
@@ -149,7 +152,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const waitingCards = (s: Snapshot, limit?: number) => {
     const cards = [
       ...s.requests.map((r) => <ApprovalCard key={`r${r.id}`} request={r} agent={s.agents.find((a) => a.key === r.key)} log={s.log} network={network} names={names} now={now} busy={busy} onApprove={() => approve(r)} onDeny={() => deny(r)} />),
-      ...s.proposals.map((p) => <ProposalCard key={`p${p.id}`} proposal={p} names={names} busy={busy} onDismiss={() => dismiss(p)} />),
+      ...s.proposals.map((p) => <ProposalCard key={`p${p.id}`} proposal={p} agent={s.agents.find((a) => a.key === p.key)} names={names} busy={busy} onGrant={() => grant(p)} onDismiss={() => dismiss(p)} />),
     ];
     return limit ? cards.slice(0, limit) : cards;
   };
@@ -180,7 +183,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
             </div>
           </header>
           <VaultCard snapshot={snap} now={now} busy={busy} onWithdraw={withdraw} onDeposit={deposit} />
-          <AgentsCard agents={snap.agents} names={names} paused={snap.paused} proposals={snap.proposals} busy={busy} onDismiss={dismiss} onAdd={openSetup} />
+          <AgentsCard agents={snap.agents} names={names} paused={snap.paused} proposals={snap.proposals} busy={busy} onGrant={grant} onDismiss={dismiss} onAdd={openSetup} />
           <ActivityCard log={snap.log} names={names} limit={6} />
         </div>
       );
@@ -189,7 +192,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         <div className={styles.column}>
           <PageHeader title="Agents" status={`${active} active${revoked ? `, ${revoked} revoked` : ""}`} action={<button className={styles.dark} onClick={openSetup}><Plus size={17} /> New agent</button>} />
           <ConnectCard onPick={pickSetup} onChatGpt={openChatGpt} />
-          <AgentList agents={snap.agents} names={names} paused={snap.paused} busy={busy} onRevoke={revoke} />
+          <AgentList agents={snap.agents} names={names} paused={snap.paused} busy={busy} onRevoke={revoke} onEndRaise={endRaise} />
         </div>
       );
     } else if (view === "approvals") {

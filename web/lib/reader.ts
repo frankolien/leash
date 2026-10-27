@@ -3,7 +3,7 @@
 
 import { JsonRpcProvider } from "near-api-js";
 import { RPC, USDC, contractOf } from "./config";
-import type { LogEntry, Network, Policy, Proposal, Request, Snapshot } from "./types";
+import type { LogEntry, Network, Policy, Proposal, Raise, Request, Snapshot } from "./types";
 
 export { contractOf, networkOf } from "./config";
 
@@ -20,7 +20,7 @@ export class LeashReader {
   }
 
   async snapshot(owner: string, contract = contractOf(owner)): Promise<Snapshot> {
-    const [policies, requests, proposals, log, paused, storage, requestTtl] = await Promise.all([
+    const [policies, requests, proposals, log, paused, storage, requestTtl, raises] = await Promise.all([
       this.view<[string, Policy][]>(contract, "get_policies", { owner }),
       this.view<Request[]>(contract, "get_requests", { owner }),
       this.view<Proposal[]>(contract, "get_proposals", { owner }),
@@ -28,7 +28,9 @@ export class LeashReader {
       this.view<boolean>(contract, "is_paused", { owner }),
       this.view<string>(contract, "get_storage", { owner }),
       this.view<number>(contract, "get_request_ttl", { owner }),
+      this.view<[string, Raise][]>(contract, "get_raises", { owner }).catch(() => [] as [string, Raise][]),
     ]);
+    const raiseOf = new Map(raises);
     const token = policies[0]?.[1].token ?? USDC[this.network];
     const [vault, held, ...remaining] = await Promise.all([
       this.view<string>(contract, "get_vault", { owner, token }),
@@ -45,7 +47,7 @@ export class LeashReader {
       storage: BigInt(storage ?? "0"),
       paused: paused ?? false,
       requestTtl: requestTtl ?? 3600,
-      agents: policies.map(([key, policy], i) => ({ key, policy, remaining: BigInt(remaining[i]?.remaining_today ?? "0") })),
+      agents: policies.map(([key, policy], i) => ({ key, policy, remaining: BigInt(remaining[i]?.remaining_today ?? "0"), raise: raiseOf.get(key) })),
       requests: [...requests].sort((a, b) => a.id - b.id),
       proposals: [...proposals].sort((a, b) => a.id - b.id),
       log: [...log].reverse(),
