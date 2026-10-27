@@ -34,6 +34,7 @@ impl Leash {
         to: AccountId,
         amount: U128,
         counted: bool,
+        payment_id: Option<String>,
         #[callback_result] result: Result<(), PromiseError>,
     ) -> PayOutcome {
         match result {
@@ -50,6 +51,10 @@ impl Leash {
                         policy.spent_today = U128(policy.spent_today.0.saturating_sub(amount.0));
                         self.policies.insert(id, policy);
                     }
+                }
+                // The payment never happened, so its id is free for an honest retry.
+                if let Some(pid) = &payment_id {
+                    self.forget(&owner, &key, pid);
                 }
                 self.record(&owner, Some(&key), "pay_failed", Some(&to), Some(amount), Some("transfer failed"));
                 emit("pay_failed", json!({ "owner": owner, "key": key, "to": to, "amount": amount }));

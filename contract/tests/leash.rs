@@ -212,3 +212,67 @@ async fn an_owner_without_storage_credit_cannot_add_state() -> Result<()> {
     assert!(format!("{:?}", result.failures()).contains("owner has no storage credit"));
     Ok(())
 }
+
+/// The live contract upgrades in place, so this replays it: v1 state (a vault, a policy, a payment)
+/// survives `migrate`, and then a stranger delivers a payment the agent signed off chain, which
+/// lands once and only once. Runs when LEASH_V1_WASM points at a build of the previous release.
+#[tokio::test]
+async fn v1_state_survives_the_upgrade_and_signed_payments_relay() -> Result<()> {
+    use ed25519_dalek::{Signer, SigningKey};
+    let Ok(v1_path) = std::env::var("LEASH_V1_WASM") else { return Ok(()) };
+    let worker = near_workspaces::sandbox().await?;
+    let ft = worker.dev_deploy(&built("./tests/mock-ft", "mock_ft")?).await?;
+    let leash = worker.dev_deploy(&std::fs::read(v1_path)?).await?;
+    ft.call("new").transact().await?.into_result()?;
+    leash.call("new").transact().await?.into_result()?;
+    let owner = worker.dev_create_account().await?;
+    let vendor = worker.dev_create_account().await?;
+    for who in [owner.id(), vendor.id(), leash.id()] {
+        register(&ft, &owner, who).await?;
+    }
+    ft.call("mint").args_json(json!({ "account_id": owner.id(), "amount": (100 * USDC).to_string() })).transact().await?.into_result()?;
+    owner.call(leash.id(), "deposit_storage").args_json(json!({})).deposit(NearToken::from_millinear(500)).transact().await?.into_result()?;
+    owner
+        .call(ft.id(), "ft_transfer_call")
+        .args_json(json!({ "receiver_id": leash.id(), "amount": (10 * USDC).to_string(), "msg": "" }))
+        .deposit(NearToken::from_yoctonear(1))
+        .gas(Gas::from_tgas(60))
+        .transact()
+        .await?
+        .into_result()?;
+
+    // The agent's key is only a signing key: it never needs to be an access key on any account.
+    let agent = SigningKey::from_bytes(&[42; 32]);
+    let agent_pk = format!("ed25519:{}", bs58::encode(agent.verifying_key().as_bytes()).into_string());
+    owner
+        .call(leash.id(), "set_policy")
+        .args_json(json!({ "public_key": agent_pk, "policy": { "name": "claude", "token": ft.id(), "daily_cap": (3 * USDC).to_string(), "per_payment_cap": (2 * USDC).to_string() } }))
+        .transact()
+        .await?
+        .into_result()?;
+
+    leash.as_account().deploy(&built(".", "leash")?).await?.into_result()?;
+    leash.call("migrate").transact().await?.into_result()?;
+    assert_eq!(vault(&leash, owner.id(), ft.id()).await?, 10 * USDC, "the vault survived the upgrade");
+    let policies: Vec<Value> = leash.view("get_policies").args_json(json!({ "owner": owner.id() })).await?.json()?;
+    assert_eq!(policies[0][1]["name"], "claude", "the policy survived the upgrade");
+
+    let now: u64 = worker.view_block().await?.timestamp();
+    let text = json!({
+        "contract": leash.id(), "owner": owner.id(), "key": agent_pk, "action": "pay", "to": vendor.id(),
+        "amount": USDC.to_string(), "payment_id": "inv-1", "expires_at": now + 600_000_000_000u64,
+    })
+    .to_string();
+    let message = [b"leash-intent:".as_slice(), text.as_bytes()].concat();
+    let signature = near_sdk::base64::Engine::encode(&near_sdk::base64::engine::general_purpose::STANDARD, agent.sign(&message).to_bytes());
+    let deliver = || vendor.call(leash.id(), "pay_signed").args_json(json!({ "intent": text, "signature": signature })).gas(Gas::from_tgas(80)).transact();
+
+    let first: Value = deliver().await?.json()?;
+    assert_eq!(first["accepted"], true, "{first}");
+    assert_eq!(balance(&ft, vendor.id()).await?, USDC, "the vendor was paid by a payment a stranger delivered");
+    let again: Value = deliver().await?.json()?;
+    assert!(again["reason"].as_str().unwrap_or_default().starts_with("already paid"), "{again}");
+    assert_eq!(balance(&ft, vendor.id()).await?, USDC, "a replay moved nothing");
+    assert_eq!(vault(&leash, owner.id(), ft.id()).await?, 9 * USDC);
+    Ok(())
+}

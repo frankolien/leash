@@ -1,8 +1,11 @@
 //! Leash: a bounded account for AI agents on NEAR.
 //!
 //! The owner keeps the money. An agent holds an ed25519 key that the owner added to the owner's own
-//! account as a function-call key restricted to this contract's `pay` and `request`. The contract reads
-//! which key signed and applies that key's policy. Nothing an agent can sign reaches any other contract.
+//! account as a function-call key restricted to this contract's `pay`, `request` and `ask_more`. The
+//! contract reads which key signed and applies that key's policy. Nothing an agent can sign reaches
+//! any other contract. An agent can also sign an instruction off chain for anyone to deliver
+//! (`pay_signed` and friends): the contract verifies the signature itself, so the agent never needs
+//! NEAR for gas and a relayer can neither forge nor repeat a payment.
 //!
 //! Layout: `types` holds every struct the API speaks; `owner` the methods only the owner's key may
 //! call; `agent` the two methods an agent key may call; `token` the NEP-141 callback and the transfer
@@ -21,6 +24,8 @@ mod types;
 mod views;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_signed;
 
 pub use types::*;
 
@@ -33,6 +38,14 @@ const GAS_FOR_CALLBACK: Gas = Gas::from_tgas(10);
 const LOG_LIMIT: usize = 100;
 // A human decides parked requests, so an hour by default; the owner can set their own window.
 const DEFAULT_REQUEST_TTL_SECS: u64 = 3_600;
+// Long enough for a relayer to deliver, short enough that a leaked instruction is soon worthless.
+const MAX_INTENT_NS: u64 = 3_600 * NS_PER_SEC;
+// Payment ids are remembered for a day per key, which outlives any instruction, and at most this
+// many, which bounds the owner's storage.
+const SEEN_LIMIT: usize = 64;
+const MIN_RAISE_SECS: u64 = 3_600;
+const MAX_RAISE_SECS: u64 = 30 * 86_400;
+const DEFAULT_RAISE_SECS: u64 = 86_400;
 const EVENT_STANDARD: &str = "leash";
 const EVENT_VERSION: &str = "1.0.0";
 
@@ -45,6 +58,26 @@ pub struct Leash {
     paused: LookupMap<AccountId, bool>,
     /// Yocto NEAR each owner has put down for the bytes their policies, requests and log take.
     /// The contract never pays for a stranger's state.
+    storage: LookupMap<AccountId, u128>,
+    requests: IterableMap<u64, Request>,
+    next_request: u64,
+    logs: LookupMap<AccountId, Vec<LogEntry>>,
+    proposals: IterableMap<u64, Proposal>,
+    next_proposal: u64,
+    request_ttl: LookupMap<AccountId, u64>,
+    /// Recent payment ids per agent key, with when they were used.
+    seen: LookupMap<(AccountId, PublicKey), Vec<(String, u64)>>,
+    raises: LookupMap<(AccountId, PublicKey), Raise>,
+    asks: LookupMap<u64, Ask>,
+}
+
+/// The state before signed instructions and raises, read once by `migrate`.
+#[near(serializers = [borsh])]
+struct LeashV1 {
+    policies: LookupMap<(AccountId, PublicKey), Policy>,
+    keys: LookupMap<AccountId, Vec<PublicKey>>,
+    vaults: LookupMap<(AccountId, AccountId), u128>,
+    paused: LookupMap<AccountId, bool>,
     storage: LookupMap<AccountId, u128>,
     requests: IterableMap<u64, Request>,
     next_request: u64,
@@ -70,6 +103,32 @@ impl Leash {
             proposals: IterableMap::new(StorageKey::Proposals),
             next_proposal: 1,
             request_ttl: LookupMap::new(StorageKey::RequestTtl),
+            seen: LookupMap::new(StorageKey::Seen),
+            raises: LookupMap::new(StorageKey::Raises),
+            asks: LookupMap::new(StorageKey::Asks),
+        }
+    }
+
+    /// Carries a v1 deployment's state over unchanged and adds the new collections.
+    #[private]
+    #[init(ignore_state)]
+    pub fn migrate() -> Self {
+        let old: LeashV1 = near_sdk::env::state_read().expect("no v1 state to migrate");
+        Self {
+            policies: old.policies,
+            keys: old.keys,
+            vaults: old.vaults,
+            paused: old.paused,
+            storage: old.storage,
+            requests: old.requests,
+            next_request: old.next_request,
+            logs: old.logs,
+            proposals: old.proposals,
+            next_proposal: old.next_proposal,
+            request_ttl: old.request_ttl,
+            seen: LookupMap::new(StorageKey::Seen),
+            raises: LookupMap::new(StorageKey::Raises),
+            asks: LookupMap::new(StorageKey::Asks),
         }
     }
 }

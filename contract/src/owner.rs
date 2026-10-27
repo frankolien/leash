@@ -47,6 +47,7 @@ impl Leash {
             last_paid_at: 0,
         };
         self.policies.insert((owner.clone(), public_key.clone()), stored);
+        self.raises.remove(&(owner.clone(), public_key.clone()));
         let mut list = self.keys.get(&owner).cloned().unwrap_or_default();
         if !list.contains(&public_key) {
             list.push(public_key.clone());
@@ -67,7 +68,8 @@ impl Leash {
         let id = (owner.clone(), public_key.clone());
         let mut policy = self.policies.get(&id).cloned().expect("no policy for that key");
         policy.active = false;
-        self.policies.insert(id, policy);
+        self.policies.insert(id.clone(), policy);
+        self.raises.remove(&id);
         self.record(&owner, Some(&public_key), "policy_revoked", None, None, None);
         emit("policy_revoked", json!({ "owner": owner, "key": public_key }));
     }
@@ -110,7 +112,7 @@ impl Leash {
         emit("request_approved", json!({ "owner": owner, "id": request_id, "to": request.to, "amount": request.amount }));
         // An approved request is the owner's own decision, so it does not count against the agent's
         // daily cap; the `pay` promise it becomes still refunds the vault on failure.
-        PromiseOrValue::Promise(self.transfer(owner, request.key, request.token, request.to, request.amount.0, request.memo, false))
+        PromiseOrValue::Promise(self.transfer(owner, request.key, request.token, request.to, request.amount.0, request.memo, false, None))
     }
 
     pub fn deny(&mut self, request_id: u64) {
@@ -137,8 +139,40 @@ impl Leash {
         let proposal = self.proposals.get(&proposal_id).cloned().expect("no such proposal");
         assert_eq!(proposal.owner, owner, "not your proposal");
         self.proposals.remove(&proposal_id);
+        self.asks.remove(&proposal_id);
         self.record(&owner, Some(&proposal.key), "proposal_dismissed", None, None, Some(&proposal.note));
         emit("proposal_dismissed", json!({ "owner": owner, "id": proposal_id }));
+        self.charge(&owner, before);
+    }
+
+    /// Grants what an agent asked for, for a while: the raise lapses on its own after `for_secs`
+    /// (the agent's own suggestion, or a day), and the policy underneath never changes.
+    pub fn grant(&mut self, proposal_id: u64, for_secs: Option<u64>) {
+        let owner = self.owner_caller();
+        let before = env::storage_usage();
+        let proposal = self.proposals.get(&proposal_id).cloned().expect("no such proposal");
+        assert_eq!(proposal.owner, owner, "not your proposal");
+        let ask = self.asks.get(&proposal_id).cloned().expect("this ask names no terms; edit the policy instead");
+        let secs = for_secs.unwrap_or(if ask.for_secs == 0 { DEFAULT_RAISE_SECS } else { ask.for_secs });
+        assert!((MIN_RAISE_SECS..=MAX_RAISE_SECS).contains(&secs), "a raise lasts an hour to 30 days");
+        let until = env::block_timestamp() + secs * NS_PER_SEC;
+        let raise = Raise { daily_cap: ask.daily_cap, per_payment_cap: ask.per_payment_cap, allow: ask.allow.clone(), until };
+        self.raises.insert((owner.clone(), proposal.key.clone()), raise.clone());
+        self.proposals.remove(&proposal_id);
+        self.asks.remove(&proposal_id);
+        self.record(&owner, Some(&proposal.key), "raise_granted", None, raise.daily_cap, Some(&proposal.note));
+        emit("raise_granted", json!({ "owner": owner, "key": proposal.key, "id": proposal_id, "raise": raise }));
+        self.charge(&owner, before);
+    }
+
+    /// Ends a raise before it lapses.
+    pub fn end_raise(&mut self, public_key: PublicKey) {
+        let owner = self.owner_caller();
+        let before = env::storage_usage();
+        if self.raises.remove(&(owner.clone(), public_key.clone())).is_some() {
+            self.record(&owner, Some(&public_key), "raise_ended", None, None, None);
+            emit("raise_ended", json!({ "owner": owner, "key": public_key }));
+        }
         self.charge(&owner, before);
     }
 

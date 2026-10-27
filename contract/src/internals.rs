@@ -41,6 +41,9 @@ impl Leash {
         self.logs.flush();
         self.proposals.flush();
         self.request_ttl.flush();
+        self.seen.flush();
+        self.raises.flush();
+        self.asks.flush();
         self.settle(owner, before, env::storage_usage());
     }
 
@@ -61,12 +64,25 @@ impl Leash {
         self.vaults.get(&(owner.clone(), token.clone())).copied().unwrap_or(0)
     }
 
+    /// The raise in force for this key, if one was granted and has not lapsed.
+    pub(crate) fn raise_of(&self, owner: &AccountId, key: &PublicKey) -> Option<Raise> {
+        self.raises.get(&(owner.clone(), key.clone())).filter(|r| r.until > env::block_timestamp()).cloned()
+    }
+
+    /// The caps that apply right now: the policy's, or a live raise's where it names one.
+    pub(crate) fn caps(&self, owner: &AccountId, key: &PublicKey, policy: &Policy) -> (u128, u128) {
+        let raise = self.raise_of(owner, key);
+        let daily = raise.as_ref().and_then(|r| r.daily_cap).map_or(policy.daily_cap.0, |c| c.0);
+        let per_payment = raise.as_ref().and_then(|r| r.per_payment_cap).map_or(policy.per_payment_cap.0, |c| c.0);
+        (daily, per_payment)
+    }
+
     pub(crate) fn remaining(&self, owner: &AccountId, key: &PublicKey) -> U128 {
         match self.policies.get(&(owner.clone(), key.clone())) {
             Some(policy) => {
                 let now = env::block_timestamp();
                 let spent = if policy.day_started_at == 0 || now.saturating_sub(policy.day_started_at) >= DAY_NS { 0 } else { policy.spent_today.0 };
-                U128(policy.daily_cap.0.saturating_sub(spent))
+                U128(self.caps(owner, key, policy).0.saturating_sub(spent))
             }
             None => U128(0),
         }
@@ -98,13 +114,16 @@ impl Leash {
         if amount == 0 {
             return refuse("amount is zero", false, remaining, vault);
         }
-        if !policy.allowlist.is_empty() && !policy.allowlist.contains(to) {
+        let raise = self.raise_of(owner, key);
+        let (_, per_payment_cap) = self.caps(owner, key, policy);
+        let raised_allow = raise.as_ref().is_some_and(|r| r.allow.contains(to));
+        if !policy.allowlist.is_empty() && !policy.allowlist.contains(to) && !raised_allow {
             return refuse("recipient not in allowlist", true, remaining, vault);
         }
         if policy.last_paid_at != 0 && now.saturating_sub(policy.last_paid_at) < policy.cooldown_secs * NS_PER_SEC {
             return refuse("cooldown not elapsed", true, remaining, vault);
         }
-        if amount > policy.per_payment_cap.0 {
+        if amount > per_payment_cap {
             return refuse("over per-payment cap", true, remaining, vault);
         }
         if amount > remaining.0 {
@@ -125,6 +144,7 @@ impl Leash {
         amount: u128,
         memo: Option<String>,
         counted: bool,
+        payment_id: Option<String>,
     ) -> near_sdk::Promise {
         ext_ft::ext(token.clone())
             .with_attached_deposit(NearToken::from_yoctonear(1))
@@ -133,7 +153,7 @@ impl Leash {
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(GAS_FOR_CALLBACK)
-                    .on_pay(owner, key, token, to, U128(amount), counted),
+                    .on_pay(owner, key, token, to, U128(amount), counted, payment_id),
             )
     }
 

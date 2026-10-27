@@ -115,10 +115,10 @@ fn deposit_credits_the_vault_of_the_token_that_called() {
 fn two_payments_land_and_the_third_hits_the_daily_cap() {
     let mut leash = funded(3 * USDC, 2 * USDC);
     ctx(owner(), agent_key(), 10);
-    accepted(leash.pay(vendor(), U128(USDC), None));
-    accepted(leash.pay(vendor(), U128(USDC), None));
+    accepted(leash.pay(vendor(), U128(USDC), None, None));
+    accepted(leash.pay(vendor(), U128(USDC), None, None));
     assert_eq!(leash.get_vault(owner(), token()).0, 8 * USDC);
-    let third = leash.pay(vendor(), U128(2 * USDC), None);
+    let third = leash.pay(vendor(), U128(2 * USDC), None, None);
     assert_eq!(refused(third), "over daily cap");
     assert_eq!(leash.check(owner(), agent_key(), vendor(), U128(USDC)).remaining_today.0, USDC);
 }
@@ -127,10 +127,10 @@ fn two_payments_land_and_the_third_hits_the_daily_cap() {
 fn the_daily_window_rolls_by_elapsed_time() {
     let mut leash = funded(2 * USDC, 2 * USDC);
     ctx(owner(), agent_key(), 10);
-    accepted(leash.pay(vendor(), U128(2 * USDC), None));
-    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None)), "over daily cap");
+    accepted(leash.pay(vendor(), U128(2 * USDC), None, None));
+    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None, None)), "over daily cap");
     ctx(owner(), agent_key(), 10 + DAY_NS);
-    accepted(leash.pay(vendor(), U128(USDC), None));
+    accepted(leash.pay(vendor(), U128(USDC), None, None));
 }
 
 #[test]
@@ -144,14 +144,14 @@ fn per_payment_cap_allowlist_cooldown_and_expiry_each_refuse() {
         PolicyInput { name: Some("claude".into()), token: token(), daily_cap: U128(5 * USDC), per_payment_cap: U128(USDC), allowlist: vec![vendor()], cooldown_secs: 60, expires_at: 1_000 },
     );
     ctx(owner(), agent_key(), 10 * NS_PER_SEC);
-    assert_eq!(refused(leash.pay(vendor(), U128(2 * USDC), None)), "over per-payment cap");
-    assert_eq!(refused(leash.pay(accounts(2), U128(USDC), None)), "recipient not in allowlist");
-    accepted(leash.pay(vendor(), U128(USDC), None));
-    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None)), "cooldown not elapsed");
+    assert_eq!(refused(leash.pay(vendor(), U128(2 * USDC), None, None)), "over per-payment cap");
+    assert_eq!(refused(leash.pay(accounts(2), U128(USDC), None, None)), "recipient not in allowlist");
+    accepted(leash.pay(vendor(), U128(USDC), None, None));
+    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None, None)), "cooldown not elapsed");
     ctx(owner(), agent_key(), 80 * NS_PER_SEC);
-    accepted(leash.pay(vendor(), U128(USDC), None));
+    accepted(leash.pay(vendor(), U128(USDC), None, None));
     ctx(owner(), agent_key(), 1_000 * NS_PER_SEC);
-    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None)), "key expired");
+    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None, None)), "key expired");
 }
 
 #[test]
@@ -160,13 +160,13 @@ fn revoke_and_pause_stop_the_key_and_cannot_be_requested_around() {
     ctx(owner(), owner_key(), 5);
     leash.pause();
     ctx(owner(), agent_key(), 6);
-    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None)), "owner paused all keys");
+    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None, None)), "owner paused all keys");
     assert!(!leash.check(owner(), agent_key(), vendor(), U128(USDC)).can_request);
     ctx(owner(), owner_key(), 7);
     leash.resume();
     leash.revoke(agent_key());
     ctx(owner(), agent_key(), 8);
-    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None)), "key revoked");
+    assert_eq!(refused(leash.pay(vendor(), U128(USDC), None, None)), "key revoked");
 }
 
 #[test]
@@ -202,7 +202,7 @@ fn an_old_request_expires_instead_of_paying() {
 fn an_agent_can_ask_for_more_and_the_owner_dismisses_it() {
     let mut leash = funded(3 * USDC, 2 * USDC);
     ctx(owner(), agent_key(), 10);
-    let id = leash.ask_more("Need 10 a day for the compute bill".into());
+    let id = leash.ask_more("Need 10 a day for the compute bill".into(), None);
     assert_eq!(leash.get_proposals(owner()).len(), 1);
     assert_eq!(leash.get_policy(owner(), agent_key()).unwrap().daily_cap.0, 3 * USDC, "asking changes nothing");
     ctx(owner(), owner_key(), 11);
@@ -223,10 +223,10 @@ fn an_agent_key_cannot_approve_its_own_request() {
 fn a_failed_transfer_refunds_the_vault_and_the_daily_counter() {
     let mut leash = funded(3 * USDC, 2 * USDC);
     ctx(owner(), agent_key(), 10);
-    accepted(leash.pay(vendor(), U128(2 * USDC), None));
+    accepted(leash.pay(vendor(), U128(2 * USDC), None, None));
     assert_eq!(leash.get_vault(owner(), token()).0, 8 * USDC);
     ctx("leash.test".parse().unwrap(), owner_key(), 11);
-    let outcome = leash.on_pay(owner(), agent_key(), token(), vendor(), U128(2 * USDC), true, Err(PromiseError::Failed));
+    let outcome = leash.on_pay(owner(), agent_key(), token(), vendor(), U128(2 * USDC), true, None, Err(PromiseError::Failed));
     assert!(!outcome.accepted);
     assert_eq!(leash.get_vault(owner(), token()).0, 10 * USDC);
     assert_eq!(outcome.remaining_today.0, 3 * USDC);
@@ -239,7 +239,7 @@ fn the_log_keeps_the_last_hundred_decisions() {
     // gas and promises of a hundred and twenty of them.
     for i in 0..120u64 {
         ctx(owner(), agent_key(), 10 + i);
-        accepted(leash.pay(vendor(), U128(1), None));
+        accepted(leash.pay(vendor(), U128(1), None, None));
     }
     let log = leash.get_log(owner(), None, None);
     assert_eq!(log.len(), LOG_LIMIT);

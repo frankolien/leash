@@ -20,6 +20,9 @@ pub(crate) enum StorageKey {
     Proposals,
     RequestTtl,
     Logs,
+    Seen,
+    Raises,
+    Asks,
 }
 
 /// What an agent key may do. Amounts are in the token's smallest unit; times are seconds.
@@ -116,4 +119,67 @@ pub struct PayOutcome {
     pub accepted: bool,
     pub reason: Option<String>,
     pub remaining_today: U128,
+}
+
+/// What an agent asks for beside its note, so the owner can grant it in one step. Each field is the
+/// new value while the raise lasts; `allow` adds recipients. `for_secs` is how long it should last.
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Ask {
+    #[serde(default)]
+    pub daily_cap: Option<U128>,
+    #[serde(default)]
+    pub per_payment_cap: Option<U128>,
+    #[serde(default)]
+    pub allow: Vec<AccountId>,
+    #[serde(default)]
+    pub for_secs: u64,
+}
+
+/// A temporary widening the owner granted from an agent's ask. It lapses on its own at `until`
+/// (nanoseconds), so a one-off need never becomes a permanent policy.
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug, PartialEq)]
+pub struct Raise {
+    pub daily_cap: Option<U128>,
+    pub per_payment_cap: Option<U128>,
+    pub allow: Vec<AccountId>,
+    pub until: u64,
+}
+
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct ProposalView {
+    pub id: u64,
+    pub owner: AccountId,
+    pub key: PublicKey,
+    pub note: String,
+    pub created_at: u64,
+    pub ask: Option<Ask>,
+}
+
+/// An instruction an agent signed with its key, as the JSON text it signed. Anyone may deliver it,
+/// so the agent needs no NEAR for gas; the contract checks the signature against the key named here
+/// and that key's policy, and never accepts the same `payment_id` twice.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct Intent {
+    pub contract: AccountId,
+    pub owner: AccountId,
+    pub key: PublicKey,
+    /// "pay", "request" or "ask_more".
+    pub action: String,
+    #[serde(default)]
+    pub to: Option<AccountId>,
+    #[serde(default)]
+    pub amount: Option<U128>,
+    #[serde(default)]
+    pub memo: Option<String>,
+    #[serde(default)]
+    pub note: Option<String>,
+    #[serde(default)]
+    pub ask: Option<Ask>,
+    pub payment_id: String,
+    /// Nanoseconds. A signed instruction is only good for a short while.
+    pub expires_at: u64,
 }

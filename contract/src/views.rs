@@ -46,8 +46,28 @@ impl Leash {
         self.requests.values().filter(|r| r.owner == owner && r.expires_at > now).cloned().collect()
     }
 
-    pub fn get_proposals(&self, owner: AccountId) -> Vec<Proposal> {
-        self.proposals.values().filter(|p| p.owner == owner).cloned().collect()
+    pub fn get_proposals(&self, owner: AccountId) -> Vec<ProposalView> {
+        self.proposals
+            .values()
+            .filter(|p| p.owner == owner)
+            .map(|p| ProposalView { id: p.id, owner: p.owner.clone(), key: p.key.clone(), note: p.note.clone(), created_at: p.created_at, ask: self.asks.get(&p.id).cloned() })
+            .collect()
+    }
+
+    /// Raises in force, by key.
+    pub fn get_raises(&self, owner: AccountId) -> Vec<(PublicKey, Raise)> {
+        self.keys
+            .get(&owner)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|k| self.raise_of(&owner, &k).map(|r| (k, r)))
+            .collect()
+    }
+
+    /// Whether a payment id was already used by this key in the last day.
+    pub fn was_paid(&self, owner: AccountId, public_key: PublicKey, payment_id: String) -> bool {
+        self.was_seen(&owner, &public_key, &payment_id)
     }
 
     pub fn get_request_ttl(&self, owner: AccountId) -> u64 {
