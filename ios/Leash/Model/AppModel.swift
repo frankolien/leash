@@ -50,7 +50,7 @@ final class AppModel {
     var site: URL {
         get {
             let saved = defaults.string(forKey: "leash.site") ?? Bundle.main.object(forInfoDictionaryKey: "LeashSiteURL") as? String
-            return URL(string: saved ?? "") ?? URL(string: "http://localhost:3000")!
+            return URL(string: saved ?? "") ?? URL(string: "https://leash-eight.vercel.app")!
         }
         set { defaults.set(newValue.absoluteString, forKey: "leash.site") }
     }

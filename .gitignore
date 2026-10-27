@@ -5,3 +5,4 @@ dist/
 *.wasm
 .DS_Store
 neardev/
+.vercel

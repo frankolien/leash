@@ -1,0 +1,11 @@
+# Vercel builds web/ only; it needs mcp/ beside it for the hosted connector.
+ios
+contract
+cli
+docs
+reports
+research_notes
+paybox_screenshots
+**/node_modules
+**/.next
+mcp/dist
