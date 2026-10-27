@@ -1,0 +1,11 @@
+{
+  "Simulator Target Bundle": "com.frankolien.leash",
+  "aps": {
+    "alert": { "title": "claude wants to pay $42.00", "body": "To vendor.testnet. Over its $2 per-payment limit." },
+    "category": "REQUEST",
+    "interruption-level": "time-sensitive",
+    "thread-id": "leash-waiting",
+    "sound": "default"
+  },
+  "request": 1
+}

@@ -96,8 +96,10 @@ function NamePicker({ suggestion, claim }: { suggestion: string; claim: (name: s
   );
 }
 
-export function SignInCard({ ready, embedded, preparing, error, onWallet }: SignInProps) {
-  const [step, setStep] = useState<Step>({ at: "options" });
+/// `startAt` opens straight on the email field, for a page that already knows how the person chose
+/// to sign in (the phone app's own buttons).
+export function SignInCard({ ready, embedded, preparing, error, onWallet, startAt }: SignInProps & { startAt?: "email" }) {
+  const [step, setStep] = useState<Step>({ at: startAt ?? "options" });
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [email, setEmail] = useState("");

@@ -1,0 +1,57 @@
+name: Leash
+options:
+  bundleIdPrefix: com.frankolien
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: YCKKUWB4WD
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Leash:
+    type: application
+    platform: iOS
+    sources: [Leash]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.frankolien.leash
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_FILE: Leash/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+  LeashTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [LeashTests]
+    dependencies:
+      - target: Leash
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.frankolien.leash.tests
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Leash.app/Leash"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+  LeashUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [LeashUITests]
+    dependencies:
+      - target: Leash
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.frankolien.leash.uitests
+        TEST_TARGET_NAME: Leash
+schemes:
+  Leash:
+    build:
+      targets:
+        Leash: all
+        LeashTests: [test]
+        LeashUITests: [test]
+    test:
+      targets: [LeashTests, LeashUITests]

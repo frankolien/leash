@@ -1,0 +1,648 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		09CE289D0C9175D67A1891D7 /* AgentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5D5FCAC92E7A7C381A3A75 /* AgentDetailView.swift */; };
+		180245EAC01F4B4922B7B705 /* LeashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6EAC8188977DE24585E339 /* LeashApp.swift */; };
+		262AEFD95BF4C934831F7CF8 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F584B82077C5211C97CFC5A /* AccountView.swift */; };
+		303FE2EC067890DF2CBA64CE /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5CCD7C4595886019F8DEEF /* ActivityView.swift */; };
+		34E2265876CEA9F1411ECEFF /* RequestSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 994C853421B7144D1B13E62C /* RequestSheet.swift */; };
+		3A753E4015E3BE4642D3DED1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D189010A09F9DB3B1E8E4E9 /* Theme.swift */; };
+		3DE08DF779A33E2DBEAAA72B /* NearKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0120918EB3924592205A5637 /* NearKey.swift */; };
+		4BB0C767446128C15DA4973A /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FEB6A8A0DA70787EC84C05B /* Activity.swift */; };
+		4FF5DEED7C057A8AE6697B30 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9471C87703B206D9B22DB069 /* Format.swift */; };
+		5030E2972F8F9A5B7A93FC17 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6ED710A00778E56B2516F4F /* HomeView.swift */; };
+		51CE34CECCDDADD2F8ADFCC9 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE19EB96FEB2C20AA3E12632 /* Types.swift */; };
+		6AD31FFB74D3A0B5006B3677 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 85712734599192B8C128D90D /* Assets.xcassets */; };
+		6B69D333AABC527E496FB429 /* hero.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 6300D6679E279F1C802241F3 /* hero.mp4 */; };
+		70D0078B025D523591FA7248 /* Alerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABB9A4990D6FB90EC55C2ED6 /* Alerts.swift */; };
+		781253DB4A972DA036F3D0FA /* NearTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D2768E7FD4F12882979AEA /* NearTests.swift */; };
+		79CFEF295F6134F56F7813DB /* LeashClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FFCED3D5FF03749D711F6A /* LeashClient.swift */; };
+		7BB0336B7BF78579362C450E /* Pairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99140712D848E2E4AEE815D /* Pairing.swift */; };
+		883B54DEF8D850C2C6116E8D /* LiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5034997D816EC2EDCCFA9AA9 /* LiveTests.swift */; };
+		8E9F41A9EDB4372F32C2A688 /* NearRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */; };
+		B74433AB79E8E86CFFCF6B00 /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C711A25949A81BC4DC7E3A5 /* Transaction.swift */; };
+		C36EDA377744213E76C7E38F /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */; };
+		C79F411A4A1964F9149FFEF0 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334BF22BDC4D53927EBBF54E /* OnboardingView.swift */; };
+		CD270B25861805CF159F7460 /* DeviceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8272068A41EEF5E0AD6D8611 /* DeviceKey.swift */; };
+		E1805225E09F6CF0E278659B /* Borsh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F487514CF92F142794A151C /* Borsh.swift */; };
+		EBF0812FFD91E480B7D7FB2C /* Base58.swift in Sources */ = {isa = PBXBuildFile; fileRef = F64E0660D25B46A6FE994A67 /* Base58.swift */; };
+		F30030882E4916F14DF88F42 /* Safety.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD85F4D2D276D50CA549D56 /* Safety.swift */; };
+		F58571AEEA806E1A1CDADBD5 /* ScreensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAD0F1C4B5EDDC9B6EB5A28 /* ScreensTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2CA26FBB6ED5E0FACD25D438 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8C376C40D12A0FF0819865DB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C23E76E69B01B62052C92F7C;
+			remoteInfo = Leash;
+		};
+		95E07BDCA9D46D1544FA1931 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8C376C40D12A0FF0819865DB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C23E76E69B01B62052C92F7C;
+			remoteInfo = Leash;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0120918EB3924592205A5637 /* NearKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearKey.swift; sourceTree = "<group>"; };
+		1F5CCD7C4595886019F8DEEF /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
+		2F584B82077C5211C97CFC5A /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
+		334BF22BDC4D53927EBBF54E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		33536AA4CA85AE7AB493CAA2 /* LeashUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LeashUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5034997D816EC2EDCCFA9AA9 /* LiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTests.swift; sourceTree = "<group>"; };
+		5C711A25949A81BC4DC7E3A5 /* Transaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
+		6300D6679E279F1C802241F3 /* hero.mp4 */ = {isa = PBXFileReference; path = hero.mp4; sourceTree = "<group>"; };
+		68871D90D17598B41C26CA92 /* Leash.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Leash.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C660D2CAA55903ACD8125D4 /* LeashTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LeashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6FEB6A8A0DA70787EC84C05B /* Activity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Activity.swift; sourceTree = "<group>"; };
+		7B5D5FCAC92E7A7C381A3A75 /* AgentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDetailView.swift; sourceTree = "<group>"; };
+		7F487514CF92F142794A151C /* Borsh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Borsh.swift; sourceTree = "<group>"; };
+		8272068A41EEF5E0AD6D8611 /* DeviceKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceKey.swift; sourceTree = "<group>"; };
+		84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearRPC.swift; sourceTree = "<group>"; };
+		85712734599192B8C128D90D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8D189010A09F9DB3B1E8E4E9 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		9471C87703B206D9B22DB069 /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
+		994C853421B7144D1B13E62C /* RequestSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestSheet.swift; sourceTree = "<group>"; };
+		A1D2768E7FD4F12882979AEA /* NearTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearTests.swift; sourceTree = "<group>"; };
+		A49C4511E8EDB2D5BC176F2B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		ABB9A4990D6FB90EC55C2ED6 /* Alerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alerts.swift; sourceTree = "<group>"; };
+		ACD85F4D2D276D50CA549D56 /* Safety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Safety.swift; sourceTree = "<group>"; };
+		B99140712D848E2E4AEE815D /* Pairing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pairing.swift; sourceTree = "<group>"; };
+		BE19EB96FEB2C20AA3E12632 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
+		C6FFCED3D5FF03749D711F6A /* LeashClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashClient.swift; sourceTree = "<group>"; };
+		C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		CB6EAC8188977DE24585E339 /* LeashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashApp.swift; sourceTree = "<group>"; };
+		CEAD0F1C4B5EDDC9B6EB5A28 /* ScreensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreensTests.swift; sourceTree = "<group>"; };
+		E6ED710A00778E56B2516F4F /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		F64E0660D25B46A6FE994A67 /* Base58.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Base58.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0120514616A62FB6F12A324E /* Near */ = {
+			isa = PBXGroup;
+			children = (
+				F64E0660D25B46A6FE994A67 /* Base58.swift */,
+				7F487514CF92F142794A151C /* Borsh.swift */,
+				8272068A41EEF5E0AD6D8611 /* DeviceKey.swift */,
+				0120918EB3924592205A5637 /* NearKey.swift */,
+				84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */,
+				5C711A25949A81BC4DC7E3A5 /* Transaction.swift */,
+			);
+			path = Near;
+			sourceTree = "<group>";
+		};
+		24EBDED0AEBEE999275852CB /* Leash */ = {
+			isa = PBXGroup;
+			children = (
+				2DCE4CFAE6B50FFA4633C01B /* App */,
+				44DC35F3028968CF2EA7B2C4 /* Model */,
+				0120514616A62FB6F12A324E /* Near */,
+				973799D649E5F7A54F9ABB5E /* Resources */,
+				27287FA672D64209C68CEE85 /* UI */,
+			);
+			path = Leash;
+			sourceTree = "<group>";
+		};
+		27287FA672D64209C68CEE85 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				2F584B82077C5211C97CFC5A /* AccountView.swift */,
+				1F5CCD7C4595886019F8DEEF /* ActivityView.swift */,
+				7B5D5FCAC92E7A7C381A3A75 /* AgentDetailView.swift */,
+				E6ED710A00778E56B2516F4F /* HomeView.swift */,
+				334BF22BDC4D53927EBBF54E /* OnboardingView.swift */,
+				994C853421B7144D1B13E62C /* RequestSheet.swift */,
+				8D189010A09F9DB3B1E8E4E9 /* Theme.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		2DCE4CFAE6B50FFA4633C01B /* App */ = {
+			isa = PBXGroup;
+			children = (
+				CB6EAC8188977DE24585E339 /* LeashApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		44DC35F3028968CF2EA7B2C4 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				6FEB6A8A0DA70787EC84C05B /* Activity.swift */,
+				ABB9A4990D6FB90EC55C2ED6 /* Alerts.swift */,
+				C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */,
+				9471C87703B206D9B22DB069 /* Format.swift */,
+				C6FFCED3D5FF03749D711F6A /* LeashClient.swift */,
+				B99140712D848E2E4AEE815D /* Pairing.swift */,
+				ACD85F4D2D276D50CA549D56 /* Safety.swift */,
+				BE19EB96FEB2C20AA3E12632 /* Types.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		6DCCC836753A863BC807A2E7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				68871D90D17598B41C26CA92 /* Leash.app */,
+				6C660D2CAA55903ACD8125D4 /* LeashTests.xctest */,
+				33536AA4CA85AE7AB493CAA2 /* LeashUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		74264348E01E7E1263AAEEEE = {
+			isa = PBXGroup;
+			children = (
+				24EBDED0AEBEE999275852CB /* Leash */,
+				F5F4E6BE3FEA4B0CE95496C9 /* LeashTests */,
+				EA3F5217502CF01E3363E191 /* LeashUITests */,
+				6DCCC836753A863BC807A2E7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		973799D649E5F7A54F9ABB5E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				85712734599192B8C128D90D /* Assets.xcassets */,
+				6300D6679E279F1C802241F3 /* hero.mp4 */,
+				A49C4511E8EDB2D5BC176F2B /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		EA3F5217502CF01E3363E191 /* LeashUITests */ = {
+			isa = PBXGroup;
+			children = (
+				CEAD0F1C4B5EDDC9B6EB5A28 /* ScreensTests.swift */,
+			);
+			path = LeashUITests;
+			sourceTree = "<group>";
+		};
+		F5F4E6BE3FEA4B0CE95496C9 /* LeashTests */ = {
+			isa = PBXGroup;
+			children = (
+				5034997D816EC2EDCCFA9AA9 /* LiveTests.swift */,
+				A1D2768E7FD4F12882979AEA /* NearTests.swift */,
+			);
+			path = LeashTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A60EE84A83F88BB06B84F723 /* LeashUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1BAA5E779A2421F6C15F0F6 /* Build configuration list for PBXNativeTarget "LeashUITests" */;
+			buildPhases = (
+				2B211A3EA9156E3C6231A6B1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2C4350F5DDC4CB4DDF28CA11 /* PBXTargetDependency */,
+			);
+			name = LeashUITests;
+			packageProductDependencies = (
+			);
+			productName = LeashUITests;
+			productReference = 33536AA4CA85AE7AB493CAA2 /* LeashUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		C23E76E69B01B62052C92F7C /* Leash */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 535C6C1A5758F924EB52417C /* Build configuration list for PBXNativeTarget "Leash" */;
+			buildPhases = (
+				84694BBD922EB3FE7BB6D682 /* Sources */,
+				FC0A0A1729073DE1AE3720F9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Leash;
+			packageProductDependencies = (
+			);
+			productName = Leash;
+			productReference = 68871D90D17598B41C26CA92 /* Leash.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CEA7D1447E0F0AE0E5CBD361 /* LeashTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B392146BA6542607A13E72CF /* Build configuration list for PBXNativeTarget "LeashTests" */;
+			buildPhases = (
+				81212CF49C1E602512234FEB /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F4A1580A85C34B00F6CEDF6D /* PBXTargetDependency */,
+			);
+			name = LeashTests;
+			packageProductDependencies = (
+			);
+			productName = LeashTests;
+			productReference = 6C660D2CAA55903ACD8125D4 /* LeashTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8C376C40D12A0FF0819865DB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					A60EE84A83F88BB06B84F723 = {
+						DevelopmentTeam = YCKKUWB4WD;
+						ProvisioningStyle = Automatic;
+						TestTargetID = C23E76E69B01B62052C92F7C;
+					};
+					C23E76E69B01B62052C92F7C = {
+						DevelopmentTeam = YCKKUWB4WD;
+						ProvisioningStyle = Automatic;
+					};
+					CEA7D1447E0F0AE0E5CBD361 = {
+						DevelopmentTeam = YCKKUWB4WD;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = DD189473676393B661A5A993 /* Build configuration list for PBXProject "Leash" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 74264348E01E7E1263AAEEEE;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6DCCC836753A863BC807A2E7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C23E76E69B01B62052C92F7C /* Leash */,
+				CEA7D1447E0F0AE0E5CBD361 /* LeashTests */,
+				A60EE84A83F88BB06B84F723 /* LeashUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FC0A0A1729073DE1AE3720F9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6AD31FFB74D3A0B5006B3677 /* Assets.xcassets in Resources */,
+				6B69D333AABC527E496FB429 /* hero.mp4 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2B211A3EA9156E3C6231A6B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F58571AEEA806E1A1CDADBD5 /* ScreensTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		81212CF49C1E602512234FEB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				883B54DEF8D850C2C6116E8D /* LiveTests.swift in Sources */,
+				781253DB4A972DA036F3D0FA /* NearTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84694BBD922EB3FE7BB6D682 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				262AEFD95BF4C934831F7CF8 /* AccountView.swift in Sources */,
+				4BB0C767446128C15DA4973A /* Activity.swift in Sources */,
+				303FE2EC067890DF2CBA64CE /* ActivityView.swift in Sources */,
+				09CE289D0C9175D67A1891D7 /* AgentDetailView.swift in Sources */,
+				70D0078B025D523591FA7248 /* Alerts.swift in Sources */,
+				C36EDA377744213E76C7E38F /* AppModel.swift in Sources */,
+				EBF0812FFD91E480B7D7FB2C /* Base58.swift in Sources */,
+				E1805225E09F6CF0E278659B /* Borsh.swift in Sources */,
+				CD270B25861805CF159F7460 /* DeviceKey.swift in Sources */,
+				4FF5DEED7C057A8AE6697B30 /* Format.swift in Sources */,
+				5030E2972F8F9A5B7A93FC17 /* HomeView.swift in Sources */,
+				180245EAC01F4B4922B7B705 /* LeashApp.swift in Sources */,
+				79CFEF295F6134F56F7813DB /* LeashClient.swift in Sources */,
+				3DE08DF779A33E2DBEAAA72B /* NearKey.swift in Sources */,
+				8E9F41A9EDB4372F32C2A688 /* NearRPC.swift in Sources */,
+				C79F411A4A1964F9149FFEF0 /* OnboardingView.swift in Sources */,
+				7BB0336B7BF78579362C450E /* Pairing.swift in Sources */,
+				34E2265876CEA9F1411ECEFF /* RequestSheet.swift in Sources */,
+				F30030882E4916F14DF88F42 /* Safety.swift in Sources */,
+				3A753E4015E3BE4642D3DED1 /* Theme.swift in Sources */,
+				B74433AB79E8E86CFFCF6B00 /* Transaction.swift in Sources */,
+				51CE34CECCDDADD2F8ADFCC9 /* Types.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2C4350F5DDC4CB4DDF28CA11 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C23E76E69B01B62052C92F7C /* Leash */;
+			targetProxy = 95E07BDCA9D46D1544FA1931 /* PBXContainerItemProxy */;
+		};
+		F4A1580A85C34B00F6CEDF6D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C23E76E69B01B62052C92F7C /* Leash */;
+			targetProxy = 2CA26FBB6ED5E0FACD25D438 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		05E6D423D266031882250699 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankolien.leash.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Leash.app/Leash";
+			};
+			name = Debug;
+		};
+		38E5843F6CC33544220C23F9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankolien.leash.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Leash.app/Leash";
+			};
+			name = Release;
+		};
+		64B5757FE0C98DCEB42FFDAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = YCKKUWB4WD;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		70084163F8FED35D126DCE27 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = YCKKUWB4WD;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		989B46B9AA20C6CD2EFD3BD3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Leash/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankolien.leash;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		9A2ED16238889CDBA9AABF83 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Leash/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankolien.leash;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		DD0E69B3CDE9B2992ABCF641 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankolien.leash.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Leash;
+			};
+			name = Debug;
+		};
+		DE9A9EB856F13BFA3EC0D9E3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.frankolien.leash.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Leash;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		535C6C1A5758F924EB52417C /* Build configuration list for PBXNativeTarget "Leash" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9A2ED16238889CDBA9AABF83 /* Debug */,
+				989B46B9AA20C6CD2EFD3BD3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B392146BA6542607A13E72CF /* Build configuration list for PBXNativeTarget "LeashTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				05E6D423D266031882250699 /* Debug */,
+				38E5843F6CC33544220C23F9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DD189473676393B661A5A993 /* Build configuration list for PBXProject "Leash" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				70084163F8FED35D126DCE27 /* Debug */,
+				64B5757FE0C98DCEB42FFDAB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F1BAA5E779A2421F6C15F0F6 /* Build configuration list for PBXNativeTarget "LeashUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD0E69B3CDE9B2992ABCF641 /* Debug */,
+				DE9A9EB856F13BFA3EC0D9E3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8C376C40D12A0FF0819865DB /* Project object */;
+}
