@@ -43,8 +43,8 @@ struct OnboardingView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(spacing: 10) {
-                    button(.google, "Continue with Google", image: "brand-google", kind: .primary)
-                    button(.apple, "Continue with Apple", image: "brand-apple", kind: .primary)
+                    button(.google, "Continue with Google", image: "brand-google", kind: .light)
+                    button(.apple, "Continue with Apple", image: "brand-apple", kind: .light)
                     button(.email, "Continue with email", system: "envelope", kind: .glass)
                 }
 
@@ -73,7 +73,7 @@ struct OnboardingView: View {
             }
         } label: {
             HStack(spacing: 10) {
-                if working == provider { ProgressView().tint(kind == .primary ? .black : .white) }
+                if working == provider { ProgressView().tint(kind == .light ? .black : .white) }
                 else if let image { Image(image).resizable().scaledToFit().frame(width: 19, height: 19).foregroundStyle(.black) }
                 else if let system { Image(systemName: system).font(.system(size: 17, weight: .medium)) }
                 Text(title)

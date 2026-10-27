@@ -50,7 +50,7 @@ struct RequestSheet: View {
 
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Checks").font(.footnote).foregroundStyle(Ink.muted)
-                        if facts == nil { ProgressView().tint(.white) }
+                        if facts == nil { ProgressView().tint(Ink.muted) }
                         ForEach(checks, id: \.self) { CheckRow(check: $0) }
                     }
                 }
@@ -62,7 +62,7 @@ struct RequestSheet: View {
                     Task { if await model.approve(request) { dismiss() } }
                 } label: {
                     HStack(spacing: 8) {
-                        if model.busy == "approve-\(request.id)" { ProgressView().tint(.black) } else { Image(systemName: "faceid") }
+                        if model.busy == "approve-\(request.id)" { ProgressView().tint(.white) } else { Image(systemName: "faceid") }
                         Text(danger ? "Approve anyway" : "Approve \(Money.usd(units(request.amount)))")
                     }
                 }
@@ -71,7 +71,7 @@ struct RequestSheet: View {
                     Task { if await model.deny(request) { dismiss() } }
                 } label: {
                     HStack(spacing: 8) {
-                        if model.busy == "deny-\(request.id)" { ProgressView().tint(.white) }
+                        if model.busy == "deny-\(request.id)" { ProgressView().tint(Ink.text) }
                         Text("Deny")
                     }
                 }
@@ -113,8 +113,8 @@ struct CheckRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Image(systemName: check.tone == .ok ? "checkmark.circle" : check.tone == .note ? "info.circle" : "exclamationmark.triangle.fill")
-                .foregroundStyle(check.tone == .danger ? Ink.danger : check.tone == .ok ? .white : Ink.muted)
-            Text(check.text).font(.subheadline).foregroundStyle(check.tone == .danger ? Ink.danger : .white)
+                .foregroundStyle(check.tone == .danger ? Ink.danger : check.tone == .ok ? Ink.good : Ink.muted)
+            Text(check.text).font(.subheadline).foregroundStyle(check.tone == .danger ? Ink.danger : Ink.text)
         }
     }
 }
@@ -170,7 +170,7 @@ struct AskSheet: View {
                         Task { if await model.grant(proposal, forSecs: hours * 3600) { dismiss() } }
                     } label: {
                         HStack(spacing: 8) {
-                            if model.busy == "grant-\(proposal.id)" { ProgressView().tint(.black) } else { Image(systemName: "faceid") }
+                            if model.busy == "grant-\(proposal.id)" { ProgressView().tint(.white) } else { Image(systemName: "faceid") }
                             Text("Grant for \(hours == 1 ? "1 hour" : hours == 24 ? "1 day" : "7 days")")
                         }
                     }

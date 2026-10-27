@@ -11,8 +11,7 @@ struct LeashApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
-                .preferredColorScheme(.dark)
-                .tint(.white)
+                .tint(Ink.text)
         }
     }
 }
@@ -24,8 +23,8 @@ struct RootView: View {
     var body: some View {
         Group {
             switch model.phase {
-            case .unlinked: OnboardingView()
-            case .linked: MainView()
+            case .unlinked: OnboardingView().preferredColorScheme(.dark)
+            case .linked: MainView().preferredColorScheme(.light)
             }
         }
         .overlay(alignment: .top) {
@@ -53,17 +52,92 @@ struct RootView: View {
     }
 }
 
+/// Four screens under a floating, icons-only tab bar, as in PayBox. Each keeps its own
+/// navigation so an agent's page opens over the screen it came from.
 struct MainView: View {
     @Environment(AppModel.self) private var model
-    @AppStorage("leash.tab") private var tab = "agents"
+    @State private var nav = Navigator()
 
     var body: some View {
-        TabView(selection: $tab) {
-            Tab("Agents", systemImage: "person.2", value: "agents") { HomeView() }
-                .badge(model.snapshot?.waiting ?? 0)
-            Tab("Activity", systemImage: "list.bullet", value: "activity") { ActivityView() }
-            Tab("Account", systemImage: "person.crop.circle", value: "account") { AccountView() }
+        ZStack(alignment: .bottom) {
+            NavigationStack {
+                Group {
+                    switch nav.screen {
+                    case .overview: OverviewView()
+                    case .agents: AgentsView()
+                    case .approvals: ApprovalsView()
+                    case .activity: ActivityView()
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .background(Ink.ground)
+                .toolbarVisibility(.hidden, for: .navigationBar)
+                .navigationDestination(for: Agent.ID.self) { AgentDetailView(key: $0) }
+            }
+            TabBar(screen: $nav.screen, waiting: model.snapshot?.waiting ?? 0)
         }
+        .sheet(item: $nav.request) { RequestSheet(request: $0) }
+        .sheet(item: $nav.ask) { AskSheet(proposal: $0) }
+        .sheet(item: $nav.sheet) { sheet in
+            switch sheet {
+            case .topUp: TopUpSheet()
+            case .receive: AddMoneySheet()
+            case .connect: ConnectSheet()
+            case .settings: AccountView()
+            }
+        }
+        .onChange(of: nav.screen) { _, screen in UserDefaults.standard.set(screen.rawValue, forKey: "leash.tab") }
+        .onReceive(NotificationCenter.default.publisher(for: .leashOpenRequest)) { note in
+            guard let id = note.object as? UInt64 else { return }
+            nav.screen = .approvals
+            nav.request = model.snapshot?.requests.first { $0.id == id }
+        }
+        // Last, so the sheets above see it too.
+        .environment(nav)
+    }
+}
+
+struct TabBar: View {
+    @Binding var screen: Navigator.Screen
+    let waiting: Int
+
+    private func icon(_ s: Navigator.Screen) -> String {
+        switch s {
+        case .overview: "chart.pie"
+        case .agents: "person.2"
+        case .approvals: "checkmark.circle"
+        case .activity: "clock"
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Navigator.Screen.allCases, id: \.self) { s in
+                Button { screen = s } label: {
+                    Image(systemName: icon(s))
+                        .font(.system(size: 21, weight: .light))
+                        .foregroundStyle(Ink.text)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .background(Capsule().fill(screen == s ? Ink.raised : .clear).padding(.horizontal, 6))
+                        .overlay(alignment: .topTrailing) {
+                            if s == .approvals, waiting > 0 {
+                                Text("\(waiting)").font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
+                                    .frame(minWidth: 18, minHeight: 18).background(Circle().fill(Ink.danger))
+                                    .offset(x: -18, y: 4)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(s.rawValue.capitalized)
+                .accessibilityAddTraits(screen == s ? .isSelected : [])
+            }
+        }
+        .padding(5)
+        .background(Capsule().fill(Ink.surface))
+        .padding(.horizontal, 16)
+        .padding(.bottom, 2)
+        .animation(.easeOut(duration: 0.18), value: screen)
     }
 }
 

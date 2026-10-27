@@ -127,7 +127,7 @@ struct TaskRow: View {
             HStack {
                 Text(task.label).font(.headline)
                 Spacer()
-                Text(task.active ? "\(Money.usd(spent)) of \(Money.usd(budget))" : "Closed").font(.subheadline).foregroundStyle(task.active ? .white : Ink.muted).monospacedDigit()
+                Text(task.active ? "\(Money.usd(spent)) of \(Money.usd(budget))" : "Closed").font(.subheadline).foregroundStyle(task.active ? Ink.text : Ink.muted).monospacedDigit()
             }
             if task.active { Meter(value: budget > 0 ? Double(spent) / Double(budget) : 0) }
             Text(task.allow.isEmpty ? "Any recipient" : "Only \(task.allow.joined(separator: ", "))")

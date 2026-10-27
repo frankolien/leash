@@ -5,31 +5,30 @@ struct ActivityView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
+        let log = model.snapshot?.log ?? []
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ScreenTitle(title: "Activity", subtitle: log.isEmpty ? "Nothing yet" : "On chain, newest first") { EmptyView() }
+                    .padding(.top, 20)
                 if let s = model.snapshot {
-                    if s.log.isEmpty {
-                        VStack(spacing: 8) {
-                            Image(systemName: "list.bullet").font(.system(size: 22)).foregroundStyle(Ink.muted)
-                            Text("Nothing yet").font(.headline)
-                            Text("Payments, requests and your decisions show up here.").font(.subheadline).foregroundStyle(Ink.muted)
-                        }
-                        .frame(maxWidth: .infinity).padding(.top, 120)
+                    if log.isEmpty {
+                        EmptyCard(system: "clock", title: "Nothing yet", line: "Payments, requests and your decisions show up here.").padding(.top, 30)
                     } else {
                         Card {
-                            ForEach(Array(s.log.enumerated()), id: \.offset) { i, e in
+                            ForEach(Array(log.enumerated()), id: \.offset) { i, e in
                                 LogRow(entry: e, who: s.name(of: e.key), policy: e.key.flatMap(s.agent))
-                                if i < s.log.count - 1 { Divider().overlay(Ink.line).padding(.leading, 64) }
+                                if i < log.count - 1 { Divider().overlay(Ink.line).padding(.leading, 74) }
                             }
                         }
-                        .padding(16)
+                        .padding(.top, 30)
                     }
                 }
             }
-            .refreshable { await model.refresh() }
-            .background(Ink.ground)
-            .navigationTitle("Activity")
+            .padding(.horizontal, 16)
+            .padding(.bottom, 110)
         }
+        .scrollIndicators(.hidden)
+        .refreshable { await model.refresh() }
     }
 }
 
@@ -42,21 +41,32 @@ struct LogRow: View {
         let d = describe(entry, who: who)
         HStack(spacing: 12) {
             Image(systemName: d.icon.rawValue)
-                .font(.system(size: 14, weight: .semibold))
-                .frame(width: 36, height: 36)
+                .font(.system(size: 15, weight: .medium))
+                .frame(width: 46, height: 46)
                 .background(Circle().fill(Ink.raised))
-                .foregroundStyle(d.danger ? Ink.danger : .white)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(d.title).font(.subheadline.weight(.medium)).lineLimit(2)
-                Text(subtitle).font(.footnote).foregroundStyle(Ink.muted).lineLimit(1)
+                .foregroundStyle(d.danger ? Ink.danger : Ink.text)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(d.title).font(.system(size: 15, weight: .semibold)).lineLimit(2)
+                Text(subtitle).font(.system(size: 13)).foregroundStyle(Ink.muted).lineLimit(1)
             }
             Spacer(minLength: 8)
-            if let amount = entry.amount, entry.event != "pay_refused" {
-                Text((sign ?? "") + Money.usd(units(amount))).font(.subheadline.weight(.semibold)).monospacedDigit()
-                    .foregroundStyle(entry.event == "request_parked" ? Ink.muted : .white)
+            if let amount = amountText {
+                Text(amount).font(.system(size: 15, weight: .semibold)).monospacedDigit()
+                    .foregroundStyle(entry.event == "request_parked" || entry.event == "policy_set" ? Ink.muted : Ink.text)
             }
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
+    }
+
+    private var amountText: String? {
+        guard let amount = entry.amount, entry.event != "pay_refused" else { return nil }
+        let money = Money.usd(units(amount))
+        switch entry.event {
+        case "pay", "request_approved", "withdraw": return "−" + money
+        case "deposit": return "+" + money
+        case "policy_set", "raise_granted": return "\(Money.short(units(amount)))/day"
+        default: return money
+        }
     }
 
     /// Why a payment went through alone, in the owner's terms, beside when it happened.
@@ -65,13 +75,5 @@ struct LogRow: View {
         if entry.event == "pay", let p = policy { return "\(when) · under its \(Money.short(p.perPaymentCap)) limit" }
         if let detail = entry.detail, !["pay_refused", "request_parked"].contains(entry.event) { return "\(when) · \(detail)" }
         return when
-    }
-
-    private var sign: String? {
-        switch entry.event {
-        case "pay", "request_approved", "withdraw": "−"
-        case "deposit": "+"
-        default: nil
-        }
     }
 }

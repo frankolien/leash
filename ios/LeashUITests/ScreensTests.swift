@@ -6,34 +6,35 @@ final class ScreensTests: XCTestCase {
     func testWalkThroughScreens() throws {
         let out = try XCTUnwrap(ProcessInfo.processInfo.environment["SHOTS"], "set TEST_RUNNER_SHOTS to a folder")
         let app = XCUIApplication()
-        app.launchArguments = ["-leash.account", ProcessInfo.processInfo.environment["OWNER"] ?? "olien.testnet", "-leash.network", "testnet", "-leash.tab", "agents"]
+        app.launchArguments = ["-leash.account", ProcessInfo.processInfo.environment["OWNER"] ?? "olien.testnet", "-leash.network", "testnet", "-leash.tab", "overview"]
         app.launch()
         func shot(_ name: String) {
             sleep(2)
             try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: out).appending(path: "\(name).png"))
         }
-        XCTAssertTrue(app.staticTexts["Agents"].waitForExistence(timeout: 20))
-        shot("1-home")
+        XCTAssertTrue(app.staticTexts["Your agents"].waitForExistence(timeout: 20))
+        shot("1-overview")
+        app.buttons["Top up"].tap()
+        shot("2-top-up")
+        app.swipeDown(velocity: .fast)
+        app.buttons["Receive USDC"].tap()
+        shot("3-receive")
+        app.swipeDown(velocity: .fast)
+        app.buttons["Agents"].tap()
+        shot("4-agents")
         app.buttons["Pause all"].tap()
-        shot("2-pause-confirm")
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.62)).tap()
-        app.buttons["Add money"].tap()
-        shot("3-add-money")
-        app.swipeDown(velocity: .fast)
-        app.buttons["Connect agent"].tap()
-        shot("4-connect")
-        app.swipeDown(velocity: .fast)
+        shot("5-pause")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)).tap()
         app.staticTexts["claude-2"].firstMatch.tap()
-        shot("5-agent")
-        app.swipeUp()
-        shot("6-agent-lower")
-        for (i, tab) in ["activity", "account"].enumerated() {
-            app.terminate()
-            app.launchArguments = app.launchArguments.dropLast(2) + ["-leash.tab", tab]
-            app.launch()
-            sleep(4)
-            shot("\(7 + i)-\(tab)")
-        }
+        shot("6-agent")
+        app.navigationBars.buttons.firstMatch.tap()
+        app.buttons["Approvals"].tap()
+        shot("7-approvals")
+        app.buttons["Activity"].tap()
+        shot("8-activity")
+        app.buttons["Overview"].tap()
+        app.buttons["Settings"].tap()
+        shot("9-settings")
     }
 
     /// A fresh phone: the email button opens the web's link page in Apple's sign-in sheet.

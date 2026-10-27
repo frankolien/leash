@@ -24,6 +24,7 @@ struct AccountView: View {
                         row("In your account", Money.usd(s.held))
                         Button("Add money") { addMoney = true }
                     }
+                    .listRowBackground(Ink.surface)
 
                     Section {
                         row("Code", model.pairingCode)
@@ -40,6 +41,7 @@ struct AccountView: View {
                     } footer: {
                         Text("Approving asks for Face ID. Pausing never does, so stopping is always one tap.")
                     }
+                    .listRowBackground(Ink.surface)
 
                     Section {
                         row("Alerts", alerts == .authorized ? "On" : alerts == .denied ? "Off in Settings" : "Not asked")
@@ -54,6 +56,7 @@ struct AccountView: View {
                     } header: { Text("Alerts") } footer: {
                         Text("Leash tells you when an agent is waiting on you.")
                     }
+                    .listRowBackground(Ink.surface)
 
                     Section {
                         TextField("Web app address", text: $site)
@@ -63,11 +66,12 @@ struct AccountView: View {
                     } header: { Text("Advanced") } footer: {
                         Text("Unlinking forgets the key on this phone. Remove it from your account in Settings on the web.")
                     }
+                    .listRowBackground(Ink.surface)
                 }
             }
             .scrollContentBackground(.hidden)
             .background(Ink.ground)
-            .navigationTitle("Account")
+            .navigationTitle("Settings")
             .sheet(isPresented: $addMoney) { AddMoneySheet() }
             .confirmationDialog("Unlink this iPhone?", isPresented: $confirmUnlink, titleVisibility: .visible) {
                 Button("Unlink", role: .destructive) { model.unlink() }
@@ -92,6 +96,41 @@ struct AccountView: View {
     }
 }
 
+/// Topping up the vault: USDC already in the account moves in on the web, where the owner's full
+/// key lives; on testnet, Circle's faucet hands out test USDC.
+struct TopUpSheet: View {
+    @Environment(AppModel.self) private var model
+    @Environment(Navigator.self) private var nav
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Top up").font(.system(size: 28, weight: .bold)).tracking(-0.8).padding(.top, 28)
+            Text("Your agents spend from the vault. Fill it from USDC in your account.").font(.system(size: 15)).foregroundStyle(Ink.muted)
+            if let s = model.snapshot {
+                RowCard(title: "In your account", subtitle: "Ready to move into the vault") {
+                    ZStack { Circle().fill(Ink.raised); Image(systemName: "arrow.down.left").font(.system(size: 17, weight: .medium)) }.frame(width: 46, height: 46)
+                } trailing: {
+                    Text(Money.usd(s.held)).font(.system(size: 17, weight: .semibold)).monospacedDigit()
+                }
+            }
+            if let owner = model.linked?.account {
+                Link(destination: model.site.appending(path: owner)) { Text("Move it into the vault").frame(maxWidth: .infinity) }
+                    .buttonStyle(.pill(.primary))
+            }
+            Button("Receive USDC first") { nav.sheet = .receive }.buttonStyle(.pill(.secondary))
+            if model.linked?.network == .testnet {
+                Link("Get test USDC from Circle's faucet", destination: URL(string: "https://faucet.circle.com")!)
+                    .font(.system(size: 14, weight: .medium)).foregroundStyle(Ink.muted).frame(maxWidth: .infinity)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .background(Ink.ground)
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+}
+
 /// Where to send USDC: the account's own name, as text and as a QR code.
 struct AddMoneySheet: View {
     @Environment(AppModel.self) private var model
@@ -106,7 +145,8 @@ struct AddMoneySheet: View {
             if let qr = QR.image(account) {
                 Image(uiImage: qr).interpolation(.none).resizable().scaledToFit()
                     .frame(width: 200, height: 200).padding(16)
-                    .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.white))
+                    .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color.white))
+                    .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Ink.edge, lineWidth: 0.7))
             }
             Button {
                 UIPasteboard.general.string = account
