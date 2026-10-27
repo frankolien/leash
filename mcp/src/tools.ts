@@ -1,29 +1,41 @@
-// The six tools an agent sees. Each description carries the same rules.
+// The six tools an agent sees. Each description carries the same rules. Payments, parked requests
+// and the budget come back with a card that Claude and ChatGPT draw in the chat.
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { CARD_META, registerCard } from "./card.js";
 import { GUIDANCE } from "./config.js";
 import { modeOf, reply } from "./envelope.js";
 import type { Leash } from "./leash.js";
-import type { LogEntry, PayOutcome, Policy } from "./types.js";
+import type { Ask, LogEntry, PayOutcome, Policy } from "./types.js";
 import { toUnits, toUsdc, whenNs } from "./units.js";
 
+const READ = { readOnlyHint: true, openWorldHint: false };
+
 export function registerTools(server: McpServer, leash: Leash) {
+  registerCard(server);
+
   server.registerTool(
     "leash_status",
     {
-      description: `What this agent may spend from the owner's NEAR account: the mode, the caps, what is left today, the allowlist, whether the key is active, what is waiting on the owner, and the vault balance. ${GUIDANCE}`,
+      description: `What this agent may spend from the owner's NEAR account: the mode, the caps, what is left today, any temporary raise, the allowlist, whether the key is active, what is waiting on the owner, and the vault balance. ${GUIDANCE}`,
       inputSchema: {},
+      annotations: { title: "Check my budget", ...READ },
+      _meta: CARD_META,
     },
     async () => {
       const policy = await leash.policy();
-      if (!policy) return reply({ status: "error", reason: "no policy for this key; ask the owner to run `leash grant`" });
-      const [verdict, paused, all, mine] = await Promise.all([
+      if (!policy) return reply({ status: "error", reason: "no policy for this key; ask the owner to connect this agent again" });
+      const [verdict, paused, all, mine, raise] = await Promise.all([
         leash.check(leash.key.owner, 1n),
         leash.view<boolean>("is_paused", { owner: leash.key.owner }),
         leash.view<[string, Policy][]>("get_policies", { owner: leash.key.owner }),
         leash.mine(),
+        leash.raise(),
       ]);
+      const daily = raise?.daily_cap ?? policy.daily_cap;
+      const perPayment = raise?.per_payment_cap ?? policy.per_payment_cap;
+      const raisedUntil = raise ? whenNs(raise.until) : null;
       return reply({
         status: "ok",
         agent: policy.name ?? leash.key.name ?? null,
@@ -33,10 +45,11 @@ export function registerTools(server: McpServer, leash: Leash) {
         paused: paused ?? false,
         mode: modeOf(policy),
         token: policy.token,
-        daily_cap_usdc: toUsdc(policy.daily_cap),
-        per_payment_cap_usdc: toUsdc(policy.per_payment_cap),
+        daily_cap_usdc: toUsdc(daily),
+        per_payment_cap_usdc: toUsdc(perPayment),
         remaining_today_usdc: toUsdc(verdict.remaining_today),
         vault_usdc: toUsdc(verdict.vault),
+        raise: raise ? { until: raisedUntil, extra_recipients: raise.allow, base_daily_cap_usdc: toUsdc(policy.daily_cap), base_per_payment_cap_usdc: toUsdc(policy.per_payment_cap) } : null,
         allowlist: policy.allowlist,
         cooldown_secs: policy.cooldown_secs,
         expires_at: policy.expires_at ? new Date(policy.expires_at * 1000).toISOString() : null,
@@ -45,6 +58,14 @@ export function registerTools(server: McpServer, leash: Leash) {
           requests: mine.requests.map((r) => ({ id: r.id, to: r.to, usdc: toUsdc(r.amount), reason: r.reason, expires_at: whenNs(r.expires_at) })),
           proposals: mine.proposals.map((p) => ({ id: p.id, note: p.note })),
         },
+      }, {
+        kind: "status",
+        agent: policy.name,
+        remaining_usdc: toUsdc(verdict.remaining_today),
+        daily_usdc: toUsdc(daily),
+        per_payment_usdc: toUsdc(perPayment),
+        vault_usdc: toUsdc(verdict.vault),
+        raised_until: raisedUntil,
       });
     },
   );
@@ -57,6 +78,7 @@ export function registerTools(server: McpServer, leash: Leash) {
         to: z.string().describe("Recipient NEAR account, like vendor.near"),
         usdc: z.string().describe("Amount in USDC, like 1.50"),
       },
+      annotations: { title: "Check a payment", ...READ },
     },
     async ({ to, usdc }) => {
       const units = toUnits(usdc);
@@ -77,25 +99,45 @@ export function registerTools(server: McpServer, leash: Leash) {
   server.registerTool(
     "leash_pay",
     {
-      description: `Pay USDC from the owner's account within the policy. "accepted" means the transfer settled on chain. "refused" carries the reason and costs nothing. Never call this twice for one payment. ${GUIDANCE}`,
+      description: `Pay USDC from the owner's account within the policy. "accepted" means the transfer settled on chain. "refused" carries the reason and costs nothing. Give each payment a payment_id (an invoice number, or any id you make up and reuse on retry): the contract never pays the same id twice, so a retry after a timeout is safe. ${GUIDANCE}`,
       inputSchema: {
         to: z.string().describe("Recipient NEAR account"),
         usdc: z.string().describe("Amount in USDC, like 1.50"),
         memo: z.string().optional().describe("What this payment is for; the owner sees it in the log"),
+        payment_id: z.string().max(64).optional().describe("A unique id for this payment; reuse it only to retry the same payment"),
       },
+      annotations: { title: "Pay", destructiveHint: true, idempotentHint: true, openWorldHint: true },
+      _meta: CARD_META,
     },
-    async ({ to, usdc, memo }) => {
+    async ({ to, usdc, memo, payment_id }) => {
       const units = toUnits(usdc);
-      const outcome = (await leash.call("pay", { to, amount: units.toString(), memo: memo ?? null })) as PayOutcome | undefined;
+      const [{ result, tx }, policy] = await Promise.all([leash.act("pay", { to, amount: units.toString(), memo: memo ?? null, payment_id }), leash.policy()]);
+      const outcome = result as PayOutcome | undefined;
       if (!outcome) return reply({ status: "error", reason: "no answer from the contract" });
-      return reply({
-        status: outcome.accepted ? "accepted" : "refused",
-        to,
-        usdc,
-        reason: outcome.reason,
-        remaining_today_usdc: toUsdc(outcome.remaining_today),
-        next: outcome.accepted ? null : "if the reason is a cap, the allowlist or a cooldown, leash_request can park it for the owner",
-      });
+      const raise = await leash.raise();
+      const daily = toUsdc(raise?.daily_cap ?? policy?.daily_cap ?? "0");
+      const repeat = outcome.accepted && outcome.reason?.startsWith("already paid");
+      return reply(
+        {
+          status: outcome.accepted ? "accepted" : "refused",
+          to,
+          usdc,
+          reason: outcome.reason,
+          remaining_today_usdc: toUsdc(outcome.remaining_today),
+          transaction: leash.explorer(tx),
+          next: outcome.accepted ? (repeat ? "this payment_id was already paid; nothing moved again" : null) : "if the reason is a cap, the allowlist or a cooldown, leash_request can park it for the owner",
+        },
+        {
+          kind: outcome.accepted ? "paid" : "refused",
+          agent: policy?.name,
+          usdc,
+          to,
+          reason: outcome.reason,
+          remaining_usdc: toUsdc(outcome.remaining_today),
+          daily_usdc: daily,
+          tx_url: outcome.accepted && !repeat ? leash.explorer(tx) : null,
+        },
+      );
     },
   );
 
@@ -108,26 +150,53 @@ export function registerTools(server: McpServer, leash: Leash) {
         usdc: z.string().describe("Amount in USDC, like 25"),
         memo: z.string().optional().describe("Why the owner should approve this; one sentence"),
       },
+      annotations: { title: "Ask the owner to approve a payment", destructiveHint: false, openWorldHint: false },
+      _meta: CARD_META,
     },
     async ({ to, usdc, memo }) => {
       const units = toUnits(usdc);
-      const id = await leash.call("request", { to, amount: units.toString(), memo: memo ?? null });
+      const [{ result: id }, verdict, policy] = await Promise.all([leash.act("request", { to, amount: units.toString(), memo: memo ?? null }), leash.check(to, units), leash.policy()]);
       const ttl = (await leash.view<number>("get_request_ttl", { owner: leash.key.owner })) ?? 3600;
-      return reply({ status: "parked", request_id: id, to, usdc, expires_in_secs: ttl, next: "the owner decides in their dashboard or with `leash approve <id>`" });
+      const expires = new Date(Date.now() + ttl * 1000).toISOString();
+      return reply(
+        { status: "parked", request_id: id, to, usdc, expires_at: expires, approve_at: leash.dashboard("approvals"), next: "the owner decides in their Leash dashboard; nothing has moved yet" },
+        { kind: "parked", agent: policy?.name, usdc, to, reason: plainReason(verdict.reason), expires_at: expires, approve_url: leash.dashboard("approvals") },
+      );
     },
   );
 
   server.registerTool(
     "leash_ask_more",
     {
-      description: `Ask the owner for a wider policy in one sentence, for example a higher daily cap or a new allowed recipient. Nothing changes until the owner acts; the note appears beside this key in their dashboard. ${GUIDANCE}`,
+      description: `Ask the owner for more room, in one sentence plus the exact terms when you know them: a higher daily cap, a higher per-payment cap or recipients to add, and for how long. The owner can grant it in one tap; a granted raise ends on its own. Nothing changes until the owner acts. ${GUIDANCE}`,
       inputSchema: {
         note: z.string().max(280).describe("One sentence: what you need and why"),
+        daily_cap_usdc: z.string().optional().describe("The daily cap you need while the raise lasts, in USDC"),
+        per_payment_cap_usdc: z.string().optional().describe("The largest single payment you need, in USDC"),
+        add_recipients: z.array(z.string()).max(10).optional().describe("NEAR accounts you need to pay that are not on the list"),
+        for_hours: z.number().int().min(1).max(720).optional().describe("How long you need it, in hours; a day if left out"),
       },
+      annotations: { title: "Ask the owner for more room", destructiveHint: false, openWorldHint: false },
     },
-    async ({ note }) => {
-      const id = await leash.call("ask_more", { note });
-      return reply({ status: "proposed", proposal_id: id, note, next: "nothing is granted yet; the owner may change the policy or dismiss this" });
+    async ({ note, daily_cap_usdc, per_payment_cap_usdc, add_recipients, for_hours }) => {
+      const terms = daily_cap_usdc || per_payment_cap_usdc || add_recipients?.length;
+      const ask: Ask | null = terms
+        ? {
+            daily_cap: daily_cap_usdc ? toUnits(daily_cap_usdc).toString() : undefined,
+            per_payment_cap: per_payment_cap_usdc ? toUnits(per_payment_cap_usdc).toString() : undefined,
+            allow: add_recipients ?? [],
+            for_secs: (for_hours ?? 24) * 3600,
+          }
+        : null;
+      const { result: id } = await leash.act("ask_more", { note, ask });
+      return reply({
+        status: "proposed",
+        proposal_id: id,
+        note,
+        terms: ask ? { daily_cap_usdc, per_payment_cap_usdc, add_recipients, for_hours: for_hours ?? 24 } : null,
+        review_at: leash.dashboard("agents"),
+        next: "nothing is granted yet; the owner can grant it in one tap, and a granted raise ends on its own",
+      });
     },
   );
 
@@ -138,6 +207,7 @@ export function registerTools(server: McpServer, leash: Leash) {
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe("How many entries, default 20"),
       },
+      annotations: { title: "What I already did", ...READ },
     },
     async ({ limit }) => {
       const log = (await leash.view<LogEntry[]>("get_log", { owner: leash.key.owner })) ?? [];
@@ -148,4 +218,15 @@ export function registerTools(server: McpServer, leash: Leash) {
       });
     },
   );
+}
+
+/// The contract's short reasons, as a sentence the owner reads on the card.
+function plainReason(reason: string | null): string {
+  const map: Record<string, string> = {
+    "over per-payment cap": "Over what it may pay alone",
+    "over daily cap": "Over today's limit",
+    "recipient not in allowlist": "Not on its list of recipients",
+    "cooldown not elapsed": "Too soon after its last payment",
+  };
+  return reason ? (map[reason] ?? reason) : "Needs your approval";
 }

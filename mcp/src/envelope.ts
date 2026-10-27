@@ -2,8 +2,14 @@
 
 import type { Policy } from "./types.js";
 
-export function reply(value: Record<string, unknown>) {
-  return { content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
+import type { Card } from "./card.js";
+
+/// The agent reads the text; hosts that draw cards read `card` from the structured copy.
+export function reply(value: Record<string, unknown>, card?: Card) {
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }],
+    ...(card ? { structuredContent: { ...value, card } } : {}),
+  };
 }
 
 export function modeOf(policy: Policy): string {

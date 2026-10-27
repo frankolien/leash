@@ -3,17 +3,18 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { parseKey } from "./key.js";
-import { Leash } from "./leash.js";
+import { Leash, type LeashOptions } from "./leash.js";
 import { registerTools } from "./tools.js";
 import type { KeyFile } from "./types.js";
 
 export const VERSION = "0.3.0";
 
-export function createLeashServer(key: KeyFile): McpServer {
+export function createLeashServer(key: KeyFile, options: LeashOptions = {}): McpServer {
   const server = new McpServer({ name: "leash", version: VERSION });
-  registerTools(server, new Leash(key));
+  registerTools(server, new Leash(key, options));
   return server;
 }
 
 export { parseKey };
-export type { KeyFile };
+export type { KeyFile, LeashOptions };
+export type { Relay, Relayed, SignedMethod } from "./relay.js";

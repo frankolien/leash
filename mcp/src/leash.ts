@@ -1,17 +1,42 @@
 // The agent's view of its Leash: its policy, the contract's verdicts, warnings, and its calls.
 
-import { Account, JsonRpcProvider, KeyPairSigner } from "near-api-js";
+import { randomUUID } from "node:crypto";
+import { Account, JsonRpcProvider, KeyPair, KeyPairSigner, actions } from "near-api-js";
 import { RPC } from "./config.js";
+import { httpRelay, type Relay, type Relayed } from "./relay.js";
 import { editDistance, skeleton } from "./safety.js";
-import type { KeyFile, Policy, Preflight, Proposal, Request } from "./types.js";
+import type { KeyFile, Policy, Preflight, Proposal, Raise, Request } from "./types.js";
+
+export type LeashOptions = {
+  /// Delivers signed instructions so the agent needs no NEAR for gas. Without one, the agent's own
+  /// function-call key sends the transaction.
+  relay?: Relay;
+  /// The Leash website, for links to the owner's dashboard.
+  site?: string;
+};
+
+type Action = "pay" | "request" | "ask_more";
+const INTENT_LIFETIME_NS = 10n * 60n * 1_000_000_000n;
+
+/// The value a transaction finally returned, through any promise chain.
+function lastResult(out: { status: unknown }): unknown {
+  const status = out.status as { SuccessValue?: string; Failure?: unknown };
+  if (status.Failure) throw new Error(JSON.stringify(status.Failure));
+  if (!status.SuccessValue) return undefined;
+  return JSON.parse(Buffer.from(status.SuccessValue, "base64").toString("utf8"));
+}
 
 export class Leash {
   readonly key: KeyFile;
   readonly provider: JsonRpcProvider;
   readonly account: Account;
+  readonly relay?: Relay;
+  readonly site?: string;
 
-  constructor(key: KeyFile) {
+  constructor(key: KeyFile, options: LeashOptions = {}) {
     this.key = key;
+    this.relay = options.relay ?? (process.env.LEASH_RELAY_URL ? httpRelay(process.env.LEASH_RELAY_URL) : undefined);
+    this.site = options.site ?? process.env.LEASH_SITE_URL;
     this.provider = new JsonRpcProvider({ url: process.env.NEAR_RPC ?? RPC[key.network] });
     this.account = new Account(key.owner, this.provider, KeyPairSigner.fromSecretKey(key.private_key as `ed25519:${string}`));
   }
@@ -62,8 +87,46 @@ export class Leash {
     return out;
   }
 
-  async call(method: "pay" | "request" | "ask_more", args: Record<string, unknown>): Promise<unknown> {
-    return this.account.callFunction({ contractId: this.key.contract, methodName: method, args, gas: 30_000_000_000_000n, deposit: 0n });
+  /// Runs an agent method: signed and relayed when there is a relay, otherwise sent by the agent's
+  /// own key. Either way the contract applies this key's policy and answers the same.
+  async act(action: Action, args: Record<string, unknown>): Promise<Relayed> {
+    if (this.relay) {
+      const payment_id = (args.payment_id as string | undefined) ?? randomUUID();
+      return this.relay(`${action}_signed`, this.sign(action, { ...args, payment_id }));
+    }
+    const direct = action === "pay" ? args : Object.fromEntries(Object.entries(args).filter(([k]) => k !== "payment_id"));
+    const out = await this.account.signAndSendTransaction({
+      receiverId: this.key.contract,
+      actions: [actions.functionCall(action, direct, 60_000_000_000_000n, 0n)],
+    });
+    return { result: lastResult(out), tx: out.transaction.hash };
+  }
+
+  /// The instruction as the exact JSON text the contract will parse, signed over a fixed prefix so
+  /// the signature means nothing anywhere else. expires_at is written by hand because nanoseconds
+  /// overflow a JavaScript number.
+  sign(action: Action, args: Record<string, unknown>): { intent: string; signature: string } {
+    const body = Object.fromEntries(
+      Object.entries({ contract: this.key.contract, owner: this.key.owner, key: this.key.public_key, action, ...args }).filter(([, v]) => v !== undefined && v !== null),
+    );
+    const expires = BigInt(Date.now()) * 1_000_000n + INTENT_LIFETIME_NS;
+    const intent = `${JSON.stringify(body).slice(0, -1)},"expires_at":${expires}}`;
+    const { signature } = KeyPair.fromString(this.key.private_key as `ed25519:${string}`).sign(new TextEncoder().encode(`leash-intent:${intent}`));
+    return { intent, signature: Buffer.from(signature).toString("base64") };
+  }
+
+  async raise(): Promise<Raise | undefined> {
+    const raises = (await this.view<[string, Raise][]>("get_raises", { owner: this.key.owner }).catch(() => [])) ?? [];
+    return raises.find(([k]) => k === this.key.public_key)?.[1];
+  }
+
+  explorer(tx: string | undefined): string | null {
+    if (!tx) return null;
+    return this.key.network === "mainnet" ? `https://nearblocks.io/txns/${tx}` : `https://testnet.nearblocks.io/txns/${tx}`;
+  }
+
+  dashboard(view: string): string | null {
+    return this.site ? `${this.site.replace(/\/$/, "")}/${encodeURIComponent(this.key.owner)}#${view}` : null;
   }
 
   async mine(): Promise<{ requests: Request[]; proposals: Proposal[] }> {

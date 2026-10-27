@@ -24,7 +24,7 @@ const ENOUGH_USDC = BigInt(1_000_000);
 
 export type Readiness = { exists: boolean; usdcRegistered: boolean; storageCredit: bigint };
 
-function sponsorAccount(network: Network): Account {
+export function sponsorAccount(network: Network): Account {
   const id = process.env.SPONSOR_ACCOUNT_ID;
   const key = process.env.SPONSOR_PRIVATE_KEY;
   if (!id || !key) throw new Error("the sponsor is not configured");
