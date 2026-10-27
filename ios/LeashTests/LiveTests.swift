@@ -16,7 +16,8 @@ final class LiveTests: XCTestCase {
 /// decision signed natively here, and the one thing the key must never do, refused by NEAR.
 final class PhoneKeyLiveTests: XCTestCase {
     func testDecisionsSignedOnThePhone() async throws {
-        let path = try XCTUnwrap(ProcessInfo.processInfo.environment["LEASH_E2E"].flatMap { $0.isEmpty ? nil : $0 }, "set TEST_RUNNER_LEASH_E2E")
+        let path = ProcessInfo.processInfo.environment["LEASH_E2E"] ?? ""
+        try XCTSkipIf(path.isEmpty, "set TEST_RUNNER_LEASH_E2E to a phone-e2e.json")
         let spec = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: path))) as! [String: String]
         let seed = Data(stride(from: 0, to: spec["seed"]!.count, by: 2).map { i -> UInt8 in
             let s = spec["seed"]!; let a = s.index(s.startIndex, offsetBy: i); return UInt8(s[a..<s.index(a, offsetBy: 2)], radix: 16)! })
