@@ -46,10 +46,16 @@ impl Leash {
                 let vault = self.vault_of(&owner, &token);
                 self.vaults.insert((owner.clone(), token.clone()), vault + amount.0);
                 if counted {
-                    let id = (owner.clone(), key.clone());
+                    let task = self.task_for(&owner, &key);
+                    let payer = task.as_ref().map_or(key.clone(), |t| t.parent.clone());
+                    let id = (owner.clone(), payer);
                     if let Some(mut policy) = self.policies.get(&id).cloned() {
                         policy.spent_today = U128(policy.spent_today.0.saturating_sub(amount.0));
                         self.policies.insert(id, policy);
+                    }
+                    if let Some(mut t) = task {
+                        t.spent = U128(t.spent.0.saturating_sub(amount.0));
+                        self.tasks.insert(t.id, t);
                     }
                 }
                 // The payment never happened, so its id is free for an honest retry.

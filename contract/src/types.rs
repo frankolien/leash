@@ -23,6 +23,8 @@ pub(crate) enum StorageKey {
     Seen,
     Raises,
     Asks,
+    Tasks,
+    TaskOf,
 }
 
 /// What an agent key may do. Amounts are in the token's smallest unit; times are seconds.
@@ -179,7 +181,43 @@ pub struct Intent {
     pub note: Option<String>,
     #[serde(default)]
     pub ask: Option<Ask>,
+    #[serde(default)]
+    pub task: Option<TaskInput>,
+    #[serde(default)]
+    pub task_id: Option<u64>,
     pub payment_id: String,
     /// Nanoseconds. A signed instruction is only good for a short while.
     pub expires_at: u64,
+}
+
+/// A budget an agent carves out for one job and hands to a sub-agent's key. The child key pays only
+/// within it, by signed instruction, and every payment also counts against the parent's own policy,
+/// so a task can narrow what the parent may do but never widen it.
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug, PartialEq)]
+pub struct Task {
+    pub id: u64,
+    pub owner: AccountId,
+    pub parent: PublicKey,
+    pub child: PublicKey,
+    pub label: String,
+    pub budget: U128,
+    pub spent: U128,
+    /// Empty means whatever the parent may pay.
+    pub allow: Vec<AccountId>,
+    pub created_at: u64,
+    /// Nanoseconds.
+    pub expires_at: u64,
+    pub active: bool,
+}
+
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct TaskInput {
+    pub label: String,
+    pub budget: U128,
+    pub for_secs: u64,
+    pub child: PublicKey,
+    #[serde(default)]
+    pub allow: Vec<AccountId>,
 }

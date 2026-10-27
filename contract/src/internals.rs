@@ -44,6 +44,8 @@ impl Leash {
         self.seen.flush();
         self.raises.flush();
         self.asks.flush();
+        self.tasks.flush();
+        self.task_of.flush();
         self.settle(owner, before, env::storage_usage());
     }
 
@@ -78,6 +80,10 @@ impl Leash {
     }
 
     pub(crate) fn remaining(&self, owner: &AccountId, key: &PublicKey) -> U128 {
+        if let Some(task) = self.task_for(owner, key) {
+            let left = task.budget.0.saturating_sub(task.spent.0);
+            return U128(left.min(self.remaining(owner, &task.parent).0));
+        }
         match self.policies.get(&(owner.clone(), key.clone())) {
             Some(policy) => {
                 let now = env::block_timestamp();
@@ -97,6 +103,9 @@ impl Leash {
             vault,
         };
         let Some(policy) = self.policies.get(&(owner.clone(), key.clone())) else {
+            if let Some(task) = self.task_for(owner, key) {
+                return self.task_preflight(owner, &task, to, amount);
+            }
             return refuse("no policy for this key", false, U128(0), U128(0));
         };
         let vault = U128(self.vault_of(owner, &policy.token));

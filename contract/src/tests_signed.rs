@@ -113,7 +113,7 @@ fn a_relayer_cannot_change_the_amount() {
     let claude = agent(7);
     let mut leash = funded(&[&claude]);
     let sig = sign(&claude, &intent(&claude, "pay", USDC, "inv-1"));
-    deliver(&mut leash, &intent(&claude, "pay", 2 * USDC, "inv-1"), sig);
+    let _ = deliver(&mut leash, &intent(&claude, "pay", 2 * USDC, "inv-1"), sig);
 }
 
 #[test]
@@ -122,7 +122,7 @@ fn one_agent_cannot_spend_under_another_agents_policy() {
     let (claude, codex) = (agent(7), agent(9));
     let mut leash = funded(&[&claude, &codex]);
     let text = intent(&claude, "pay", USDC, "inv-1");
-    deliver(&mut leash, &text, sign(&codex, &text));
+    let _ = deliver(&mut leash, &text, sign(&codex, &text));
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn a_signed_request_cannot_be_delivered_as_a_payment() {
     let claude = agent(7);
     let mut leash = funded(&[&claude]);
     let text = intent(&claude, "request", USDC, "inv-1");
-    deliver(&mut leash, &text, sign(&claude, &text));
+    let _ = deliver(&mut leash, &text, sign(&claude, &text));
 }
 
 #[test]

@@ -213,13 +213,14 @@ async fn an_owner_without_storage_credit_cannot_add_state() -> Result<()> {
     Ok(())
 }
 
-/// The live contract upgrades in place, so this replays it: v1 state (a vault, a policy, a payment)
-/// survives `migrate`, and then a stranger delivers a payment the agent signed off chain, which
-/// lands once and only once. Runs when LEASH_V1_WASM points at a build of the previous release.
+/// The live contract upgrades in place, so this replays it: the previous release's state (a vault,
+/// a policy) survives `migrate`; a stranger delivers a payment the agent signed off chain, once and
+/// only once; then the agent opens a task and its sub-agent's key spends from it. Runs when
+/// LEASH_PREV_WASM points at a build of the previous release.
 #[tokio::test]
-async fn v1_state_survives_the_upgrade_and_signed_payments_relay() -> Result<()> {
+async fn previous_state_survives_the_upgrade_and_signed_payments_relay() -> Result<()> {
     use ed25519_dalek::{Signer, SigningKey};
-    let Ok(v1_path) = std::env::var("LEASH_V1_WASM") else { return Ok(()) };
+    let Ok(v1_path) = std::env::var("LEASH_PREV_WASM") else { return Ok(()) };
     let worker = near_workspaces::sandbox().await?;
     let ft = worker.dev_deploy(&built("./tests/mock-ft", "mock_ft")?).await?;
     let leash = worker.dev_deploy(&std::fs::read(v1_path)?).await?;
@@ -274,5 +275,28 @@ async fn v1_state_survives_the_upgrade_and_signed_payments_relay() -> Result<()>
     assert!(again["reason"].as_str().unwrap_or_default().starts_with("already paid"), "{again}");
     assert_eq!(balance(&ft, vendor.id()).await?, USDC, "a replay moved nothing");
     assert_eq!(vault(&leash, owner.id(), ft.id()).await?, 9 * USDC);
+
+    // A task: the agent hands a sub-agent $1 for one job; its key pays by signed instruction too.
+    let child = SigningKey::from_bytes(&[43; 32]);
+    let child_pk = format!("ed25519:{}", bs58::encode(child.verifying_key().as_bytes()).into_string());
+    let sign = |k: &SigningKey, t: &str| near_sdk::base64::Engine::encode(&near_sdk::base64::engine::general_purpose::STANDARD, k.sign(&[b"leash-intent:".as_slice(), t.as_bytes()].concat()).to_bytes());
+    let open = json!({
+        "contract": leash.id(), "owner": owner.id(), "key": agent_pk, "action": "open_task", "payment_id": "task-1", "expires_at": now + 600_000_000_000u64,
+        "task": { "label": "research", "budget": USDC.to_string(), "for_secs": 3600, "child": child_pk },
+    })
+    .to_string();
+    vendor.call(leash.id(), "open_task_signed").args_json(json!({ "intent": open, "signature": sign(&agent, &open) })).gas(Gas::from_tgas(80)).transact().await?.into_result()?;
+    let child_pay = |id: &str, amount: u128| {
+        json!({ "contract": leash.id(), "owner": owner.id(), "key": child_pk, "action": "pay", "to": vendor.id(), "amount": amount.to_string(), "payment_id": id, "expires_at": now + 600_000_000_000u64 }).to_string()
+    };
+    let small = child_pay("c-1", USDC / 2);
+    let paid: Value = vendor.call(leash.id(), "pay_signed").args_json(json!({ "intent": small, "signature": sign(&child, &small) })).gas(Gas::from_tgas(80)).transact().await?.json()?;
+    assert_eq!(paid["accepted"], true, "{paid}");
+    let big = child_pay("c-2", USDC);
+    let refused: Value = vendor.call(leash.id(), "pay_signed").args_json(json!({ "intent": big, "signature": sign(&child, &big) })).gas(Gas::from_tgas(80)).transact().await?.json()?;
+    assert_eq!(refused["reason"], "over task budget", "{refused}");
+    let tasks: Vec<Value> = leash.view("get_tasks").args_json(json!({ "owner": owner.id() })).await?.json()?;
+    assert_eq!(tasks[0]["spent"], (USDC / 2).to_string());
+    assert_eq!(vault(&leash, owner.id(), ft.id()).await?, 9 * USDC - USDC / 2);
     Ok(())
 }

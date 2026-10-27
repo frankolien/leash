@@ -54,7 +54,7 @@ impl Leash {
     /// The intent, if `signature` is the named key's ed25519 signature over `leash-intent:` and the
     /// exact text, for this contract and this action, and still fresh. The prefix keeps a signature
     /// made for Leash from ever passing as anything else.
-    fn verified(&self, text: &str, signature: &Base64VecU8, action: &str) -> Intent {
+    pub(crate) fn verified(&self, text: &str, signature: &Base64VecU8, action: &str) -> Intent {
         let intent: Intent = near_sdk::serde_json::from_str(text).expect("intent is not valid JSON");
         assert_eq!(intent.contract, env::current_account_id(), "intent is for another contract");
         assert_eq!(intent.action, action, "intent is for another action");
@@ -86,9 +86,16 @@ impl Leash {
             self.charge(&owner, before);
             return PromiseOrValue::Value(PayOutcome { accepted: false, reason: Some(reason), remaining_today: verdict.remaining_today });
         }
-        let id = (owner.clone(), key.clone());
+        // A child key spends its task and, through it, its parent's day.
+        let task = self.task_for(&owner, &key);
+        let payer = task.as_ref().map_or(key.clone(), |t| t.parent.clone());
+        let id = (owner.clone(), payer);
         let mut policy = self.policies.get(&id).cloned().expect("policy");
         let now = env::block_timestamp();
+        if let Some(mut t) = task {
+            t.spent = U128(t.spent.0 + amount.0);
+            self.tasks.insert(t.id, t);
+        }
         if policy.day_started_at == 0 || now.saturating_sub(policy.day_started_at) >= DAY_NS {
             policy.day_started_at = now;
             policy.spent_today = U128(0);
@@ -186,7 +193,7 @@ impl Leash {
     }
 
     /// A signed request or ask is delivered once; a repeat is someone replaying it.
-    fn once(&mut self, owner: &AccountId, key: &PublicKey, payment_id: &str) {
+    pub(crate) fn once(&mut self, owner: &AccountId, key: &PublicKey, payment_id: &str) {
         assert!(!self.was_seen(owner, key, payment_id), "this instruction was already delivered");
         self.remember(owner, key, payment_id);
     }

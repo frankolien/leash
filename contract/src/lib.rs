@@ -5,7 +5,8 @@
 //! contract reads which key signed and applies that key's policy. Nothing an agent can sign reaches
 //! any other contract. An agent can also sign an instruction off chain for anyone to deliver
 //! (`pay_signed` and friends): the contract verifies the signature itself, so the agent never needs
-//! NEAR for gas and a relayer can neither forge nor repeat a payment.
+//! NEAR for gas and a relayer can neither forge nor repeat a payment. An agent can also open a task:
+//! a budget for one job, spent by a sub-agent's key within the parent's own limits.
 //!
 //! Layout: `types` holds every struct the API speaks; `owner` the methods only the owner's key may
 //! call; `agent` the two methods an agent key may call; `token` the NEP-141 callback and the transfer
@@ -19,6 +20,7 @@ use near_sdk::{log, near, AccountId, Gas, PanicOnDefault, PublicKey};
 mod agent;
 mod internals;
 mod owner;
+mod tasks;
 mod token;
 mod types;
 mod views;
@@ -26,6 +28,8 @@ mod views;
 mod tests;
 #[cfg(test)]
 mod tests_signed;
+#[cfg(test)]
+mod tests_tasks;
 
 pub use types::*;
 
@@ -46,6 +50,10 @@ const SEEN_LIMIT: usize = 64;
 const MIN_RAISE_SECS: u64 = 3_600;
 const MAX_RAISE_SECS: u64 = 30 * 86_400;
 const DEFAULT_RAISE_SECS: u64 = 86_400;
+const MIN_TASK_SECS: u64 = 60;
+const MAX_TASK_SECS: u64 = 7 * 86_400;
+// Open tasks per parent key, so one agent cannot run up the owner's storage.
+const TASK_LIMIT: usize = 10;
 const EVENT_STANDARD: &str = "leash";
 const EVENT_VERSION: &str = "1.0.0";
 
@@ -69,11 +77,15 @@ pub struct Leash {
     seen: LookupMap<(AccountId, PublicKey), Vec<(String, u64)>>,
     raises: LookupMap<(AccountId, PublicKey), Raise>,
     asks: LookupMap<u64, Ask>,
+    tasks: IterableMap<u64, Task>,
+    next_task: u64,
+    /// Which task a child key spends from.
+    task_of: LookupMap<(AccountId, PublicKey), u64>,
 }
 
-/// The state before signed instructions and raises, read once by `migrate`.
+/// The state before tasks, read once by `migrate`.
 #[near(serializers = [borsh])]
-struct LeashV1 {
+struct LeashV2 {
     policies: LookupMap<(AccountId, PublicKey), Policy>,
     keys: LookupMap<AccountId, Vec<PublicKey>>,
     vaults: LookupMap<(AccountId, AccountId), u128>,
@@ -85,6 +97,9 @@ struct LeashV1 {
     proposals: IterableMap<u64, Proposal>,
     next_proposal: u64,
     request_ttl: LookupMap<AccountId, u64>,
+    seen: LookupMap<(AccountId, PublicKey), Vec<(String, u64)>>,
+    raises: LookupMap<(AccountId, PublicKey), Raise>,
+    asks: LookupMap<u64, Ask>,
 }
 
 #[near]
@@ -106,14 +121,17 @@ impl Leash {
             seen: LookupMap::new(StorageKey::Seen),
             raises: LookupMap::new(StorageKey::Raises),
             asks: LookupMap::new(StorageKey::Asks),
+            tasks: IterableMap::new(StorageKey::Tasks),
+            next_task: 1,
+            task_of: LookupMap::new(StorageKey::TaskOf),
         }
     }
 
-    /// Carries a v1 deployment's state over unchanged and adds the new collections.
+    /// Carries a v2 deployment's state over unchanged and adds the task collections.
     #[private]
     #[init(ignore_state)]
     pub fn migrate() -> Self {
-        let old: LeashV1 = near_sdk::env::state_read().expect("no v1 state to migrate");
+        let old: LeashV2 = near_sdk::env::state_read().expect("no v2 state to migrate");
         Self {
             policies: old.policies,
             keys: old.keys,
@@ -126,9 +144,12 @@ impl Leash {
             proposals: old.proposals,
             next_proposal: old.next_proposal,
             request_ttl: old.request_ttl,
-            seen: LookupMap::new(StorageKey::Seen),
-            raises: LookupMap::new(StorageKey::Raises),
-            asks: LookupMap::new(StorageKey::Asks),
+            seen: old.seen,
+            raises: old.raises,
+            asks: old.asks,
+            tasks: IterableMap::new(StorageKey::Tasks),
+            next_task: 1,
+            task_of: LookupMap::new(StorageKey::TaskOf),
         }
     }
 }
