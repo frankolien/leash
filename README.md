@@ -36,6 +36,48 @@ flowchart LR
    for them, and a sponsor covers the first fees) or with any NEAR wallet. One shared contract
    serves every owner, so a new owner costs a small storage credit, not a deployment.
 
+## On your iPhone
+
+Agents ask while you are away from the computer, so the owner's side lives on the phone too. The
+Leash iOS app (`ios/`, SwiftUI) supervises every agent: what each spent today against its limit,
+what waits for you, and the brake.
+
+```mermaid
+flowchart LR
+  Agent["Agent parks a payment<br/>over its limit"] --> Chain{{"Leash contract"}}
+  Chain --> Phone["Leash on iPhone<br/>notification, Live Activity"]
+  Phone -- "Deny, Pause<br/>brake key, works locked" --> Chain
+  Phone -- "Approve, Grant, Resume<br/>decision key, Face ID" --> Chain
+```
+
+- **The phone holds two keys, neither of which can move money elsewhere.** Linking (sign in with
+  Google, Apple or a passkey, check a six-character code) adds two NEAR function-call keys to the
+  owner's account, scoped to the Leash contract. The decision key can approve, deny, grant raises,
+  pause, resume and revoke; the app asks for Face ID before it signs. The brake key can only `pause`
+  and `deny`, so it stays usable on a locked phone. Neither can call the USDC contract or add keys:
+  NEAR itself refuses (tested on testnet: `DepositWithFunctionCall`, and the brake's `resume` is
+  rejected).
+- **The brake works from everywhere.** "Pause my agents" runs from Siri, Shortcuts, the Action
+  button, a Control Center and Lock Screen control and the Home Screen widget, without opening the
+  app or asking for Face ID. Resuming always asks.
+- **Decisions where you are.** A parked payment arrives as a Time Sensitive notification with Deny
+  on it, and as a Live Activity in the Dynamic Island with the amount, recipient and time left.
+  Approve opens the request with the recipient checks (exists, can hold USDC, first payment, larger
+  than usual, lookalike of someone you paid) and takes Face ID.
+- **Native NEAR, no wallet app.** Borsh transactions signed with CryptoKit's Ed25519 and sent over
+  JSON-RPC. The unit tests check the bytes and hash against near-api-js.
+
+Verify without an iPhone:
+
+```bash
+cd ios && xcodegen generate   # or open Leash.xcodeproj as committed
+xcodebuild test -project Leash.xcodeproj -scheme Leash \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:LeashTests
+xcrun simctl push booted com.frankolien.leash demo/parked.apns   # a waiting-payment alert
+```
+
+A linked phone's keys are listed in the web dashboard's Settings, each removable from the account.
+
 ## Verify it in ten minutes
 
 No NEAR account is needed for the first two steps. Each one says what you should see.
@@ -105,6 +147,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | The agent pays an unexpected account | The per-agent allowlist; above-limit payments wait for the owner |
 | A lookalike recipient (`vend0r.near` for `vendor.near`) or one that cannot receive USDC | Before paying, the agent's preflight warns; before approving, the owner sees the same checks against every account they have paid, and the button reads Approve anyway |
 | A leaked agent key | Same limits as the agent; revoke deletes the key, and NEAR refuses it before the contract runs |
+| A lost or stolen phone | Its keys are limited to Leash decisions; approving takes Face ID; the brake can only stop things; the owner removes both keys from the web |
 | An agent spamming requests | Requests expire after the owner's window; each request costs the owner's storage credit, which is visible |
 | A stranger growing the contract's storage | Every byte is billed to the owner who adds it; freed bytes are credited back |
 | Approving a transfer the token would reject | The CLI refuses an unregistered recipient up front; a transfer that fails anyway is refunded by the callback |
@@ -118,6 +161,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | `mcp/` | The MCP server any agent can run: status, preflight, pay, request, ask for more, history. |
 | `cli/` | The owner's CLI. |
 | `web/` | The landing page and the owner's dashboard: Next.js 16, reads the chain over RPC, signs through the owner's session. |
+| `ios/` | The owner's iPhone app (SwiftUI): approvals, the brake, a widget, a Control, a Live Activity. XcodeGen `project.yml`. |
 | `docs/` | Design, plan, dashboard design, accounts and sign-in. |
 
 ## Code map
@@ -154,5 +198,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 - [x] Unit and sandbox tests; CI for every package
 - [x] Dashboard: live data for any owner, approvals panel, new agents without the CLI, recipients, activity filters
 - [x] Sign in with Google, Apple or email (Privy embedded wallets) with sponsored onboarding; NEAR wallets through NEAR Connect
+- [x] iPhone app: native NEAR signing, decision and brake keys, approvals with Face ID, Live Activity, widget, Control Center brake, Siri
+- [ ] Push notifications from a server watcher (alerts today come while the app runs)
 - [ ] Mainnet deployment
 - [ ] Countersign: a NEAR AI Cloud model signs off on payments inside a TEE (stretch)
