@@ -4,7 +4,7 @@
 // Apple or email (through Privy, when the app is configured for it), or an existing NEAR wallet
 // through NEAR Connect. Either way pages get one OwnerSession.
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Suspense, createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { DEFAULT_NETWORK } from "@/lib/config";
 import { walletSession, type OwnerSession } from "@/lib/session";
@@ -74,14 +74,6 @@ export function AuthCore({ embedded, children }: { embedded: Embedded | null; ch
     [embedded?.session, walletAccount],
   );
 
-  // A new owner picks a name before anything else.
-  // The landing page stays a landing page; the app's own pages ask.
-  const pathname = usePathname();
-  const needsName = embedded?.naming != null && pathname !== "/";
-  useEffect(() => {
-    if (needsName) setDialog(true);
-  }, [needsName]);
-
   // Close the dialog once a session exists, whichever way it arrived.
   useEffect(() => {
     if (session) setDialog(false);
@@ -120,9 +112,25 @@ export function AuthCore({ embedded, children }: { embedded: Embedded | null; ch
   return (
     <AuthContext.Provider value={value}>
       {children}
+      {embedded?.naming != null && (
+        <Suspense fallback={null}>
+          <AskForName open={() => setDialog(true)} />
+        </Suspense>
+      )}
       {inline === 0 && <SignInDialog open={dialog} onClose={() => setDialog(false)} {...card} />}
     </AuthContext.Provider>
   );
+}
+
+/// A new owner picks a name before anything else. The landing page stays a landing page; the
+/// app's own pages ask. Reading the path is request data, so it sits in its own Suspense boundary
+/// and the rest of the page can still prerender.
+function AskForName({ open }: { open: () => void }) {
+  const pathname = usePathname();
+  useEffect(() => {
+    if (pathname !== "/") open();
+  }, [pathname, open]);
+  return null;
 }
 
 /// Where "Get started" and "Sign in" lead: a signed-in owner goes straight to their dashboard.
