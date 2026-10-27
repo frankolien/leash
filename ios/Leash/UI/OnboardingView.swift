@@ -6,6 +6,8 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(AppModel.self) private var model
     @State private var working: Pairing.Provider?
+    @State private var editingSite = false
+    @State private var site = ""
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -14,9 +16,21 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
+                // A phone cannot reach the Mac's localhost; holding the name sets a tunnel address.
                 HStack(spacing: 8) {
                     Image("mark").resizable().frame(width: 24, height: 24)
                     Text("Leash").font(.system(size: 22, weight: .semibold)).tracking(-0.4)
+                }
+                .onLongPressGesture {
+                    site = model.site.absoluteString
+                    editingSite = true
+                }
+                .alert("Web app address", isPresented: $editingSite) {
+                    TextField("https://…", text: $site).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    Button("Save") { if let url = URL(string: site.trimmingCharacters(in: .whitespaces)), url.scheme != nil { model.site = url } }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Where Leash's web app runs, for example your ngrok address.")
                 }
                 Spacer()
                 Text("Your agents can pay now.")
