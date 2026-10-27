@@ -21,7 +21,7 @@
 	<key>LSRequiresIPhoneOS</key><true/>
 	<key>NSSupportsLiveActivities</key><true/>
 	<key>LeashKeychainGroup</key><string>$(AppIdentifierPrefix)com.frankolien.leash.shared</string>
-	<key>LeashSiteURL</key><string>https://leash-eight.vercel.app</string>
+	<key>LeashSiteURL</key><string>https://leash.frankolien.com</string>
 	<key>NSFaceIDUsageDescription</key><string>Leash asks for Face ID before your phone approves a payment.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict><key>NSAllowsLocalNetworking</key><true/></dict>
