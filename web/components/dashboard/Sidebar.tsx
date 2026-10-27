@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { Activity, Bell, LayoutGrid, Pause, Play, Settings, Users, X, BookUser } from "lucide-react";
 import { shortAccount } from "@/lib/config";
+import { claudeInstallLink, siteOrigin } from "@/lib/connector";
 import type { View } from "./views";
 import styles from "./dashboard.module.css";
 
@@ -39,9 +40,8 @@ export default function Sidebar(props: {
   onDisconnect: () => void;
   onPause: () => void;
   onResume: () => void;
-  onSetup: () => void;
 }) {
-  const { view, waiting, owner, network, account, accountLabel, paused, canAct, busy, onConnect, onDisconnect, onPause, onResume, onSetup, authReady, preparing } = props;
+  const { view, waiting, owner, network, account, accountLabel, paused, canAct, busy, onConnect, onDisconnect, onPause, onResume, authReady, preparing } = props;
   const [promo, setPromo] = useState(false);
   useEffect(() => {
     try { setPromo(window.localStorage.getItem(PROMO_KEY) !== "1"); } catch { setPromo(true); }
@@ -75,9 +75,9 @@ export default function Sidebar(props: {
         {promo && (
           <div className={styles.promo}>
             <button className={styles.promoClose} onClick={dismiss} aria-label="Dismiss"><X size={14} /></button>
-            <strong>Put Claude Code on a leash.</strong>
-            <span>Four steps, about two minutes.</span>
-            <button className={styles.promoGo} onClick={onSetup}>Show me how</button>
+            <strong>Put Claude on a leash.</strong>
+            <span>In the Claude app on your Mac or phone. About a minute.</span>
+            <a className={styles.promoGo} href={claudeInstallLink(siteOrigin())} target="_blank" rel="noreferrer">Open in Claude</a>
           </div>
         )}
         <div className={styles.account}>

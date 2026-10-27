@@ -1,18 +1,14 @@
 "use client";
 
 // Creates an agent from the dashboard's side panel, so an owner who signed in with Google never
-// needs the CLI.
-// The key pair is made in this browser; the owner signs twice (add the key to their account, set
-// its limits on Leash); then the key is handed over once, inside the line (or Cursor link) that
-// installs Leash in their agent.
+// needs the CLI. The key is handed over once, inside the line (or Cursor link) that installs Leash
+// in their agent.
 
 import { useState } from "react";
 import { ArrowUpRight, Check, Copy, Download } from "lucide-react";
-import { KeyPair } from "near-api-js";
 import { AGENTS, inlineKey, mcpConfig, type Agent as AgentKind } from "@/components/setup/agents";
-import { AGENT_ALLOWANCE, AGENT_METHODS } from "@/lib/config";
+import { createAgent, limitsProblem } from "@/lib/agents";
 import { plainError } from "@/lib/errors";
-import { toUnits } from "@/lib/format";
 import type { OwnerSession } from "@/lib/session";
 import { BrandLogo } from "./AgentIcon";
 import SidePanel from "./SidePanel";
@@ -33,30 +29,15 @@ export default function NewAgentPanel(props: { kind: AgentKind; session: OwnerSe
   const [copied, setCopied] = useState(false);
 
   const owns = session?.accountId === owner;
-  const valid = /^[a-z0-9-]{1,32}$/.test(name) && Number(daily) > 0 && Number(perPayment) > 0 && Number(perPayment) <= Number(daily);
+  const limits = { name, daily, perPayment, recipients: recipients.split(",").map((s) => s.trim()).filter(Boolean) };
+  const valid = limitsProblem(limits) === null;
 
   async function create() {
     if (!session || !owns || !valid) return;
     setError(null);
     try {
-      const pair = KeyPair.fromRandom("ed25519");
-      const publicKey = pair.getPublicKey().toString();
-      setStep("Adding the agent's key to your account");
-      await session.addAgentKey(publicKey, contract, AGENT_METHODS, AGENT_ALLOWANCE);
-      setStep("Setting its limits on Leash");
-      await session.call(contract, "set_policy", {
-        public_key: publicKey,
-        policy: {
-          name,
-          token,
-          daily_cap: toUnits(daily).toString(),
-          per_payment_cap: toUnits(perPayment).toString(),
-          allowlist: recipients.split(",").map((s) => s.trim()).filter(Boolean),
-          cooldown_secs: 0,
-          expires_at: 0,
-        },
-      });
-      const file = JSON.stringify({ name, owner, public_key: publicKey, private_key: pair.toString(), contract, network: session.network, token }, null, 2);
+      const made = await createAgent(session, contract, token, limits, setStep);
+      const file = JSON.stringify(made, null, 2);
       setMade({ name, file, kind: agent });
       await onCreated(name);
     } catch (e) {

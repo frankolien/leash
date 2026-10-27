@@ -25,6 +25,7 @@ import AmountPanel, { type AmountAsk } from "./AmountPanel";
 import ApprovalCard from "./ApprovalCard";
 import NewAgentPanel from "./NewAgentPanel";
 import ApprovalPanel, { useApprovalQueue } from "./ApprovalPanel";
+import ChatGptPanel from "./ChatGptPanel";
 import ConnectCard from "./ConnectCard";
 import PageHeader from "./PageHeader";
 import ProposalCard from "./ProposalCard";
@@ -61,6 +62,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const [moving, setMoving] = useState<"deposit" | "withdraw" | null>(null);
   const { testUsdc } = useAuth();
   const [setup, setSetup] = useState<SetupAgent | null>(null);
+  const [chatGpt, setChatGpt] = useState(false);
   const queue = useApprovalQueue(snap?.requests);
   useLiveActivity(snap?.log, names, say);
 
@@ -80,10 +82,12 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   // One side panel: opening a task replaces whatever task was open.
   const deposit = useCallback(() => {
     setSetup(null);
+    setChatGpt(false);
     setMoving("deposit");
   }, []);
   const withdraw = useCallback(() => {
     setSetup(null);
+    setChatGpt(false);
     setMoving("withdraw");
   }, []);
   const funded = useCallback(async (text: string, bad?: boolean) => {
@@ -119,14 +123,21 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   }
   const pickSetup = useCallback((kind: SetupAgent) => {
     setMoving(null);
+    setChatGpt(false);
     setSetup(kind);
   }, []);
   const openSetup = useCallback(() => pickSetup("claude"), [pickSetup]);
-  const closeTask = useCallback(() => {
+  const openChatGpt = useCallback(() => {
     setMoving(null);
     setSetup(null);
+    setChatGpt(true);
   }, []);
-  const task = moving !== null || setup !== null;
+  const closeTask = useCallback(() => {
+    setMoving(null);
+    setChatGpt(false);
+    setSetup(null);
+  }, []);
+  const task = moving !== null || setup !== null || chatGpt;
   const showApprovals = useCallback(() => {
     closeTask();
     queue.reopen();
@@ -177,7 +188,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
       page = (
         <div className={styles.column}>
           <PageHeader title="Agents" status={`${active} active${revoked ? `, ${revoked} revoked` : ""}`} action={<button className={styles.dark} onClick={openSetup}><Plus size={17} /> New agent</button>} />
-          <ConnectCard onPick={pickSetup} />
+          <ConnectCard onPick={pickSetup} onChatGpt={openChatGpt} />
           <AgentList agents={snap.agents} names={names} paused={snap.paused} busy={busy} onRevoke={revoke} />
         </div>
       );
@@ -231,7 +242,6 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         onDisconnect={wallet.onDisconnect}
         onPause={pause}
         onResume={resume}
-        onSetup={openSetup}
       />
       <main className={styles.main}>
         <div className={styles.phoneBar}>
@@ -252,6 +262,7 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
         {page}
       </main>
       {ask && <AmountPanel key={`${moving}-${ask.max > BigInt(0)}`} ask={ask} onClose={closeTask} />}
+      {snap && chatGpt && <ChatGptPanel onClose={closeTask} />}
       {snap && setup && <NewAgentPanel key={setup} kind={setup} session={wallet.session} owner={owner} contract={contract} token={snap.token ?? USDC[network]} onClose={closeTask} onSignIn={wallet.onConnect} onCreated={afterAgent} />}
       {snap && !task && queue.next && <ApprovalPanel request={queue.next} total={queue.pending.length} agents={snap.agents} log={snap.log} network={network} names={names} now={now} busy={busy} onApprove={approve} onDeny={deny} onClose={queue.later} />}
       {toast && <div className={styles.toast} data-bad={toast.bad || undefined} role="status">{toast.text}</div>}

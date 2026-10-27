@@ -1,14 +1,24 @@
 {
   "name": "leash-near-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MCP server that lets an AI agent pay in USDC on NEAR, inside limits its owner sets with Leash",
   "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    }
+  },
   "bin": {
     "leash-near-mcp": "dist/index.js"
   },
   "files": [
     "dist/**/*.js",
+    "dist/**/*.d.ts",
     "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts",
     "README.md"
   ],
   "scripts": {

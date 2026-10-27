@@ -8,17 +8,12 @@
 // Every tool answers in one envelope: { status, ... } where status is one of
 // "ok", "accepted", "refused", "parked", "proposed", "error". An agent never has to guess the shape.
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadKey } from "./key.js";
-import { Leash } from "./leash.js";
-import { registerTools } from "./tools.js";
+import { createLeashServer } from "./server.js";
 
 async function main() {
-  const leash = new Leash(loadKey());
-  const server = new McpServer({ name: "leash", version: "0.2.0" });
-  registerTools(server, leash);
-  await server.connect(new StdioServerTransport());
+  await createLeashServer(loadKey()).connect(new StdioServerTransport());
 }
 
 main().catch((error) => {

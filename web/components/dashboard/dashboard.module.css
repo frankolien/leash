@@ -64,7 +64,7 @@
 .promo strong { padding-right: 26px; font-size: 16px; font-weight: 600; line-height: 1.25; }
 .promo span { color: var(--grey); font-size: 13px; }
 .promoClose { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 50%; background: var(--raised); color: #fff; }
-.promoGo { align-self: flex-start; margin-top: 8px; min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: #fff; color: #000; font-family: inherit; font-size: 13px; font-weight: 600; }
+.promoGo { display: inline-flex; align-items: center; align-self: flex-start; margin-top: 8px; min-height: 34px; text-decoration: none; padding: 0 16px; border: 0; border-radius: 999px; background: #fff; color: #000; font-family: inherit; font-size: 13px; font-weight: 600; }
 .account { display: flex; flex-direction: column; gap: 10px; padding: 0 18px; }
 .accountId { display: flex; flex-direction: column; gap: 2px; font-size: 14px; font-weight: 500; color: #fff; overflow-wrap: anywhere; }
 .accountId small { color: var(--grey); font-size: 13px; font-weight: 400; }
@@ -267,7 +267,13 @@ button.listRow:hover { background: #1c1c1c; }
 .connect { display: flex; flex-direction: column; gap: 6px; }
 .connect > strong { font-size: 18px; font-weight: 600; }
 .connectOptions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
-.connectOptions .white { min-height: 52px; font-weight: 500; }
+.connectOptions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.connectOptions .white { min-height: 56px; font-size: 16px; font-weight: 600; text-decoration: none; }
+.devRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--edge); }
+.devRow > span { margin-right: 4px; font-size: 14px; }
+.devChip { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--raised); color: var(--text-2); font-family: inherit; font-size: 14px; font-weight: 500; }
+.devChip:hover { background: #2e2e2e; color: #fff; }
+@media (max-width: 560px) { .connectOptions { grid-template-columns: minmax(0, 1fr); } }
 
 .approvalList { display: flex; flex-direction: column; gap: 14px; }
 
