@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Smartphone } from "lucide-react";
+import { KeyRound, Loader2, Smartphone } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { SignInCard } from "@/components/auth/SignInDialog";
 import { contractOf, shortAccount } from "@/lib/config";
@@ -21,6 +21,7 @@ export default function LinkPage() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
 
   useEffect(() => showInline(), [showInline]);
 
@@ -44,6 +45,21 @@ export default function LinkPage() {
   useEffect(() => {
     if (key) pairingCode(key).then(setCode);
   }, [key]);
+
+  // Safari opens the passkey sheet only from a tap, so passkey gets its own button, not a redirect.
+  async function passkey() {
+    if (!card.embedded) return;
+    setPasskeyBusy(true);
+    setProblem(null);
+    try {
+      await card.embedded.passkey();
+    } catch (e) {
+      console.warn("Leash: passkey sign-in failed", e);
+      setProblem(plainError(e));
+    } finally {
+      setPasskeyBusy(false);
+    }
+  }
 
   async function allow() {
     if (!session || "error" in request) return;
@@ -77,7 +93,20 @@ export default function LinkPage() {
         ) : !session ? (
           <>
             <p className={styles.kicker}>Sign in to link {request.device}</p>
-            <div className={styles.signIn}>{card.ready ? <SignInCard {...card} startAt={provider === "email" ? "email" : undefined} /> : <div className={styles.status}><Loader2 size={20} className={styles.spin} /></div>}</div>
+            {!card.ready ? (
+              <div className={styles.status}><Loader2 size={20} className={styles.spin} /></div>
+            ) : provider === "passkey" ? (
+              <div className={styles.allow}>
+                <h1 id="link-title">Continue with your passkey</h1>
+                <p className={styles.lead}>Use Face ID. No passkey for Leash yet? You can make one now, and it makes your account.</p>
+                {(problem || card.error) && <p className={styles.error} role="alert">{problem ?? card.error}</p>}
+                <button className={styles.white} disabled={passkeyBusy || !card.embedded} onClick={passkey}>
+                  {passkeyBusy ? <Loader2 size={18} className={styles.spin} /> : <KeyRound size={18} />} Continue with passkey
+                </button>
+              </div>
+            ) : (
+              <div className={styles.signIn}><SignInCard {...card} startAt={provider === "email" ? "email" : undefined} /></div>
+            )}
           </>
         ) : step ? (
           <>

@@ -24,6 +24,8 @@ export type Embedded = {
   naming: { suggestion: string; claim: (name: string) => Promise<void> } | null;
   /// Sends the browser straight to Google's or Apple's account picker; sign-in finishes on return.
   oauth: (provider: OAuthProvider) => Promise<void>;
+  /// Signs in with this device's passkey for Leash, or makes one (and the account) if it has none.
+  passkey: () => Promise<void>;
   /// Email sign-in inside our own card: send a one-time code, then check it.
   sendEmailCode: (email: string) => Promise<void>;
   verifyEmailCode: (code: string) => Promise<void>;

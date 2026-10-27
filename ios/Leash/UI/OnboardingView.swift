@@ -45,7 +45,7 @@ struct OnboardingView: View {
                 VStack(spacing: 10) {
                     button(.google, "Continue with Google", image: "brand-google", kind: .light)
                     button(.apple, "Continue with Apple", image: "brand-apple", kind: .light)
-                    button(.email, "Continue with email", system: "envelope", kind: .glass)
+                    button(.passkey, "Continue with passkey", system: "person.badge.key", kind: .glass)
                 }
 
                 if let problem = model.linkProblem {

@@ -37,14 +37,14 @@ final class ScreensTests: XCTestCase {
         shot("9-settings")
     }
 
-    /// A fresh phone: the email button opens the web's link page in Apple's sign-in sheet.
+    /// A fresh phone: the passkey button opens the web's link page in Apple's sign-in sheet.
     func testLinkSheetOpensTheWebPage() throws {
         let out = try XCTUnwrap(ProcessInfo.processInfo.environment["SHOTS"])
         let app = XCUIApplication()
         app.launchArguments = ["-leash.account", "", "-leash.network", ""]
         app.launch()
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        app.buttons["Continue with email"].tap()
+        app.buttons["Continue with passkey"].tap()
         let allow = springboard.buttons["Continue"]
         if allow.waitForExistence(timeout: 5) { allow.tap() }
         sleep(8)

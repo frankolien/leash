@@ -6,7 +6,7 @@
 // for it with the embedded key.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { PrivyProvider, useIdentityToken, useLoginWithEmail, useLoginWithOAuth, usePrivy } from "@privy-io/react-auth";
+import { PrivyProvider, useIdentityToken, useLoginWithEmail, useLoginWithOAuth, useLoginWithPasskey, usePrivy, useSignupWithPasskey } from "@privy-io/react-auth";
 import { useCreateWallet, useSignRawHash } from "@privy-io/react-auth/extended-chains";
 import { DEFAULT_NETWORK } from "@/lib/config";
 import { namesOfKey, suggestName } from "@/lib/names";
@@ -62,6 +62,8 @@ function Bridge({ children }: { children: ReactNode }) {
   // Headless flows, so a click goes straight to the provider instead of through Privy's modal.
   const { initOAuth, state: oauth } = useLoginWithOAuth();
   const { sendCode, loginWithCode } = useLoginWithEmail();
+  const { loginWithPasskey } = useLoginWithPasskey();
+  const { signupWithPasskey } = useSignupWithPasskey();
   const { createWallet } = useCreateWallet();
   const { signRawHash } = useSignRawHash();
   const { identityToken } = useIdentityToken();
@@ -176,6 +178,17 @@ function Bridge({ children }: { children: ReactNode }) {
     oauth: async (provider) => {
       setError(null);
       await initOAuth({ provider });
+    },
+    passkey: async () => {
+      setError(null);
+      try {
+        await loginWithPasskey();
+      } catch (e) {
+        // No passkey for Leash on this device yet (or the sheet was closed): offer to make one,
+        // which makes the account too.
+        console.warn("Leash: passkey sign-in did not finish, offering a new passkey", e);
+        await signupWithPasskey();
+      }
     },
     sendEmailCode: (email) => sendCode({ email }),
     verifyEmailCode: (code) => loginWithCode({ code }),

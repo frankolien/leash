@@ -14,7 +14,7 @@ enum Pairing {
         return String(chars.prefix(3)) + "-" + String(chars.suffix(3))
     }
 
-    enum Provider: String { case google, apple, email }
+    enum Provider: String { case google, apple, passkey }
 
     static func url(site: URL, key: String, provider: Provider) -> URL {
         var c = URLComponents(url: site.appending(path: "link"), resolvingAgainstBaseURL: false)!
