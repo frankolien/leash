@@ -84,7 +84,7 @@ panel hands you one line with the agent's key inside; paste it in a terminal (Cu
 Cursor button instead):
 
 ```bash
-claude mcp add leash -e LEASH_KEY=<key from the dashboard> -- npx -y leash-near-mcp
+claude mcp add --scope user leash -e LEASH_KEY=<key from the dashboard> -- npx -y leash-near-mcp
 ```
 
 From a checkout instead of npm: `cd mcp && npm install && npm run build`, then use

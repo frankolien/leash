@@ -18,7 +18,7 @@ export type Install = { where: string; code: string; link?: { href: string; labe
 
 export function mcpConfig(agent: Agent, key: string = KEY_PLACEHOLDER): Install {
   const server = { command: "npx", args: ["-y", MCP_PACKAGE], env: { LEASH_KEY: key } };
-  if (agent === "claude") return { where: "In your terminal", code: `claude mcp add leash -e LEASH_KEY=${key} -- npx -y ${MCP_PACKAGE}` };
+  if (agent === "claude") return { where: "In your terminal", code: `claude mcp add --scope user leash -e LEASH_KEY=${key} -- npx -y ${MCP_PACKAGE}` };
   if (agent === "codex") return { where: "In your terminal", code: `codex mcp add leash --env LEASH_KEY=${key} -- npx -y ${MCP_PACKAGE}` };
   const code = JSON.stringify({ mcpServers: { leash: server } }, null, 2);
   // Cursor's install link carries the server's config as base64 JSON; only a real key makes it useful.

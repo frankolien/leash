@@ -26,7 +26,7 @@ dashboard's Cursor button installs it in one click. By hand:
 Claude Code:
 
 ```
-claude mcp add leash -e LEASH_KEY=<key from the dashboard> -- npx -y leash-near-mcp
+claude mcp add --scope user leash -e LEASH_KEY=<key from the dashboard> -- npx -y leash-near-mcp
 ```
 
 Codex:
