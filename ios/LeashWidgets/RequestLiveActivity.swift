@@ -6,7 +6,7 @@ import WidgetKit
 /// A waiting payment on the Lock Screen and in the Dynamic Island: who, how much, to whom, and the
 /// time left. Deny works from here; Review opens the app, where approving takes Face ID.
 struct RequestLiveActivity: Widget {
-    private let ink = Color(red: 0.098, green: 0.098, blue: 0.098)
+    private let ink = Color.black
     private let muted = Color(red: 0.48, green: 0.48, blue: 0.48)
 
     var body: some WidgetConfiguration {

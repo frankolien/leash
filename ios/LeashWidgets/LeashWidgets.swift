@@ -66,7 +66,7 @@ struct StatusView: View {
     @Environment(\.widgetFamily) private var family
     let entry: StatusEntry
 
-    private let ink = Color(red: 0.098, green: 0.098, blue: 0.098)
+    private let ink = Color.black
     private let muted = Color(red: 0.48, green: 0.48, blue: 0.48)
 
     var body: some View {

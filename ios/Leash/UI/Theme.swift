@@ -1,14 +1,15 @@
 import SwiftUI
 
 /// PayBox's restraint, measured from its app: a white ground, #F6F6F6 cards, #EBEBEB pills and
-/// circles with a hairline edge, near-black ink. Colour only where it means something.
+/// circles with a hairline edge. Ink is true black, not PayBox's #191919, which reads grey on a
+/// phone. Colour only where it means something.
 enum Ink {
     static let ground = Color.white
     static let surface = Color(hex: 0xF6F6F6)
     static let raised = Color(hex: 0xEBEBEB)
     static let edge = Color(hex: 0xDDDDDD)
     static let line = Color(hex: 0xE6E6E6)
-    static let text = Color(hex: 0x191919)
+    static let text = Color.black
     static let muted = Color(hex: 0x7B7B7B)
     static let faint = Color(hex: 0xA6A6A6)
     static let danger = Color(hex: 0xE5484D)
