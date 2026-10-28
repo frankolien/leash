@@ -29,6 +29,9 @@ export default function LinkPage() {
   // picker instead of making the person choose again. Once only, so a cancelled picker shows the card.
   const provider = params.get("provider");
   const started = useRef(false);
+  // While the page hands over to Google or Apple it shows only that, so nothing can start a second
+  // sign-in whose state would void the first.
+  const [handingOver, setHandingOver] = useState(false);
   useEffect(() => {
     if (session || started.current || !card.ready || !card.embedded) return;
     if (provider !== "google" && provider !== "apple") return;
@@ -38,7 +41,11 @@ export default function LinkPage() {
       if (params.has("privy_oauth_code") || sessionStorage.getItem("leash.linkOAuth")) return;
       sessionStorage.setItem("leash.linkOAuth", "1");
     } catch {}
-    card.embedded.oauth(provider).catch((e) => console.warn("Leash: sign-in did not start", e));
+    setHandingOver(true);
+    card.embedded.oauth(provider).catch((e) => {
+      console.warn("Leash: sign-in did not start", e);
+      setHandingOver(false);
+    });
   }, [session, card.ready, card.embedded, provider]);
 
   const key = "error" in request ? null : request.key;
@@ -99,6 +106,8 @@ export default function LinkPage() {
             <p className={styles.kicker}>Sign in to link {request.device}</p>
             {!card.ready ? (
               <div className={styles.status}><Loader2 size={20} className={styles.spin} /></div>
+            ) : handingOver ? (
+              <div className={styles.status} role="status"><Loader2 size={20} className={styles.spin} />Opening {provider === "apple" ? "Apple" : "Google"}…</div>
             ) : provider === "passkey" ? (
               <div className={styles.allow}>
                 <h1 id="link-title">Continue with your passkey</h1>
