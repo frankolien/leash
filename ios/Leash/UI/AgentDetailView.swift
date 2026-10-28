@@ -350,9 +350,12 @@ struct MoneyField: View {
             Spacer()
             HStack(spacing: 2) {
                 Text("$").foregroundStyle(Ink.faint)
-                TextField("0", text: $text).keyboardType(.decimalPad).multilineTextAlignment(.trailing).fixedSize()
+                TextField("0", text: $text).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 150)
+                    .onChange(of: text) { _, new in if new.count > 10 { text = String(new.prefix(10)) } }
             }
             .font(.system(size: 22, weight: .semibold)).monospacedDigit()
+            .lineLimit(1).minimumScaleFactor(0.6)
         }
         .padding(.horizontal, 16).frame(height: 64)
         .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Ink.surface))

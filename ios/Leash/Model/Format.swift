@@ -29,11 +29,15 @@ enum Money {
     static func parse(_ text: String) -> Units? {
         let t = text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "$", with: "")
         let parts = t.split(separator: ".", omittingEmptySubsequences: false)
-        guard (1...2).contains(parts.count), let whole = Units(parts[0]), whole >= 0 else { return nil }
-        guard parts.count == 2 else { return whole * unit }
+        guard (1...2).contains(parts.count), let whole = Units(parts[0].isEmpty ? "0" : parts[0]), whole >= 0 else { return nil }
+        // Typed digits can run past what an Int64 holds; that is no amount, not a crash.
+        let (base, overflow) = whole.multipliedReportingOverflow(by: unit)
+        guard !overflow else { return nil }
+        guard parts.count == 2 else { return base }
         let frac = parts[1]
         guard frac.count <= 6, frac.allSatisfy(\.isNumber) else { return nil }
-        return whole * unit + (Units(frac.padding(toLength: 6, withPad: "0", startingAt: 0)) ?? 0)
+        let (total, over) = base.addingReportingOverflow(Units(frac.padding(toLength: 6, withPad: "0", startingAt: 0)) ?? 0)
+        return over ? nil : total
     }
 }
 

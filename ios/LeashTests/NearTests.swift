@@ -80,6 +80,24 @@ final class LeashModelTests: XCTestCase {
         XCTAssertEqual(Money.parse("$0.000001"), 1)
         XCTAssertNil(Money.parse("1.2345678"))
         XCTAssertNil(Money.parse("abc"))
+        XCTAssertNil(Money.parse("99999999999999999999"))
+        XCTAssertNil(Money.parse("9999999999999"))
+        XCTAssertEqual(Money.parse(".5"), 500_000)
+    }
+
+    func testAmountEntryKeepsToARealAmount() {
+        var e = AmountEntry()
+        for _ in 0..<20 { e.press(.digit(9)) }
+        XCTAssertEqual(e.display, "$9,999,999")
+        XCTAssertEqual(e.rejected, 13)
+        e = AmountEntry()
+        [.digit(0), .digit(0), .point, .point, .digit(5), .digit(0), .digit(1)].forEach { e.press($0) }
+        XCTAssertEqual(e.display, "$0.50")
+        XCTAssertEqual(e.units, 500_000)
+        e.press(.delete); e.press(.delete); e.press(.delete); e.press(.delete); e.press(.delete)
+        XCTAssertTrue(e.isEmpty)
+        XCTAssertEqual(AmountEntry(units: 14_000_000).display, "$14")
+        XCTAssertEqual(AmountEntry(units: 2_500_000).display, "$2.50")
     }
 
     func testLookalikes() {

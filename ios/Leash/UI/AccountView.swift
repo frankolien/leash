@@ -193,90 +193,183 @@ struct AccountView: View {
     }
 }
 
-/// Money between the account and the vault, both ways, signed on the phone. A phone without its
-/// full key yet gets it on Continue: one more sign-in, then the top up goes ahead.
+/// Money between the account and the vault, both ways, like any deposit screen: the amount,
+/// what is there to move, a keypad and Continue. A phone without its full key yet gets it on
+/// Continue: one more sign-in, then the top up goes ahead.
 struct MoveMoneySheet: View {
     enum Direction { case toVault, toAccount }
     @Environment(AppModel.self) private var model
     @Environment(Navigator.self) private var nav
     let direction: Direction
-    @State private var text = ""
-    @State private var faucet = false
+    @State private var entry = AmountEntry()
     @State private var working = false
-    @FocusState private var focused: Bool
 
     var body: some View {
-        let s = model.snapshot
-        let available = (direction == .toVault ? s?.held : s?.vault) ?? 0
-        let amount = Money.parse(text) ?? 0
+        let available = (direction == .toVault ? model.snapshot?.held : model.snapshot?.vault) ?? 0
+        let amount = entry.units
         let over = amount > available
-        VStack(alignment: .leading, spacing: 0) {
-            Text(direction == .toVault ? "Top up" : "Withdraw").font(.system(size: 28, weight: .bold)).tracking(-0.8).padding(.top, 28)
-            Text(direction == .toVault ? "Your agents spend from the vault. Fill it from USDC in your account." : "Move USDC from the vault back to your account.")
-                .font(.system(size: 15)).foregroundStyle(Ink.muted).padding(.top, 6)
-
-            Spacer(minLength: 24)
-            VStack(spacing: 10) {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("$").font(.system(size: 40, weight: .bold)).foregroundStyle(text.isEmpty ? Ink.faint : Ink.text)
-                    TextField("0", text: $text)
-                        .font(.system(size: 60, weight: .bold)).tracking(-2)
-                        .keyboardType(.decimalPad).focused($focused)
-                        .fixedSize()
-                        .foregroundStyle(over ? Ink.danger : Ink.text)
+        VStack(spacing: 0) {
+            ZStack {
+                Text(direction == .toVault ? "Top up" : "Withdraw").font(.system(size: 17, weight: .semibold))
+                HStack {
+                    Spacer()
+                    Button { nav.sheet = nil } label: { RoundIcon(system: "xmark", size: 36) }.accessibilityLabel("Close")
                 }
-                .monospacedDigit()
-                HStack(spacing: 6) {
-                    Text("\(Money.usd(available)) \(direction == .toVault ? "in your account" : "in the vault")").foregroundStyle(over ? Ink.danger : Ink.muted)
-                    if available > 0 {
-                        Text("·").foregroundStyle(Ink.faint)
-                        Button("Max") { text = Money.plain(available) }.fontWeight(.semibold).foregroundStyle(Ink.text)
-                    }
-                }
-                .font(.system(size: 15))
             }
-            .frame(maxWidth: .infinity)
-            Spacer(minLength: 24)
+            .padding(.top, 18)
 
-            if direction == .toVault, available == 0 {
-                VStack(spacing: 10) {
-                    Button("Receive USDC first") { nav.sheet = .receive }.buttonStyle(.pill(.primary))
-                    if model.linked?.network == .testnet {
-                        Button("Get test USDC from Circle") { faucet = true }
-                            .font(.system(size: 14, weight: .medium)).foregroundStyle(Ink.muted)
+            Spacer(minLength: 12)
+            Text(entry.display)
+                .font(.system(size: 64, weight: .bold)).tracking(-2)
+                .foregroundStyle(entry.isEmpty ? Ink.faint : over ? Ink.danger : Ink.text)
+                .monospacedDigit()
+                .lineLimit(1).minimumScaleFactor(0.4)
+                .contentTransition(.numericText())
+                .animation(.snappy(duration: 0.15), value: entry.display)
+                .modifier(Shake(amount: entry.rejected))
+                .animation(.linear(duration: 0.3), value: entry.rejected)
+            HStack(spacing: 8) {
+                Text(over ? "More than you have" : "\(Money.usd(available)) \(direction == .toVault ? "in your account" : "in the vault")")
+                    .foregroundStyle(over ? Ink.danger : Ink.muted)
+                if available > 0 {
+                    Button("Max") { entry = AmountEntry(units: available) }
+                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Ink.text)
+                        .padding(.horizontal, 12).frame(height: 30)
+                        .background(Capsule().fill(Ink.surface))
+                }
+            }
+            .font(.system(size: 15))
+            .padding(.top, 10)
+            Spacer(minLength: 12)
+
+            Keypad { entry.press($0) }
+                .padding(.bottom, 18)
+
+            Button {
+                working = true
+                Task {
+                    defer { working = false }
+                    if direction == .toVault {
+                        guard await model.ensureOwnerKey() else { return }
+                        if await model.topUp(amount) { nav.sheet = nil }
+                    } else if await model.withdraw(amount) {
+                        nav.sheet = nil
                     }
                 }
-            } else {
-                Button {
-                    working = true
-                    Task {
-                        defer { working = false }
-                        if direction == .toVault {
-                            guard await model.ensureOwnerKey() else { return }
-                            if await model.topUp(amount) { nav.sheet = nil }
-                        } else if await model.withdraw(amount) {
-                            nav.sheet = nil
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 8) {
-                        if working { ProgressView().tint(.white) }
-                        Text("Continue")
-                    }
+            } label: {
+                HStack(spacing: 8) {
+                    if working { ProgressView().tint(.white) }
+                    Text("Continue")
                 }
-                .buttonStyle(.pill(.primary))
-                .disabled(amount <= 0 || over || working)
-                if let problem = model.linkProblem, direction == .toVault {
-                    Text(problem).font(.system(size: 13)).foregroundStyle(Ink.danger).frame(maxWidth: .infinity).padding(.top, 8)
-                }
+            }
+            .buttonStyle(.pill(.primary))
+            .disabled(amount <= 0 || over || working)
+            if let problem = model.linkProblem, direction == .toVault {
+                Text(problem).font(.system(size: 13)).foregroundStyle(Ink.danger).padding(.top, 8)
             }
         }
         .padding(.horizontal, 20).padding(.bottom, 12)
         .background(Ink.ground)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .onAppear { focused = available > 0 }
-        .sheet(isPresented: $faucet) { SafariView(url: URL(string: "https://faucet.circle.com")!).ignoresSafeArea() }
+        .sensoryFeedback(.impact(weight: .light), trigger: entry.text)
+        .sensoryFeedback(.error, trigger: entry.rejected)
+    }
+}
+
+/// What has been typed, kept to an amount a person means: at most seven dollar digits and two
+/// cents digits, one point, no leading zeros. A key past those limits shakes instead.
+struct AmountEntry: Equatable {
+    private(set) var text = ""
+    private(set) var rejected = 0
+
+    init() {}
+    init(units: Units) {
+        let cents = units / 10_000
+        text = cents % 100 == 0 ? "\(cents / 100)" : String(format: "%lld.%02lld", cents / 100, cents % 100)
+    }
+
+    var isEmpty: Bool { text.isEmpty }
+    var units: Units { Money.parse(text) ?? 0 }
+
+    /// "$1,250.5" as typed, grouped; "$0" before anything.
+    var display: String {
+        guard !text.isEmpty else { return "$0" }
+        let parts = text.split(separator: ".", omittingEmptySubsequences: false)
+        let whole = Units(parts[0]).map { $0.formatted(.number.grouping(.automatic)) } ?? "0"
+        return "$" + whole + (parts.count > 1 ? "." + parts[1] : "")
+    }
+
+    mutating func press(_ key: Keypad.Key) {
+        let parts = text.split(separator: ".", omittingEmptySubsequences: false)
+        switch key {
+        case .delete:
+            if text.isEmpty { rejected += 1 } else { text.removeLast() }
+        case .point:
+            if text.contains(".") { rejected += 1 } else { text = (text.isEmpty ? "0" : text) + "." }
+        case .digit(let d):
+            if parts.count == 2 {
+                if parts[1].count >= 2 { rejected += 1 } else { text += "\(d)" }
+            } else if text == "0" {
+                text = "\(d)"
+            } else if text.count >= 7 {
+                rejected += 1
+            } else {
+                text += "\(d)"
+            }
+        }
+    }
+}
+
+/// A phone keypad for amounts: digits, a point and delete, set large and bare.
+struct Keypad: View {
+    enum Key: Hashable { case digit(Int), point, delete }
+    let press: (Key) -> Void
+
+    var body: some View {
+        let rows: [[Key]] = [[.digit(1), .digit(2), .digit(3)], [.digit(4), .digit(5), .digit(6)], [.digit(7), .digit(8), .digit(9)], [.point, .digit(0), .delete]]
+        Grid(horizontalSpacing: 0, verticalSpacing: 4) {
+            ForEach(rows, id: \.self) { row in
+                GridRow {
+                    ForEach(row, id: \.self) { key in
+                        Button { press(key) } label: {
+                            Group {
+                                switch key {
+                                case .digit(let d): Text("\(d)")
+                                case .point: Text(".")
+                                case .delete: Image(systemName: "delete.left").font(.system(size: 22, weight: .medium))
+                                }
+                            }
+                            .font(.system(size: 30, weight: .medium))
+                            .foregroundStyle(Ink.text)
+                            .frame(maxWidth: .infinity, minHeight: 60)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(KeyStyle())
+                        .accessibilityLabel({ if case .digit(let d) = key { return "\(d)" }; return key == .delete ? "Delete" : "Point" }())
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// A key lights a soft circle under the finger, as the phone's own keypad does.
+private struct KeyStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(Circle().fill(Ink.surface).frame(width: 64, height: 64).opacity(configuration.isPressed ? 1 : 0))
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+/// A quick side-to-side shake each time `amount` goes up.
+struct Shake: GeometryEffect {
+    var amount: Int
+    var animatableData: CGFloat
+    init(amount: Int) { self.amount = amount; animatableData = CGFloat(amount) }
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        ProjectionTransform(CGAffineTransform(translationX: 8 * sin(animatableData * .pi * 4), y: 0))
     }
 }
 
