@@ -200,5 +200,6 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 - [x] Sign in with Google, Apple or email (Privy embedded wallets) with sponsored onboarding; NEAR wallets through NEAR Connect
 - [x] iPhone app: native NEAR signing, decision and brake keys, approvals with Face ID, Live Activity, widget, Control Center brake, Siri
 - [ ] Push notifications from a server watcher (alerts today come while the app runs)
+- [ ] Cross-chain payouts: an agent pays a Solana or Base address from the vault through NEAR Intents (mainnet)
 - [ ] Mainnet deployment
 - [ ] Countersign: a NEAR AI Cloud model signs off on payments inside a TEE (stretch)
