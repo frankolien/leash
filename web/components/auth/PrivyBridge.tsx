@@ -12,6 +12,7 @@ import { DEFAULT_NETWORK } from "@/lib/config";
 import { namesOfKey, suggestName } from "@/lib/names";
 import { publicKeyOfImplicit } from "@/lib/privySigner";
 import { embeddedSession } from "@/lib/session";
+import { rememberReturn } from "@/lib/returnTo";
 import { AuthCore, type Embedded } from "./AuthContext";
 
 type Linked = { type: string; chainType?: string; address?: string; email?: string };
@@ -177,6 +178,7 @@ function Bridge({ children }: { children: ReactNode }) {
     naming: authenticated && needsName ? { suggestion: suggestName(label), claim } : null,
     oauth: async (provider) => {
       setError(null);
+      rememberReturn(window.location.pathname + window.location.search + window.location.hash);
       await initOAuth({ provider });
     },
     passkey: async () => {
@@ -215,7 +217,10 @@ export default function PrivyBridge({ appId, clientId, children }: { appId: stri
       appId={appId}
       clientId={clientId}
       config={{
-        loginMethods: ["google", "apple", "email"],
+        loginMethods: ["google", "apple", "email", "passkey"],
+        // Every OAuth sign-in returns to /app, the return page Privy's dashboard allows; /app then
+        // forwards to the page that started it (see lib/returnTo).
+        customOAuthRedirectUrl: typeof window === "undefined" ? undefined : `${window.location.origin}/app`,
         appearance: { theme: "dark", accentColor: "#ffffff", logo: "/icon.svg", landingHeader: "Sign in to Leash" },
       }}
     >

@@ -4,6 +4,7 @@
 // visitors pass straight to their dashboard.
 
 import { useEffect } from "react";
+import { takeReturn } from "@/lib/returnTo";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthContext";
 import { SignInCard } from "./SignInDialog";
@@ -17,7 +18,7 @@ export default function SignInPage() {
   useEffect(() => showInline(), [showInline]);
 
   useEffect(() => {
-    if (session) router.replace(`/${encodeURIComponent(session.accountId)}`);
+    if (session) router.replace(takeReturn() ?? `/${encodeURIComponent(session.accountId)}`);
   }, [session, router]);
 
   return (
