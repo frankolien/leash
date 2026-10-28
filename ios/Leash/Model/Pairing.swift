@@ -57,7 +57,10 @@ final class WebSignIn: NSObject, ASWebAuthenticationPresentationContextProviding
 
     func start(_ url: URL) async throws -> URL {
         try await withCheckedThrowingContinuation { continuation in
+            // The sheet can report twice (a result, then a cancel as it closes); only the first counts.
+            let once = Once()
             let session = ASWebAuthenticationSession(url: url, callback: .customScheme("leash")) { callback, error in
+                guard once.claim() else { return }
                 if let callback { continuation.resume(returning: callback) }
                 else if let error = error as? ASWebAuthenticationSessionError, error.code == .canceledLogin { continuation.resume(throwing: Pairing.Failure.cancelled) }
                 else { continuation.resume(throwing: error ?? Pairing.Failure.cancelled) }
@@ -73,5 +76,19 @@ final class WebSignIn: NSObject, ASWebAuthenticationPresentationContextProviding
         MainActor.assumeIsolated {
             UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first ?? ASPresentationAnchor()
         }
+    }
+}
+
+/// True the first time it is asked, false after, from any thread.
+final class Once: @unchecked Sendable {
+    private let lock = NSLock()
+    private var done = false
+
+    func claim() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if done { return false }
+        done = true
+        return true
     }
 }

@@ -30,6 +30,8 @@ final class AppModel {
     private let keys: DeviceKeyStore
     private let brake: DeviceKeyStore
     private var refreshTask: Task<Void, Never>?
+    /// Held for the whole sign-in, so the sheet is never torn down while it is still on screen.
+    private var signIn: WebSignIn?
 
     init(defaults: UserDefaults = .standard, keys: DeviceKeyStore = .decision, brake: DeviceKeyStore = .brake) {
         self.defaults = defaults
@@ -66,7 +68,10 @@ final class AppModel {
         do {
             let key = try keys.loadOrCreate()
             let brakeKey = try brake.loadOrCreate()
-            let callback = try await WebSignIn().start(Pairing.url(site: site, key: key.publicKey, brake: brakeKey.publicKey, provider: provider))
+            let sheet = WebSignIn()
+            signIn = sheet
+            defer { signIn = nil }
+            let callback = try await sheet.start(Pairing.url(site: site, key: key.publicKey, brake: brakeKey.publicKey, provider: provider))
             let linked = try Pairing.parse(callback: callback)
             let access = try await NearRPC(url: linked.network.rpc).accessKey(account: linked.account, publicKey: key.publicKey)
             guard access.receiver == linked.network.contract else {
