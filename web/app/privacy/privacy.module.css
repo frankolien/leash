@@ -1,0 +1,10 @@
+.page { min-height: 100vh; background: #0b0b0b; color: #fff; font-family: var(--font-app), sans-serif; }
+.prose { box-sizing: border-box; max-width: 680px; margin: 0 auto; padding: 120px 20px 96px; font-size: 16px; line-height: 1.65; color: #d6d6d6; }
+.prose h1 { margin: 0 0 8px; color: #fff; font-size: 40px; font-weight: 700; letter-spacing: -.03em; text-wrap: balance; }
+.updated { margin: 0 0 40px; color: #858585; font-size: 14px; }
+.prose h2 { margin: 40px 0 10px; color: #fff; font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+.prose p, .prose ul { margin: 0 0 14px; }
+.prose ul { padding-left: 20px; }
+.prose li { margin-bottom: 6px; }
+.prose a { color: #fff; text-underline-offset: 3px; }
+.prose strong { color: #fff; font-weight: 600; }

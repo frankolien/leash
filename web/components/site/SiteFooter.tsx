@@ -16,7 +16,7 @@ export default function SiteFooter() {
       </div>
       <div className={styles.footerBase}>
         <span>Leash is open source and runs on NEAR testnet today.</span>
-        <span>Built for the NEAR Hackathon, November 2026.</span>
+        <span>Built for the NEAR Hackathon, November 2026. <a href="/privacy">Privacy</a></span>
       </div>
     </footer>
   );
