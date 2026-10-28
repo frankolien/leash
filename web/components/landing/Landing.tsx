@@ -11,6 +11,7 @@ import SiteFooter from "@/components/site/SiteFooter";
 import SiteHeader from "@/components/site/SiteHeader";
 import Atmosphere from "@/components/site/Atmosphere";
 import { Invitation, Questions } from "./Closing";
+import sections from "./sections.module.css";
 import FilmSequence from "./FilmSequence";
 import HowItHolds from "./HowItHolds";
 import SetupDialog from "@/components/setup/SetupDialog";
@@ -50,9 +51,12 @@ export default function Landing() {
         <HowItHolds />
         <WorksWith />
         <Questions />
-        <Invitation />
       </main>
-      <SiteFooter />
+      {/* The way in and the footer share one screen, so the photo is as tall as the room left. */}
+      <div className={sections.end}>
+        <Invitation />
+        <SiteFooter />
+      </div>
       <SetupDialog agent={setup} onClose={() => setSetup(null)} onSwitch={setSetup} />
     </>
   );
