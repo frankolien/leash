@@ -135,6 +135,7 @@ struct TopUpSheet: View {
 struct AddMoneySheet: View {
     @Environment(AppModel.self) private var model
     @State private var copied = false
+    @State private var qr: UIImage?
 
     var body: some View {
         let account = model.linked?.account ?? ""
@@ -142,12 +143,18 @@ struct AddMoneySheet: View {
             Text("Add money").font(.title2.bold()).padding(.top, 28)
             Text("Send USDC on NEAR to your account. Then move it into the vault, where your agents spend from.")
                 .font(.subheadline).foregroundStyle(Ink.muted).multilineTextAlignment(.center).padding(.horizontal, 12)
-            if let qr = QR.image(account) {
-                Image(uiImage: qr).interpolation(.none).resizable().scaledToFit()
-                    .frame(width: 200, height: 200).padding(16)
-                    .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color.white))
-                    .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Ink.edge, lineWidth: 0.7))
+            Group {
+                if let qr {
+                    Image(uiImage: qr).interpolation(.none).resizable().scaledToFit()
+                } else {
+                    ProgressView().tint(Ink.muted)
+                }
             }
+            .frame(width: 200, height: 200).padding(16)
+            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color.white))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Ink.edge, lineWidth: 0.7))
+            // Drawn once, away from the main thread: the screen redraws on every balance refresh.
+            .task(id: account) { qr = await QR.render(account) }
             Button {
                 UIPasteboard.general.string = account
                 copied = true
@@ -175,12 +182,19 @@ struct AddMoneySheet: View {
 }
 
 enum QR {
+    /// One renderer for the app; making a Core Image context is slow on a device.
+    private static let context = CIContext()
+
+    static func render(_ text: String) async -> UIImage? {
+        await Task.detached(priority: .userInitiated) { image(text) }.value
+    }
+
     static func image(_ text: String) -> UIImage? {
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(text.utf8)
         filter.correctionLevel = "M"
         guard let output = filter.outputImage?.transformed(by: .init(scaleX: 10, y: 10)),
-              let cg = CIContext().createCGImage(output, from: output.extent) else { return nil }
+              let cg = context.createCGImage(output, from: output.extent) else { return nil }
         return UIImage(cgImage: cg)
     }
 }
