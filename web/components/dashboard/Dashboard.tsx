@@ -86,13 +86,14 @@ export default function Dashboard({ owner, contract: contractOverride }: { owner
   const resume = useCallback(() => act("resume", () => call(contract, "resume", {}), "Resumed"), [act, call, contract]);
   // A phone's keys are removed from the account itself, so NEAR refuses them at once.
   const [phones, setPhones] = useState<PhoneKey[] | null>(null);
+  const ownKey = wallet.session?.accountId === owner ? wallet.session.signingKey : undefined;
   useEffect(() => {
-    new LeashReader(network).phoneKeys(owner, contract).then(setPhones, () => setPhones([]));
-  }, [owner, network, contract]);
+    new LeashReader(network).phoneKeys(owner, contract, ownKey).then(setPhones, () => setPhones([]));
+  }, [owner, network, contract, ownKey]);
   const unlink = useCallback((p: PhoneKey) => act("remove the phone's key", async () => {
     await wallet.session?.deleteKey(p.key);
     setPhones((list) => list?.filter((k) => k.key !== p.key) ?? null);
-  }, p.brake ? "Removed the phone's brake key" : "Removed the phone's decision key. It can no longer approve."), [act, wallet.session]);
+  }, p.full ? "Removed the phone's full key" : p.brake ? "Removed the phone's brake key" : "Removed the phone's decision key. It can no longer approve."), [act, wallet.session]);
   const setWindow = useCallback((secs: number) => act("set the approval window", () => call(contract, "set_request_ttl", { secs }), `Requests now wait ${Math.round(secs / 60)} minutes`), [act, call, contract]);
   // One side panel: opening a task replaces whatever task was open.
   const deposit = useCallback(() => {

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		09CE289D0C9175D67A1891D7 /* AgentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5D5FCAC92E7A7C381A3A75 /* AgentDetailView.swift */; };
 		0DA553BCBCAAE2EB5B61B191 /* NearKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0120918EB3924592205A5637 /* NearKey.swift */; };
+		10AA20FC8FC44A827125042D /* ConnectSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E1D21F9F5899A0D1366140A /* ConnectSheet.swift */; };
 		180245EAC01F4B4922B7B705 /* LeashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6EAC8188977DE24585E339 /* LeashApp.swift */; };
 		262AEFD95BF4C934831F7CF8 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F584B82077C5211C97CFC5A /* AccountView.swift */; };
 		26E48DB8EE51848521AAE918 /* NearRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */; };
@@ -37,12 +38,14 @@
 		883B54DEF8D850C2C6116E8D /* LiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5034997D816EC2EDCCFA9AA9 /* LiveTests.swift */; };
 		8E15AA6A874B0A269B9583FB /* RequestActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FB1A89E15E805E2664FB77 /* RequestActivity.swift */; };
 		8E9F41A9EDB4372F32C2A688 /* NearRPC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */; };
+		8F8D84D1C6EC7A182979D190 /* BalanceChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81115D0ED8866393BA954A84 /* BalanceChart.swift */; };
 		ADC003550373BE44F7018037 /* LiveRequests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C730B03149307A3DD8F8645D /* LiveRequests.swift */; };
 		B699CCF5DCC16FE137E0B239 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 653DBAC2F6A2C55DB80E65DC /* Shared.swift */; };
 		B74433AB79E8E86CFFCF6B00 /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C711A25949A81BC4DC7E3A5 /* Transaction.swift */; };
 		C36EDA377744213E76C7E38F /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92977F61FDA3FBB4DB4AA56 /* AppModel.swift */; };
 		C77BBEB7EF85DF20F37951D1 /* Shortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA8C04C4966013676DFB0C85 /* Shortcuts.swift */; };
 		C79F411A4A1964F9149FFEF0 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 334BF22BDC4D53927EBBF54E /* OnboardingView.swift */; };
+		CA262A331392C9083A56758A /* OwnerKeyLiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B9FD1C29660E46682A5302 /* OwnerKeyLiveTests.swift */; };
 		D584E35B7CF8DCB853E1C5A9 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D106FD854808009BD7705EE1 /* Intents.swift */; };
 		D6996C954F29D79313E98666 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D106FD854808009BD7705EE1 /* Intents.swift */; };
 		D97704DB7BCB4E29CF3D1767 /* LeashClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6FFCED3D5FF03749D711F6A /* LeashClient.swift */; };
@@ -99,6 +102,7 @@
 		1F5CCD7C4595886019F8DEEF /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 		224C4671E4DA6DFEE9731885 /* LeashWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LeashWidgets.entitlements; sourceTree = "<group>"; };
 		2CEAF78BBDA11A095B7F9164 /* LeashWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = LeashWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2E1D21F9F5899A0D1366140A /* ConnectSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectSheet.swift; sourceTree = "<group>"; };
 		2F584B82077C5211C97CFC5A /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
 		334BF22BDC4D53927EBBF54E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		33536AA4CA85AE7AB493CAA2 /* LeashUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LeashUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -112,6 +116,7 @@
 		6FEB6A8A0DA70787EC84C05B /* Activity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Activity.swift; sourceTree = "<group>"; };
 		7B5D5FCAC92E7A7C381A3A75 /* AgentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDetailView.swift; sourceTree = "<group>"; };
 		7F487514CF92F142794A151C /* Borsh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Borsh.swift; sourceTree = "<group>"; };
+		81115D0ED8866393BA954A84 /* BalanceChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceChart.swift; sourceTree = "<group>"; };
 		84BA7346AEE869C5D4CEFB65 /* NearRPC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearRPC.swift; sourceTree = "<group>"; };
 		85712734599192B8C128D90D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8D189010A09F9DB3B1E8E4E9 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -122,6 +127,7 @@
 		A49C4511E8EDB2D5BC176F2B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		ABB9A4990D6FB90EC55C2ED6 /* Alerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alerts.swift; sourceTree = "<group>"; };
 		ACD85F4D2D276D50CA549D56 /* Safety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Safety.swift; sourceTree = "<group>"; };
+		B8B9FD1C29660E46682A5302 /* OwnerKeyLiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnerKeyLiveTests.swift; sourceTree = "<group>"; };
 		B99140712D848E2E4AEE815D /* Pairing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pairing.swift; sourceTree = "<group>"; };
 		BE19EB96FEB2C20AA3E12632 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
 		C119EFAF932478AE3A04BF2D /* RequestLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLiveActivity.swift; sourceTree = "<group>"; };
@@ -171,6 +177,8 @@
 				2F584B82077C5211C97CFC5A /* AccountView.swift */,
 				1F5CCD7C4595886019F8DEEF /* ActivityView.swift */,
 				7B5D5FCAC92E7A7C381A3A75 /* AgentDetailView.swift */,
+				81115D0ED8866393BA954A84 /* BalanceChart.swift */,
+				2E1D21F9F5899A0D1366140A /* ConnectSheet.swift */,
 				E6ED710A00778E56B2516F4F /* HomeView.swift */,
 				334BF22BDC4D53927EBBF54E /* OnboardingView.swift */,
 				994C853421B7144D1B13E62C /* RequestSheet.swift */,
@@ -272,6 +280,7 @@
 			children = (
 				5034997D816EC2EDCCFA9AA9 /* LiveTests.swift */,
 				A1D2768E7FD4F12882979AEA /* NearTests.swift */,
+				B8B9FD1C29660E46682A5302 /* OwnerKeyLiveTests.swift */,
 			);
 			path = LeashTests;
 			sourceTree = "<group>";
@@ -429,6 +438,7 @@
 			files = (
 				883B54DEF8D850C2C6116E8D /* LiveTests.swift in Sources */,
 				781253DB4A972DA036F3D0FA /* NearTests.swift in Sources */,
+				CA262A331392C9083A56758A /* OwnerKeyLiveTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -442,8 +452,10 @@
 				09CE289D0C9175D67A1891D7 /* AgentDetailView.swift in Sources */,
 				70D0078B025D523591FA7248 /* Alerts.swift in Sources */,
 				C36EDA377744213E76C7E38F /* AppModel.swift in Sources */,
+				8F8D84D1C6EC7A182979D190 /* BalanceChart.swift in Sources */,
 				EBF0812FFD91E480B7D7FB2C /* Base58.swift in Sources */,
 				E1805225E09F6CF0E278659B /* Borsh.swift in Sources */,
+				10AA20FC8FC44A827125042D /* ConnectSheet.swift in Sources */,
 				5F7B77C6486941818B9897AC /* DeviceKey.swift in Sources */,
 				4FF5DEED7C057A8AE6697B30 /* Format.swift in Sources */,
 				5030E2972F8F9A5B7A93FC17 /* HomeView.swift in Sources */,
@@ -695,6 +707,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Leash/Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -713,6 +726,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Leash/Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

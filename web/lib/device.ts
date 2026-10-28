@@ -1,7 +1,7 @@
-// Linking a phone. The Leash app makes its own key and asks the owner, on this site, to add it to
-// their account. The key is limited to the owner's decisions on the Leash contract: it can approve,
-// deny, pause and revoke, but it cannot move the owner's tokens or add keys, so a lost phone can
-// never empty the account.
+// Linking a phone. The Leash app makes its own keys and asks the owner, on this site, to add them to
+// their account. Two are limited to the owner's decisions on the Leash contract. The third is a
+// full key, so the app can fund the vault, add agents and unlink itself without this site; the
+// phone keeps it in the Keychain behind Face ID, and Settings here removes it if the phone is lost.
 
 import { DEFAULT_NETWORK } from "./config";
 
@@ -26,7 +26,7 @@ export async function pairingCode(publicKey: string): Promise<string> {
   return `${code.slice(0, 3)}-${code.slice(3)}`;
 }
 
-export type LinkRequest = { key: string; brake: string | null; device: string; callback: URL };
+export type LinkRequest = { key: string; brake: string | null; owner: string | null; device: string; callback: URL };
 
 const KEY = /^ed25519:[1-9A-HJ-NP-Za-km-z]{43,44}$/;
 
@@ -41,8 +41,11 @@ export function linkRequest(params: URLSearchParams): LinkRequest | { error: str
   }
   if (callback.protocol !== APP_SCHEME) return { error: "Open this page from the Leash app on your phone." };
   const brake = params.get("brake");
-  if (!KEY.test(key) || (brake !== null && (!KEY.test(brake) || brake === key))) return { error: "This link does not carry a valid phone key. Start again from the app." };
-  return { key, brake, device, callback };
+  const owner = params.get("owner");
+  const bad = (k: string | null) => k !== null && !KEY.test(k);
+  const keys = [key, brake, owner].filter((k): k is string => k !== null);
+  if (!KEY.test(key) || bad(brake) || bad(owner) || new Set(keys).size !== keys.length) return { error: "This link does not carry a valid phone key. Start again from the app." };
+  return { key, brake, owner, device, callback };
 }
 
 export function callbackUrl(request: LinkRequest, extra: Record<string, string>): string {
@@ -52,16 +55,21 @@ export function callbackUrl(request: LinkRequest, extra: Record<string, string>)
   return url.toString();
 }
 
-/// A phone's key as the owner's account lists it: the decision key or the brake.
-export type PhoneKey = { key: string; brake: boolean };
+/// A phone's key as the owner's account lists it: the decision key, the brake, or a full key.
+export type PhoneKey = { key: string; brake: boolean; full?: boolean };
 
 type KeyView = { public_key: string; access_key: { permission: unknown } };
 
 /// The phone keys among an account's access keys: function-call keys on this Leash contract whose
-/// methods are a phone's. Agent keys (pay, request, ask_more) and full-access keys are left out.
-export function phoneKeysOf(keys: KeyView[], contract: string): PhoneKey[] {
+/// methods are a phone's, and, when the key this browser signs with is known, every other full key.
+/// A full key can't say whose it is, so only a sign-in that knows its own key lists them.
+export function phoneKeysOf(keys: KeyView[], contract: string, ownKey?: string): PhoneKey[] {
   const out: PhoneKey[] = [];
   for (const k of keys) {
+    if (k.access_key.permission === "FullAccess") {
+      if (ownKey && k.public_key !== ownKey) out.push({ key: k.public_key, brake: false, full: true });
+      continue;
+    }
     const fc = (k.access_key.permission as { FunctionCall?: { receiver_id: string; method_names: string[] } }).FunctionCall;
     if (!fc || fc.receiver_id !== contract) continue;
     const methods = [...fc.method_names].sort();

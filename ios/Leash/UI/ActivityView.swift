@@ -1,79 +1,93 @@
 import SwiftUI
 
-/// Everything that happened, newest first, as the contract recorded it.
+/// Everything that happened, newest first and grouped by day, as the contract recorded it.
 struct ActivityView: View {
     @Environment(AppModel.self) private var model
+    var key: String?
+    var title = "Activity"
 
     var body: some View {
-        let log = model.snapshot?.log ?? []
+        let feed = model.snapshot?.feed(key: key) ?? []
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                ScreenTitle(title: "Activity", subtitle: log.isEmpty ? "Nothing yet" : "On chain, newest first") { EmptyView() }
-                    .padding(.top, 20)
-                if let s = model.snapshot {
-                    if log.isEmpty {
-                        EmptyCard(system: "clock", title: "Nothing yet", line: "Payments, requests and your decisions show up here.").padding(.top, 30)
-                    } else {
-                        Card {
-                            ForEach(Array(log.enumerated()), id: \.offset) { i, e in
-                                LogRow(entry: e, who: s.name(of: e.key), policy: e.key.flatMap(s.agent))
-                                if i < log.count - 1 { Divider().overlay(Ink.line).padding(.leading, 74) }
-                            }
-                        }
-                        .padding(.top, 30)
-                    }
+                if model.snapshot != nil, feed.isEmpty {
+                    EmptyCard(system: "clock", title: "Nothing yet", line: "Payments, requests and your decisions show up here.").padding(.top, 12)
                 }
+                FeedList(feed: feed)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 110)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 32)
         }
         .scrollIndicators(.hidden)
+        .background(Ink.ground)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbarVisibility(.visible, for: .navigationBar)
         .refreshable { await model.refresh() }
     }
 }
 
-struct LogRow: View {
-    let entry: LogEntry
-    let who: String
-    let policy: Agent?
+/// Feed rows under a heading per day: Today, Yesterday, then dates.
+struct FeedList: View {
+    let feed: [(entry: LogEntry, line: FeedLine)]
 
     var body: some View {
-        let d = describe(entry, who: who)
-        HStack(spacing: 12) {
-            Image(systemName: d.icon.rawValue)
-                .font(.system(size: 15, weight: .medium))
-                .frame(width: 46, height: 46)
-                .background(Circle().fill(Ink.raised))
-                .foregroundStyle(d.danger ? Ink.danger : Ink.text)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(d.title).font(.system(size: 15, weight: .semibold)).lineLimit(2)
-                Text(subtitle).font(.system(size: 13)).foregroundStyle(Ink.muted).lineLimit(1)
+        let days = Dictionary(grouping: feed) { Calendar.current.startOfDay(for: $0.entry.at.nanoDate) }
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(days.keys.sorted(by: >), id: \.self) { day in
+                Text(Self.heading(day)).font(.system(size: 14, weight: .medium)).foregroundStyle(Ink.muted)
+                    .padding(.top, 22).padding(.bottom, 4)
+                ForEach(Array(days[day]!.enumerated()), id: \.offset) { _, item in
+                    FeedRow(entry: item.entry, line: item.line)
+                }
             }
+        }
+    }
+
+    static func heading(_ day: Date) -> String {
+        if Calendar.current.isDateInToday(day) { return "Today" }
+        if Calendar.current.isDateInYesterday(day) { return "Yesterday" }
+        return day.formatted(.dateTime.weekday(.wide).day().month(.wide))
+    }
+}
+
+/// One thing that happened: who, with a badge for how it ended, what, and the money if any moved.
+struct FeedRow: View {
+    let entry: LogEntry
+    let line: FeedLine
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Avatar(actor: line.actor, badge: line.badge)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(line.title).font(.system(size: 16, weight: .semibold)).lineLimit(1)
+                if let detail = line.detail {
+                    Text(detail).font(.system(size: 14)).foregroundStyle(Ink.muted).lineLimit(1)
+                }
+            }
+            .layoutPriority(1)
             Spacer(minLength: 8)
-            if let amount = amountText {
-                Text(amount).font(.system(size: 15, weight: .semibold)).monospacedDigit()
-                    .foregroundStyle(entry.event == "request_parked" || entry.event == "policy_set" ? Ink.muted : Ink.text)
+            VStack(alignment: .trailing, spacing: 3) {
+                if let amount = line.amount, amount > 0 {
+                    Text(amountText(amount))
+                        .font(.system(size: 16, weight: .semibold)).monospacedDigit()
+                        .foregroundStyle(line.flow == .into ? Ink.good : line.flow == .out ? Ink.text : Ink.muted)
+                }
+                Text(entry.at.nanoDate.formatted(date: .omitted, time: .shortened)).font(.system(size: 13)).foregroundStyle(Ink.faint)
             }
+            .fixedSize()
         }
-        .padding(.horizontal, 14).padding(.vertical, 12)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
-    private var amountText: String? {
-        guard let amount = entry.amount, entry.event != "pay_refused" else { return nil }
-        let money = Money.usd(units(amount))
-        switch entry.event {
-        case "pay", "request_approved", "withdraw": return "−" + money
-        case "deposit": return "+" + money
-        case "policy_set", "raise_granted": return "\(Money.short(units(amount)))/day"
-        default: return money
+    private func amountText(_ amount: Units) -> String {
+        switch line.flow {
+        case .out: "−" + Money.usd(amount)
+        case .into: "+" + Money.usd(amount)
+        case .held: Money.usd(amount)
+        case .rate: "\(Money.short(amount))/day"
         }
-    }
-
-    /// Why a payment went through alone, in the owner's terms, beside when it happened.
-    private var subtitle: String {
-        let when = relative(entry.at.nanoDate)
-        if entry.event == "pay", let p = policy { return "\(when) · under its \(Money.short(p.perPaymentCap)) limit" }
-        if let detail = entry.detail, !["pay_refused", "request_parked"].contains(entry.event) { return "\(when) · \(detail)" }
-        return when
     }
 }

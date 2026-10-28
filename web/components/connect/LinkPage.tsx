@@ -1,15 +1,16 @@
 "use client";
 
 // Where the Leash iPhone app sends the owner to link it. They sign in as they would on the web, check
-// the code matches their phone and allow it; this browser adds the phone's key, limited to their
-// decisions on Leash, and hands the account name back to the app.
+// the code matches their phone and allow it; this browser adds the phone's keys and hands the
+// account name back to the app. Keys the account already has are skipped, so a phone linked before
+// it carried a full key can come back here for just that one.
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { KeyRound, Loader2, Smartphone } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { SignInCard } from "@/components/auth/SignInDialog";
-import { contractOf, shortAccount } from "@/lib/config";
+import { RPC, contractOf, shortAccount } from "@/lib/config";
 import { BRAKE_METHODS, PHONE_ALLOWANCE, PHONE_METHODS, callbackUrl, linkRequest, pairingCode } from "@/lib/device";
 import { plainError } from "@/lib/errors";
 import styles from "./connect.module.css";
@@ -71,12 +72,17 @@ export default function LinkPage() {
   async function allow() {
     if (!session || "error" in request) return;
     setProblem(null);
-    setStep("Adding your phone's key");
+    setStep("Adding your phone's keys");
     try {
-      await session.addAgentKey(request.key, contractOf(session.accountId), PHONE_METHODS, PHONE_ALLOWANCE);
-      if (request.brake) {
+      const has = await keysOf(session.accountId, session.network);
+      if (!has.has(request.key)) await session.addAgentKey(request.key, contractOf(session.accountId), PHONE_METHODS, PHONE_ALLOWANCE);
+      if (request.brake && !has.has(request.brake)) {
         setStep("Adding its brake");
         await session.addAgentKey(request.brake, contractOf(session.accountId), BRAKE_METHODS, PHONE_ALLOWANCE);
+      }
+      if (request.owner && !has.has(request.owner)) {
+        setStep("Adding its full key");
+        await session.addFullKey(request.owner);
       }
       setStep("Opening Leash on your phone");
       window.location.assign(callbackUrl(request, { account: session.accountId, network: session.network }));
@@ -137,11 +143,19 @@ export default function LinkPage() {
               <span>Your phone shows</span>
               <b className="mono">{code || "…"}</b>
             </div>
-            <ul className={styles.terms}>
-              <li>It can approve or deny what your agents ask for.</li>
-              <li>It can pause everything and revoke an agent. Pausing works even while it is locked.</li>
-              <li>It cannot send your money anywhere else or add keys.</li>
-            </ul>
+            {request.owner ? (
+              <ul className={styles.terms}>
+                <li>It runs your account: approve, add agents, top up and withdraw, right from the app.</li>
+                <li>Anything that moves money or adds a key asks for Face ID first.</li>
+                <li>Pausing works even while it is locked. Lose the phone? Remove it in Settings here.</li>
+              </ul>
+            ) : (
+              <ul className={styles.terms}>
+                <li>It can approve or deny what your agents ask for.</li>
+                <li>It can pause everything and revoke an agent. Pausing works even while it is locked.</li>
+                <li>It cannot send your money anywhere else or add keys.</li>
+              </ul>
+            )}
             {problem && <p className={styles.error} role="alert">{problem}</p>}
             <button className={styles.white} disabled={!code}>Link {request.device}</button>
             <button type="button" className={styles.textButton} onClick={() => window.location.assign(callbackUrl(request, { error: "cancelled" }))}>Cancel</button>
@@ -151,4 +165,15 @@ export default function LinkPage() {
       </section>
     </main>
   );
+}
+
+/// The public keys already on the account.
+async function keysOf(account: string, network: keyof typeof RPC): Promise<Set<string>> {
+  const res = await fetch(RPC[network], {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: "leash", method: "query", params: { request_type: "view_access_key_list", finality: "optimistic", account_id: account } }),
+  });
+  const body = (await res.json()) as { result?: { keys: { public_key: string }[] } };
+  return new Set((body.result?.keys ?? []).map((k) => k.public_key));
 }

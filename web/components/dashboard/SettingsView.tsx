@@ -32,14 +32,14 @@ export default function SettingsView(props: { snapshot: Snapshot; busy: string |
       </section>
       <section className={styles.card}>
         <div className={styles.setting}>
-          <div><strong>Linked phones</strong><span>The Leash iPhone app holds two keys: one approves what agents ask for, the brake can only pause and deny. Neither can send your money anywhere else.</span></div>
+          <div><strong>Linked phones</strong><span>The Leash iPhone app holds a decision key that approves what agents ask for, a brake that can only pause and deny, and a full key it unlocks with Face ID to run your account. Lost the phone? Remove all three here.</span></div>
         </div>
         {phones === null ? null : phones.length === 0 ? (
           <p className={styles.muted}>No phone is linked. Open the Leash app on your iPhone to link one.</p>
         ) : (
           phones.map((p) => (
             <div className={styles.setting} key={p.key}>
-              <div><strong><Smartphone size={15} /> {p.brake ? "Brake key" : "Decision key"}</strong><span className="mono">{shortKey(p.key)}</span></div>
+              <div><strong><Smartphone size={15} /> {p.full ? "Full key" : p.brake ? "Brake key" : "Decision key"}</strong><span className="mono">{shortKey(p.key)}</span></div>
               <button className="btn line danger" onClick={() => onUnlink(p)} disabled={busy !== null || !canAct}>Remove</button>
             </div>
           ))

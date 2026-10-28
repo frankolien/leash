@@ -63,6 +63,17 @@ struct NearRPC: Sendable {
         return AccessKey(nonce: nonce, blockHash: hash, receiver: fc?["receiver_id"] as? String, methods: fc?["method_names"] as? [String] ?? [])
     }
 
+    /// Every key on the account, with what each may do.
+    func accessKeys(account: String) async throws -> [(publicKey: String, permission: KeyPermission)] {
+        let result = try await call("query", ["request_type": "view_access_key_list", "finality": "optimistic", "account_id": account])
+        guard let keys = (result as? [String: Any])?["keys"] as? [[String: Any]] else { throw NearError.badResponse }
+        return keys.compactMap { k in
+            guard let pk = k["public_key"] as? String, let access = k["access_key"] as? [String: Any] else { return nil }
+            guard let fc = (access["permission"] as? [String: Any])?["FunctionCall"] as? [String: Any] else { return (pk, .fullAccess) }
+            return (pk, .functionCall(receiver: fc["receiver_id"] as? String ?? "", methods: fc["method_names"] as? [String] ?? [], allowance: nil))
+        }
+    }
+
     func accountExists(_ account: String) async -> Bool {
         (try? await call("query", ["request_type": "view_account", "finality": "final", "account_id": account])) != nil
     }
@@ -70,6 +81,10 @@ struct NearRPC: Sendable {
     /// Signs and sends calls to one contract, and waits until they have run. Returns the
     /// transaction hash and the last call's JSON result, if it returned one.
     func send(_ calls: [FunctionCall], to receiver: String, as account: String, key: NearKey) async throws -> (hash: String, value: Any?) {
+        try await send(actions: calls.map(NearAction.call), to: receiver, as: account, key: key)
+    }
+
+    func send(actions calls: [NearAction], to receiver: String, as account: String, key: NearKey) async throws -> (hash: String, value: Any?) {
         let access = try await accessKey(account: account, publicKey: key.publicKey)
         let nonce = await Nonces.shared.next(for: key.publicKey, chain: access.nonce)
         let tx = NearTransaction(signerId: account, publicKey: key.publicKeyData, nonce: nonce, receiverId: receiver, blockHash: access.blockHash, actions: calls)

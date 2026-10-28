@@ -166,18 +166,88 @@ struct Meter: View {
     }
 }
 
-/// The balance numeral, bold and tight like PayBox's.
+/// The balance numeral, bold and tight like PayBox's. The cents sit smaller and grey, the way a
+/// bank's app sets them, so the dollars read first.
 struct BigAmount: View {
     let units: Units
     var size: CGFloat = 50
     var hidden = false
     var body: some View {
-        Text(hidden ? "$••••" : Money.usd(units))
-            .font(.system(size: size, weight: .bold)).tracking(-size * 0.035)
-            .monospacedDigit()
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
+        let text = Money.usd(units)
+        let cut = text.lastIndex(of: ".") ?? text.endIndex
+        Group {
+            if hidden {
+                Text("$••••")
+            } else {
+                Text(text[..<cut]) + Text(text[cut...]).font(.system(size: size * 0.62, weight: .semibold)).foregroundColor(Ink.faint)
+            }
+        }
+        .font(.system(size: size, weight: .bold)).tracking(-size * 0.035)
+        .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.5)
+        .contentTransition(.numericText())
     }
+}
+
+/// Who an activity line is about, with a small badge on the corner saying how it ended: a green
+/// check for money that moved as asked, red for stopped, black for waiting or neutral.
+struct Avatar: View {
+    let actor: FeedLine.Actor
+    var badge: FeedLine.Badge?
+    var size: CGFloat = 46
+
+    var body: some View {
+        Group {
+            switch actor {
+            case .agent(let name): AgentMark(name: name, size: size)
+            case .owner:
+                ZStack {
+                    Circle().fill(Ink.raised)
+                    Image("mark").resizable().renderingMode(.template).foregroundStyle(Ink.text).frame(width: size * 0.42, height: size * 0.42)
+                }
+                .frame(width: size, height: size)
+            }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if let badge {
+                Image(systemName: badge.symbol)
+                    .font(.system(size: size * 0.2, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .frame(width: size * 0.42, height: size * 0.42)
+                    .background(Circle().fill(badge.tone.color))
+                    .overlay(Circle().stroke(Ink.ground, lineWidth: 2.5))
+                    .offset(x: 3, y: 3)
+            }
+        }
+    }
+}
+
+extension FeedLine.Tone {
+    var color: Color {
+        switch self {
+        case .good: Ink.good
+        case .bad: Ink.danger
+        case .neutral: Ink.text
+        }
+    }
+}
+
+/// A screen section's heading, with an optional link on the right.
+struct SectionHeader<Trailing: View>: View {
+    let title: String
+    @ViewBuilder var trailing: Trailing
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title).font(.system(size: 20, weight: .semibold)).tracking(-0.4)
+            Spacer()
+            trailing.font(.system(size: 15, weight: .medium)).foregroundStyle(Ink.muted)
+        }
+    }
+}
+
+extension SectionHeader where Trailing == EmptyView {
+    init(title: String) { self.init(title: title) { EmptyView() } }
 }
 
 struct SectionTitle: View {

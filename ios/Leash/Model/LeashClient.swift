@@ -55,7 +55,7 @@ struct LeashClient: Sendable {
 
     @discardableResult
     func act(_ method: String, _ args: [String: Any], key: NearKey) async throws -> (hash: String, value: Any?) {
-        try await rpc.send([try FunctionCall(method: method, args: args, gas: method == "approve" ? 100_000_000_000_000 : FunctionCall.defaultGas)], to: contract, as: owner, key: key)
+        try await rpc.send([try FunctionCall(method: method, args: args, gas: ["approve", "withdraw"].contains(method) ? 100_000_000_000_000 : FunctionCall.defaultGas)], to: contract, as: owner, key: key)
     }
 
     /// The approve call returns whether the payment went through; a refusal is reported, not thrown.
@@ -65,6 +65,65 @@ struct LeashClient: Sendable {
             throw NearError.contract(((outcome["reason"] as? String) ?? "Not paid").capitalizedFirst + ".")
         }
         return hash
+    }
+}
+
+// MARK: With the owner's full key
+
+extension LeashClient {
+    /// USDC from the account into the vault: the token notifies Leash, which credits the sender.
+    func topUp(_ amount: Units, token: String, key: NearKey) async throws {
+        let call = try FunctionCall(method: "ft_transfer_call", args: ["receiver_id": contract, "amount": String(amount), "msg": ""], gas: 100_000_000_000_000, deposit: 1)
+        _ = try await rpc.send([call], to: token, as: owner, key: key)
+    }
+
+    func withdraw(_ amount: Units, token: String, key: NearKey) async throws {
+        try await act("withdraw", ["token": token, "amount": String(amount)], key: key)
+    }
+
+    /// A new agent: its own key on the account, limited to paying through Leash, then its limits.
+    func createAgent(name: String, token: String, daily: Units, perPayment: Units, allowlist: [String], key: NearKey) async throws -> AgentKeyFile {
+        let agent = NearKey()
+        let add = NearAction.addKey(publicKey: agent.publicKeyData, permission: .functionCall(receiver: contract, methods: ["pay", "request", "ask_more"], allowance: Self.agentAllowance))
+        _ = try await rpc.send(actions: [add], to: owner, as: owner, key: key)
+        try await act("set_policy", ["public_key": agent.publicKey, "policy": Self.policy(name: name, token: token, daily: daily, perPayment: perPayment, allowlist: allowlist)], key: key)
+        return AgentKeyFile(name: name, owner: owner, public_key: agent.publicKey, private_key: agent.secretKey, contract: contract, network: network.rawValue, token: token)
+    }
+
+    /// Takes keys off the account, the signing key last since it signs this very transaction.
+    /// Keys the account no longer has are skipped.
+    func deleteKeys(_ keys: Set<String>, key: NearKey) async throws {
+        let present = try await rpc.accessKeys(account: owner).map(\.publicKey).filter(keys.contains)
+        let ordered = present.filter { $0 != key.publicKey } + present.filter { $0 == key.publicKey }
+        let actions = ordered.compactMap(NearKey.bytes(of:)).map { NearAction.deleteKey(publicKey: $0) }
+        if !actions.isEmpty { _ = try await rpc.send(actions: actions, to: owner, as: owner, key: key) }
+    }
+
+    /// Gas an agent's key may spend from the account: a quarter NEAR, as the web gives.
+    static let agentAllowance: UInt128 = 250_000_000_000_000_000_000_000
+
+    static func policy(name: String, token: String, daily: Units, perPayment: Units, allowlist: [String], cooldown: UInt64 = 0, expires: UInt64 = 0) -> [String: Any] {
+        ["name": name, "token": token, "daily_cap": String(daily), "per_payment_cap": String(perPayment), "allowlist": allowlist, "cooldown_secs": cooldown, "expires_at": expires]
+    }
+}
+
+/// What an agent keeps: the same shape as the web's key file and `leash grant`'s.
+struct AgentKeyFile: Codable, Hashable, Identifiable {
+    let name: String
+    let owner: String
+    let public_key: String
+    let private_key: String
+    let contract: String
+    let network: String
+    let token: String
+
+    var id: String { public_key }
+
+    /// The key file as LEASH_KEY carries it: its JSON in base64.
+    var inline: String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        return ((try? encoder.encode(self)) ?? Data()).base64EncodedString()
     }
 }
 

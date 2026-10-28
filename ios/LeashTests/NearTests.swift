@@ -23,7 +23,7 @@ final class NearTests: XCTestCase {
         let tx = NearTransaction(
             signerId: "olien.testnet", publicKey: key.publicKeyData, nonce: 123_456_789_012,
             receiverId: "leash.frankolien.testnet", blockHash: Base58.decode("8ZvyVbJGKRK9yWLuhSsSpNaBGzGbGuSfWsnSRH8RsvT1")!,
-            actions: [try FunctionCall(method: "approve", args: ["request_id": 7], gas: 30_000_000_000_000)]
+            actions: [.call(try FunctionCall(method: "approve", args: ["request_id": 7], gas: 30_000_000_000_000))]
         )
         XCTAssertEqual(tx.encoded.map { String(format: "%02x", $0) }.joined(), txHex)
         XCTAssertEqual(tx.hash.map { String(format: "%02x", $0) }.joined(), "4f0c7cebb73a9344ac0c5e3370581f9b3c68f8c5bc6675ce261ac864770b176b")
@@ -33,6 +33,26 @@ final class NearTests: XCTestCase {
         XCTAssertEqual(signed[tx.encoded.count], 0)
         let signature = signed.suffix(64)
         XCTAssertTrue(key.privateKey.publicKey.isValidSignature(signature, for: tx.hash))
+    }
+
+    func testKeyActionsMatchNearApiJs() throws {
+        let key = try NearKey(seed: seed)
+        let agent = NearKey.bytes(of: "ed25519:6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp")!
+        let tx = NearTransaction(
+            signerId: "olien.testnet", publicKey: key.publicKeyData, nonce: 7,
+            receiverId: "olien.testnet", blockHash: Base58.decode("8ZvyVbJGKRK9yWLuhSsSpNaBGzGbGuSfWsnSRH8RsvT1")!,
+            actions: [
+                .addKey(publicKey: agent, permission: .functionCall(receiver: "leash.frankolien.testnet", methods: ["pay", "request", "ask_more"], allowance: 250_000_000_000_000_000_000_000)),
+                .addKey(publicKey: agent, permission: .fullAccess),
+                .deleteKey(publicKey: agent),
+            ]
+        )
+        XCTAssertEqual(tx.encoded.map { String(format: "%02x", $0) }.joined(), "0d0000006f6c69656e2e746573746e65740079b5562e8fe654f94078b112e8a98ba7901f853ae695bed7e0e3910bad04966407000000000000000d0000006f6c69656e2e746573746e657470716c490fc190fd8b1f52e6ec7dd450bc7d77dd7cd126b5c99dd2e3749ce6080300000005004da7e0f4096aaf2ce55e371657cd3089ba1e9f59f4d6e27bd02e472a16a61dc100000000000000000001000040683bb3f386f034000000000000180000006c656173682e6672616e6b6f6c69656e2e746573746e6574030000000300000070617907000000726571756573740800000061736b5f6d6f726505004da7e0f4096aaf2ce55e371657cd3089ba1e9f59f4d6e27bd02e472a16a61dc100000000000000000106004da7e0f4096aaf2ce55e371657cd3089ba1e9f59f4d6e27bd02e472a16a61dc1")
+    }
+
+    func testSecretKeyIsSeedThenPublicKey() throws {
+        let key = try NearKey(seed: seed)
+        XCTAssertEqual(Base58.decode(String(key.secretKey.dropFirst(8))), seed + key.publicKeyData)
     }
 
     func testRpcErrorsReadAsSentences() {

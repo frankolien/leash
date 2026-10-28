@@ -3,7 +3,7 @@ import CryptoKit
 import UIKit
 
 /// Linking this phone to an owner's account. The web page at /link signs the owner in, shows the
-/// same short code as the phone, and adds the phone's key; it returns through leash://linked.
+/// same short code as the phone, and adds the phone's keys; it returns through leash://linked.
 enum Pairing {
     private static let alphabet = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
 
@@ -16,15 +16,16 @@ enum Pairing {
 
     enum Provider: String { case google, apple, passkey }
 
-    static func url(site: URL, key: String, brake: String, provider: Provider) -> URL {
+    /// With no provider the page offers every way to sign in.
+    static func url(site: URL, key: String, brake: String, owner: String, provider: Provider?) -> URL {
         var c = URLComponents(url: site.appending(path: "link"), resolvingAgainstBaseURL: false)!
         c.queryItems = [
             .init(name: "key", value: key),
             .init(name: "brake", value: brake),
+            .init(name: "owner", value: owner),
             .init(name: "device", value: UIDevice.current.model),
             .init(name: "callback", value: "leash://linked"),
-            .init(name: "provider", value: provider.rawValue),
-        ]
+        ] + (provider.map { [.init(name: "provider", value: $0.rawValue)] } ?? [])
         return c.url!
     }
 

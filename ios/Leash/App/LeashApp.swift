@@ -52,35 +52,28 @@ struct RootView: View {
     }
 }
 
-/// Four screens under a floating, icons-only tab bar, as in PayBox. Each keeps its own
-/// navigation so an agent's page opens over the screen it came from.
+/// Three icon-only tabs in the system tab bar, which iOS 26 draws in Liquid Glass and tucks away
+/// while scrolling. Each tab keeps its own navigation, so an agent's page opens over the tab it came from.
 struct MainView: View {
     @Environment(AppModel.self) private var model
     @State private var nav = Navigator()
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            NavigationStack {
-                Group {
-                    switch nav.screen {
-                    case .overview: OverviewView()
-                    case .agents: AgentsView()
-                    case .approvals: ApprovalsView()
-                    case .activity: ActivityView()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(Ink.ground)
-                .toolbarVisibility(.hidden, for: .navigationBar)
-                .navigationDestination(for: Agent.ID.self) { AgentDetailView(key: $0) }
-            }
-            TabBar(screen: $nav.screen, waiting: model.snapshot?.waiting ?? 0)
+        TabView(selection: $nav.screen) {
+            Tab(value: Navigator.Screen.overview) { stack { OverviewView() } } label: { Image(systemName: "chart.pie").accessibilityLabel("Home") }
+            Tab(value: Navigator.Screen.agents) { stack { AgentsView() } } label: { Image(systemName: "person.2").accessibilityLabel("Agents") }
+            Tab(value: Navigator.Screen.approvals) { stack { ApprovalsView() } } label: { Image(systemName: "checkmark.circle").accessibilityLabel("Approvals") }
+                .badge(model.snapshot?.waiting ?? 0)
         }
+        // Thin outlines, as before, rather than the filled symbols a tab bar picks by default.
+        .environment(\.symbolVariants, .none)
+        .minimizingTabBar()
         .sheet(item: $nav.request) { RequestSheet(request: $0) }
         .sheet(item: $nav.ask) { AskSheet(proposal: $0) }
         .sheet(item: $nav.sheet) { sheet in
             switch sheet {
-            case .topUp: TopUpSheet()
+            case .topUp: MoveMoneySheet(direction: .toVault)
+            case .withdraw: MoveMoneySheet(direction: .toAccount)
             case .receive: AddMoneySheet()
             case .connect: ConnectSheet()
             case .settings: AccountView()
@@ -94,55 +87,26 @@ struct MainView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .leashOpenRequest)) { note in
             guard let id = note.object as? UInt64 else { return }
-            nav.screen = .approvals
             nav.request = model.snapshot?.requests.first { $0.id == id }
         }
         // Last, so the sheets above see it too.
         .environment(nav)
     }
-}
 
-struct TabBar: View {
-    @Binding var screen: Navigator.Screen
-    let waiting: Int
-
-    private func icon(_ s: Navigator.Screen) -> String {
-        switch s {
-        case .overview: "chart.pie"
-        case .agents: "person.2"
-        case .approvals: "checkmark.circle"
-        case .activity: "clock"
+    private func stack(@ViewBuilder _ root: () -> some View) -> some View {
+        NavigationStack {
+            root()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .background(Ink.ground)
+                .toolbarVisibility(.hidden, for: .navigationBar)
+                .navigationDestination(for: Agent.ID.self) { AgentDetailView(key: $0) }
         }
     }
+}
 
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(Navigator.Screen.allCases, id: \.self) { s in
-                Button { screen = s } label: {
-                    Image(systemName: icon(s))
-                        .font(.system(size: 21, weight: .light))
-                        .foregroundStyle(Ink.text)
-                        .frame(maxWidth: .infinity, minHeight: 48)
-                        .background(Capsule().fill(screen == s ? Ink.raised : .clear).padding(.horizontal, 6))
-                        .overlay(alignment: .topTrailing) {
-                            if s == .approvals, waiting > 0 {
-                                Text("\(waiting)").font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
-                                    .frame(minWidth: 18, minHeight: 18).background(Circle().fill(Ink.danger))
-                                    .offset(x: -18, y: 4)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(s.rawValue.capitalized)
-                .accessibilityAddTraits(screen == s ? .isSelected : [])
-            }
-        }
-        .padding(5)
-        .background(Capsule().fill(Ink.surface))
-        .padding(.horizontal, 16)
-        .padding(.bottom, 2)
-        .animation(.easeOut(duration: 0.18), value: screen)
+extension View {
+    @ViewBuilder func minimizingTabBar() -> some View {
+        if #available(iOS 26.0, *) { tabBarMinimizeBehavior(.onScrollDown) } else { self }
     }
 }
 

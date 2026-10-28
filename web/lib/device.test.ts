@@ -18,6 +18,9 @@ describe("linking a phone", () => {
     expect(ok).toMatchObject({ key: KEY, brake: null, device: "Frank's iPhone" });
     expect(linkRequest(new URLSearchParams({ key: KEY, brake: KEY, callback: "leash://linked" }))).toHaveProperty("error");
     expect(linkRequest(new URLSearchParams({ key: KEY, brake: "ed25519:9C6hybhQ6Aycep9jaUnP6uL9ZYvDjUp1aSkFWPUFJtpj", callback: "leash://linked" }))).toMatchObject({ brake: "ed25519:9C6hybhQ6Aycep9jaUnP6uL9ZYvDjUp1aSkFWPUFJtpj" });
+    const owner = "ed25519:4u2ve5cUvnKLL8nKFmPeLz1pUu8hjeTmhjSxWsUnMyZS";
+    expect(linkRequest(new URLSearchParams({ key: KEY, owner, callback: "leash://linked" }))).toMatchObject({ owner });
+    expect(linkRequest(new URLSearchParams({ key: KEY, owner: KEY, callback: "leash://linked" }))).toHaveProperty("error");
     if ("error" in ok) throw new Error();
     expect(callbackUrl(ok, { account: "olien.testnet" })).toBe("leash://linked?account=olien.testnet&network=testnet");
   });
@@ -32,5 +35,14 @@ describe("linking a phone", () => {
       { public_key: "ed25519:other", access_key: { permission: fc(["approve"], "someone.testnet") } },
     ];
     expect(phoneKeysOf(keys, "leash.frankolien.testnet")).toEqual([{ key: "ed25519:phone", brake: false }, { key: "ed25519:brake", brake: true }]);
+  });
+
+  it("lists other full keys only for a sign-in that knows its own", () => {
+    const keys = [
+      { public_key: "ed25519:mine", access_key: { permission: "FullAccess" } },
+      { public_key: "ed25519:phoneFull", access_key: { permission: "FullAccess" } },
+    ];
+    expect(phoneKeysOf(keys, "leash.frankolien.testnet", "ed25519:mine")).toEqual([{ key: "ed25519:phoneFull", brake: false, full: true }]);
+    expect(phoneKeysOf(keys, "leash.frankolien.testnet")).toEqual([]);
   });
 });

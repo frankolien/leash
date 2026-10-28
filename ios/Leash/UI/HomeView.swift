@@ -1,29 +1,39 @@
 import SwiftUI
 
-/// Which screen the floating tab bar shows, and which sheet is open over it. Shared so a tapped
-/// alert, or a card on one screen, can move the owner to the right place.
+/// Which tab is showing, and which sheet is open over it. Shared so a tapped alert, or a card on
+/// one screen, can move the owner to the right place.
 @MainActor
 @Observable
 final class Navigator {
-    enum Screen: String, CaseIterable { case overview, agents, approvals, activity }
+    enum Screen: String, CaseIterable { case overview, agents, approvals }
     var screen: Screen
     var request: PayRequest?
     var ask: Proposal?
     var sheet: Sheet?
 
-    enum Sheet: String, Identifiable { case topUp, receive, connect, settings; var id: String { rawValue } }
+    enum Sheet: String, Identifiable { case topUp, withdraw, receive, connect, settings; var id: String { rawValue } }
 
     init() { screen = Screen(rawValue: UserDefaults.standard.string(forKey: "leash.tab") ?? "") ?? .overview }
+
+    /// Opens the first thing waiting, as a sheet over whatever is on screen.
+    func openWaiting(_ s: Snapshot) {
+        if let r = s.requests.first { request = r } else if let p = s.proposals.first { ask = p }
+    }
 }
 
-/// Overview, laid out like PayBox's: the account and settings on top, the vault balance, two
-/// actions, then the agents where PayBox lists assets.
+/// Home, laid out like PayBox's: the account and settings on top, the vault balance and how it
+/// moved, two actions, anything waiting on the owner, then what happened lately.
 struct OverviewView: View {
     @Environment(AppModel.self) private var model
     @Environment(Navigator.self) private var nav
     @AppStorage("leash.hideBalance") private var hidden = false
+    @AppStorage("leash.chartDays") private var days = 7
+    @State private var scrub: Date?
 
     var body: some View {
+        let s = model.snapshot
+        let history = s?.balanceHistory(days: days) ?? []
+        let picked = scrub.flatMap { date in history.first { Calendar.current.isDate($0.day, inSameDayAs: date) } }
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
@@ -32,19 +42,32 @@ struct OverviewView: View {
                     Button { nav.sheet = .settings } label: { RoundIcon(system: "gearshape") }
                         .accessibilityLabel("Settings")
                 }
-                .padding(.top, 12)
+                .padding(.top, 8)
 
                 HStack(spacing: 8) {
-                    Text("Balance").font(.system(size: 16)).foregroundStyle(Ink.muted)
-                    Button { hidden.toggle() } label: {
-                        Image(systemName: hidden ? "eye.slash" : "eye").font(.system(size: 16)).foregroundStyle(Ink.muted)
+                    Text(picked.map { Self.dayLabel($0.day) } ?? "Vault balance").font(.system(size: 16)).foregroundStyle(Ink.muted)
+                        .contentTransition(.opacity)
+                    if picked == nil {
+                        Button { hidden.toggle() } label: {
+                            Image(systemName: hidden ? "eye.slash" : "eye").font(.system(size: 15)).foregroundStyle(Ink.muted)
+                        }
+                        .accessibilityLabel(hidden ? "Show balance" : "Hide balance")
                     }
-                    .accessibilityLabel(hidden ? "Show balance" : "Hide balance")
                 }
-                .padding(.top, 30)
-                BigAmount(units: model.snapshot?.vault ?? 0, hidden: hidden)
-                    .redacted(reason: model.snapshot == nil ? .placeholder : [])
-                    .padding(.top, 4)
+                .padding(.top, 28)
+                BigAmount(units: picked?.balance ?? s?.vault ?? 0, size: 52, hidden: hidden && picked == nil)
+                    .redacted(reason: s == nil ? .placeholder : [])
+                    .padding(.top, 2)
+                    .animation(.snappy(duration: 0.2), value: picked?.balance)
+                change(history).padding(.top, 6)
+
+                if history.count > 1 {
+                    BalanceChart(points: history, selected: $scrub)
+                        .frame(height: 150)
+                        .padding(.top, 22)
+                        .opacity(hidden ? 0 : 1)
+                    rangePicker.padding(.top, 14)
+                }
 
                 HStack(spacing: 8) {
                     Button("Top up") { nav.sheet = .topUp }.buttonStyle(.pill(.primary))
@@ -52,44 +75,71 @@ struct OverviewView: View {
                 }
                 .padding(.top, 24)
 
-                if let s = model.snapshot {
-                    if s.paused { PausedCard().padding(.top, 24) }
-                    if s.waiting > 0 {
-                        Button { nav.screen = .approvals } label: {
-                            RowCard(title: "\(s.waiting) waiting for you", subtitle: waitingLine(s)) {
-                                ZStack {
-                                    Circle().fill(Ink.text)
-                                    Image(systemName: "hand.raised").font(.system(size: 19)).foregroundStyle(.white)
-                                }
-                                .frame(width: 46, height: 46)
-                            } trailing: {
-                                Image(systemName: "chevron.right").font(.system(size: 15, weight: .semibold)).foregroundStyle(Ink.text)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 24)
+                if let s {
+                    if s.paused { PausedCard().padding(.top, 20) }
+                    if s.waiting > 0 { WaitingCard(snapshot: s) { nav.openWaiting(s) }.padding(.top, 20) }
+
+                    SectionHeader(title: "Recent activity") {
+                        if !s.log.isEmpty { NavigationLink("See all") { ActivityView() } }
                     }
-                    agents(s).padding(.top, 34)
+                    .padding(.top, 34)
+                    if s.log.isEmpty {
+                        EmptyCard(system: "clock", title: "Nothing yet", line: "When an agent pays or asks, it shows up here.", action: s.activeAgents.isEmpty ? "Connect an agent" : nil) { nav.sheet = .connect }
+                            .padding(.top, 14)
+                    } else {
+                        FeedList(feed: s.feed(limit: 8))
+                    }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 110)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 28)
         }
         .scrollIndicators(.hidden)
         .refreshable { await model.refresh() }
     }
 
-    private func waitingLine(_ s: Snapshot) -> String {
-        if let r = s.requests.first { return "\(s.name(of: r.key)) wants to pay \(Money.usd(units(r.amount)))" }
-        if let p = s.proposals.first { return "\(s.name(of: p.key)) asks for more" }
-        return ""
+    /// How the vault moved over the range shown.
+    @ViewBuilder private func change(_ history: [(day: Date, balance: Units)]) -> some View {
+        if let first = history.first, let last = history.last, !hidden {
+            let delta = last.balance - first.balance
+            HStack(spacing: 6) {
+                if delta != 0 {
+                    Image(systemName: delta > 0 ? "arrow.up.right" : "arrow.down.right").font(.system(size: 12, weight: .bold))
+                }
+                Text(delta == 0 ? "No change" : Money.usd(abs(delta)))
+                    .fontWeight(.semibold)
+                Text(days == 7 ? "this week" : "this month").foregroundStyle(Ink.muted)
+            }
+            .font(.system(size: 15))
+            .foregroundStyle(delta > 0 ? Ink.good : Ink.text)
+            .monospacedDigit()
+        }
+    }
+
+    private var rangePicker: some View {
+        HStack(spacing: 4) {
+            ForEach([(7, "1W"), (30, "1M")], id: \.0) { value, label in
+                Button { withAnimation(.snappy) { days = value } } label: {
+                    Text(label).font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(days == value ? Ink.ground : Ink.muted)
+                        .frame(width: 44, height: 28)
+                        .background(Capsule().fill(days == value ? Ink.text : .clear))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    static func dayLabel(_ day: Date) -> String {
+        Calendar.current.isDateInToday(day) ? "Now" : "End of " + day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
     }
 
     private var accountMenu: some View {
         Menu {
             if let linked = model.linked {
                 Button { UIPasteboard.general.string = linked.account } label: { Label("Copy account name", systemImage: "doc.on.doc") }
-                Link(destination: URL(string: "\(linked.network.explorer)/address/\(linked.account)")!) { Label("View on NEAR", systemImage: "arrow.up.right") }
+                Button { nav.sheet = .receive } label: { Label("Show QR code", systemImage: "qrcode") }
             }
         } label: {
             HStack(spacing: 10) {
@@ -99,42 +149,70 @@ struct OverviewView: View {
                 }
                 .frame(width: 35, height: 35)
                 Text(shortAccount(model.linked?.account ?? "")).font(.system(size: 16, weight: .semibold)).foregroundStyle(Ink.text).lineLimit(1)
-                Image(systemName: "chevron.down").font(.system(size: 13, weight: .semibold)).foregroundStyle(Ink.text)
+                Image(systemName: "chevron.down").font(.system(size: 12, weight: .bold)).foregroundStyle(Ink.muted)
             }
-            .padding(.leading, 5).padding(.trailing, 16)
+            .padding(.leading, 6).padding(.trailing, 16)
             .frame(height: 46)
             .background(Capsule().fill(Ink.raised))
             .overlay(Capsule().stroke(Ink.edge, lineWidth: 0.7))
         }
     }
+}
 
-    private func agents(_ s: Snapshot) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+/// What waits on the owner, in black so it is the first thing seen. Tapping opens the request
+/// itself, over Home.
+struct WaitingCard: View {
+    let snapshot: Snapshot
+    let open: () -> Void
+
+    var body: some View {
+        let s = snapshot
+        Button(action: open) {
             HStack(spacing: 14) {
-                Text("Your agents").font(.system(size: 19, weight: .semibold)).tracking(-0.3)
-                Spacer()
-                Text("Today").font(.system(size: 14)).foregroundStyle(Ink.muted)
-                Button { nav.screen = .activity } label: { Image(systemName: "clock").font(.system(size: 19)).foregroundStyle(Ink.text) }
-                    .accessibilityLabel("Activity")
-            }
-            if s.activeAgents.isEmpty {
-                EmptyCard(system: "plus", title: "Connect your first agent", line: "Give Claude or ChatGPT a daily limit.", action: "Connect agent") { nav.sheet = .connect }
-            } else {
-                ForEach(s.activeAgents) { agent in
-                    NavigationLink(value: agent.id) {
-                        RowCard(title: agent.name, subtitle: s.paused ? "Paused" : modeOf(agent)) {
-                            AgentMark(name: agent.name)
-                        } trailing: {
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text(Money.usd(agent.spentToday)).font(.system(size: 17, weight: .semibold)).monospacedDigit()
-                                Text("of \(Money.short(agent.dailyCap)) today").font(.system(size: 14)).foregroundStyle(Ink.muted)
-                            }
-                        }
+                if let r = s.requests.first {
+                    Avatar(actor: .agent(s.name(of: r.key)), badge: .init(symbol: "hourglass", tone: .neutral))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("\(s.name(of: r.key)) wants to pay \(Money.usd(units(r.amount)))").font(.system(size: 16, weight: .semibold)).lineLimit(1)
+                        Text(s.waiting > 1 ? "\(r.to) and \(s.waiting - 1) more" : "\(r.to) · \(untilText(r.expires_at.nanoDate)) left")
+                            .font(.system(size: 14)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
                     }
-                    .buttonStyle(.plain)
+                } else if let p = s.proposals.first {
+                    Avatar(actor: .agent(s.name(of: p.key)), badge: .init(symbol: "arrow.up", tone: .neutral))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("\(s.name(of: p.key)) asks for more").font(.system(size: 16, weight: .semibold)).lineLimit(1)
+                        Text(p.note).font(.system(size: 14)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                    }
                 }
+                Spacer(minLength: 6)
+                Text("Review").font(.system(size: 14, weight: .semibold)).foregroundStyle(Ink.text)
+                    .padding(.horizontal, 14).frame(height: 34)
+                    .background(Capsule().fill(.white))
             }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16).padding(.vertical, 16)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Ink.text))
+            .environment(\.colorScheme, .dark)
         }
+        .buttonStyle(PressStyle())
+    }
+}
+
+/// A label's icon before its title, sized for a pill button.
+struct PillLabel: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 8) {
+            configuration.icon.font(.system(size: 15, weight: .semibold))
+            configuration.title
+        }
+    }
+}
+
+/// A gentle press for cards that act as buttons.
+struct PressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 
@@ -187,8 +265,8 @@ struct AgentsView: View {
                 }
                 .padding(.top, 24)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 110)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 28)
         }
         .scrollIndicators(.hidden)
         .refreshable { await model.refresh() }
@@ -266,8 +344,8 @@ struct ApprovalsView: View {
                 }
                 .padding(.top, 30)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 110)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 28)
         }
         .scrollIndicators(.hidden)
         .refreshable { await model.refresh() }

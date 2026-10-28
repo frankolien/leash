@@ -21,14 +21,14 @@ export class LeashReader {
   }
 
   /// The owner's linked phones, from the access keys on their account.
-  async phoneKeys(owner: string, contract = contractOf(owner)): Promise<PhoneKey[]> {
+  async phoneKeys(owner: string, contract = contractOf(owner), ownKey?: string): Promise<PhoneKey[]> {
     const res = await fetch(RPC[this.network], {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: "leash", method: "query", params: { request_type: "view_access_key_list", finality: "optimistic", account_id: owner } }),
     });
     const body = (await res.json()) as { result?: { keys: Parameters<typeof phoneKeysOf>[0] } };
-    return phoneKeysOf(body.result?.keys ?? [], contract);
+    return phoneKeysOf(body.result?.keys ?? [], contract, ownKey);
   }
 
   async snapshot(owner: string, contract = contractOf(owner)): Promise<Snapshot> {
