@@ -35,19 +35,28 @@ struct DeviceKeyStore: Sendable {
         return try create()
     }
 
-    /// The owner key's public half, making the key first if the phone has none.
+    /// The owner key's public half, making the key first if the phone has none. A leftover key
+    /// whose public half was never recorded can't be named without Face ID, so it is replaced; it
+    /// was never confirmed on the account.
     func publicKeyOrCreate() throws -> String {
-        if let existing = try publicKey() { return existing }
-        return try create().publicKey
+        if let existing = publicKey() { return existing }
+        delete()
+        let key = try create()
+        UserDefaults.standard.set(key.publicKey, forKey: Self.ownerPublicKey)
+        return key.publicKey
     }
+
+    /// Kept outside the locked item: the Keychain won't even list an item behind Face ID without
+    /// asking, and a public key is no secret.
+    func publicKey() -> String? { UserDefaults.standard.string(forKey: Self.ownerPublicKey) }
+
+    private static let ownerPublicKey = "leash.ownerKeyPublic"
 
     private func create() throws -> NearKey {
         let key = NearKey()
         var insert = query
         insert[kSecValueData as String] = key.seed
         if role == .owner {
-            // The public half sits beside it, readable without Face ID, so the app can name the key.
-            insert[kSecAttrLabel as String] = key.publicKey
             if let access = SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleWhenUnlockedThisDeviceOnly, .userPresence, nil) {
                 insert[kSecAttrAccessControl as String] = access
             }
@@ -64,20 +73,6 @@ struct DeviceKeyStore: Sendable {
         }
         guard status == errSecSuccess else { throw KeyError.keychain(status) }
         return key
-    }
-
-    /// The owner key's public half, read without asking for Face ID.
-    func publicKey() throws -> String? {
-        var q = query
-        q[kSecReturnAttributes as String] = true
-        let context = LAContext()
-        context.interactionNotAllowed = true
-        q[kSecUseAuthenticationContext as String] = context
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(q as CFDictionary, &item)
-        if status == errSecItemNotFound { return nil }
-        guard status == errSecSuccess, let attributes = item as? [String: Any] else { throw KeyError.keychain(status) }
-        return attributes[kSecAttrLabel as String] as? String
     }
 
     /// The key, after Face ID or the passcode has been given for `reason`; one prompt either way.
@@ -97,7 +92,10 @@ struct DeviceKeyStore: Sendable {
         return try NearKey(seed: data)
     }
 
-    func delete() { SecItemDelete(query as CFDictionary) }
+    func delete() {
+        SecItemDelete(query as CFDictionary)
+        if role == .owner { UserDefaults.standard.removeObject(forKey: Self.ownerPublicKey) }
+    }
 
     enum KeyError: LocalizedError {
         case keychain(OSStatus)
