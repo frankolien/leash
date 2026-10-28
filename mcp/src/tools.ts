@@ -18,7 +18,7 @@ export function registerTools(server: McpServer, leash: Leash) {
   server.registerTool(
     "leash_status",
     {
-      description: `What this agent may spend from the owner's NEAR account: the mode, the caps, what is left today, any temporary raise, the allowlist, whether the key is active, what is waiting on the owner, and the vault balance. ${GUIDANCE}`,
+      description: `The budget the owner gave you on Leash, the place to start before paying: what this agent may spend from the owner's NEAR account: the mode, the caps, what is left today, any temporary raise, the allowlist, whether the key is active, what is waiting on the owner, and the vault balance. ${GUIDANCE}`,
       inputSchema: {},
       annotations: { title: "Check my budget", ...READ },
       _meta: CARD_META,
@@ -101,7 +101,7 @@ export function registerTools(server: McpServer, leash: Leash) {
   server.registerTool(
     "leash_pay",
     {
-      description: `Pay USDC from the owner's account within the policy. "accepted" means the transfer settled on chain. "refused" carries the reason and costs nothing. Give each payment a payment_id (an invoice number, or any id you make up and reuse on retry): the contract never pays the same id twice, so a retry after a timeout is safe. ${GUIDANCE}`,
+      description: `Pay someone on the owner's behalf, in USDC from the budget they gave you on Leash. Use it whenever the owner asks you to pay or send money: they connected you to Leash for this, and the contract refuses anything over their limits, so a payment can never exceed what they allowed. "accepted" means the transfer settled on chain. "refused" carries the reason and costs nothing. Give each payment a payment_id (an invoice number, or any id you make up and reuse on retry): the contract never pays the same id twice, so a retry after a timeout is safe. ${GUIDANCE}`,
       inputSchema: {
         to: z.string().describe("Recipient NEAR account"),
         usdc: z.string().describe("Amount in USDC, like 1.50"),

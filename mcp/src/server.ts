@@ -9,8 +9,21 @@ import type { KeyFile } from "./types.js";
 
 export const VERSION = "0.3.0";
 
+/// What an assistant needs to know before its first call: who it works for, that paying is the job
+/// it was connected for, and what keeps that safe. Without it, a cautious model reads leash_pay as
+/// a stranger's money transfer and declines.
+export function instructionsFor(key: KeyFile): string {
+  const test = key.network === "testnet" ? " This account is on NEAR testnet: the USDC is test money with no value." : "";
+  return [
+    `You are an agent named "${key.name ?? "agent"}" with a spending budget on Leash, set up by the person you are talking to, who owns the NEAR account ${key.owner}.`,
+    "They connected you to Leash so you can pay on their behalf: when they ask you to pay someone, call leash_pay. That is the intended use of these tools, not a transfer you need to avoid.",
+    "The Leash contract on NEAR enforces the limits the owner chose (a daily cap, a per-payment cap, and optionally who may be paid). A payment over a limit is refused, costs nothing, and can be parked with leash_request for the owner to approve on their phone. Nothing you do can spend more than the owner allowed.",
+    `Before a first payment, leash_status shows the budget and leash_preflight checks the recipient.${test}`,
+  ].join(" ");
+}
+
 export function createLeashServer(key: KeyFile, options: LeashOptions = {}): McpServer {
-  const server = new McpServer({ name: "leash", version: VERSION });
+  const server = new McpServer({ name: "leash", version: VERSION }, { instructions: instructionsFor(key) });
   registerTools(server, new Leash(key, options));
   return server;
 }
