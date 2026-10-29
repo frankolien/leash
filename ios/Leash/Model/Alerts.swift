@@ -1,8 +1,10 @@
 import Foundation
+import UIKit
 import UserNotifications
 
 /// Tells the owner when an agent is waiting on them. While the app runs it notices new requests
-/// itself; pushes from the server cover the times it does not.
+/// itself; pushes from the site cover the times it does not. Whichever arrives first is shown and
+/// the other is dropped, so one request is one alert.
 @MainActor
 final class Alerts {
     static let shared = Alerts()
@@ -25,7 +27,18 @@ final class Alerts {
     }
 
     func requestPermission() async {
-        _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+        let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+        if granted { UIApplication.shared.registerForRemoteNotifications() }
+    }
+
+    /// A push from the site for the request or proposal in its payload: true when the app already
+    /// alerted for it, else it is now counted as alerted so the next refresh does not repeat it.
+    func alreadyShown(_ info: [AnyHashable: Any]) -> Bool {
+        guard let id = (info["request"] as? NSNumber).map({ "r\($0)" }) ?? (info["proposal"] as? NSNumber).map({ "p\($0)" }) else { return false }
+        if seen.contains(id) { return true }
+        seen.insert(id)
+        UserDefaults.standard.set(Array(seen), forKey: "leash.alerted")
+        return false
     }
 
     func noticeWaiting(_ s: Snapshot) {

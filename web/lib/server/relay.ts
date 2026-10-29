@@ -2,8 +2,10 @@
 // holds NEAR. The contract checks each signature and payment id, so this server can neither forge
 // nor repeat a payment; it only refuses obvious junk early and brakes how much gas one owner burns.
 
+import { waitUntil } from "@vercel/functions";
 import type { Relayed, SignedMethod } from "leash-near-mcp";
 import { CONTRACT, DEFAULT_NETWORK } from "@/lib/config";
+import { alertOwner } from "./alerts";
 import { sponsorAccount } from "./sponsor";
 
 const METHODS: SignedMethod[] = ["pay_signed", "request_signed", "ask_more_signed", "open_task_signed", "close_task_signed"];
@@ -39,6 +41,10 @@ export async function relayIntent(method: SignedMethod, args: { intent: string; 
   const status = out.status as { SuccessValue?: string; Failure?: unknown };
   if (status.Failure) throw new RelayRefusal(failureText(status.Failure));
   const result = status.SuccessValue ? JSON.parse(Buffer.from(status.SuccessValue, "base64").toString("utf8")) : undefined;
+  // A parked request or a raise is news for the owner's phone; the agent gets its answer first.
+  if ((method === "request_signed" || method === "ask_more_signed") && typeof result === "number") {
+    waitUntil(alertOwner(DEFAULT_NETWORK, parsed.owner, method === "request_signed" ? "request" : "proposal", result).catch((error: unknown) => console.error(`alert: ${error instanceof Error ? error.message : String(error)}`)));
+  }
   return { result, tx: out.transaction.hash };
 }
 

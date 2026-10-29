@@ -39,7 +39,12 @@ retry finishes the job without paying twice. Tested on testnet with a throwaway 
 registered, credited, then the account added an agent key and set a policy (0.0065 NEAR of credit).
 
 Environment, in `web/.env.local` (never committed): `SPONSOR_ACCOUNT_ID`, `SPONSOR_PRIVATE_KEY`,
-`NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_PRIVY_CLIENT_ID`.
+`NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_PRIVY_CLIENT_ID`. Phone alerts need `APNS_KEY_ID`,
+`APNS_TEAM_ID`, `APNS_KEY_P8` (the team's push key, one line with `\n` for newlines) and the
+Upstash Redis the Vercel marketplace provisions (`KV_REST_API_URL`, `KV_REST_API_TOKEN`; the store is
+`leash-phones`),
+which holds each owner's registered phones; without them the site relays as before and only the
+app's own checks alert.
 
 ## Agents without the CLI
 

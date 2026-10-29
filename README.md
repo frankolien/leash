@@ -60,10 +60,13 @@ flowchart LR
 - **The brake works from everywhere.** "Pause my agents" runs from Siri, Shortcuts, the Action
   button, a Control Center and Lock Screen control and the Home Screen widget, without opening the
   app or asking for Face ID. Resuming always asks.
-- **Decisions where you are.** A parked payment arrives as a Time Sensitive notification with Deny
-  on it, and as a Live Activity in the Dynamic Island with the amount, recipient and time left.
-  Approve opens the request with the recipient checks (exists, can hold USDC, first payment, larger
-  than usual, lookalike of someone you paid) and takes Face ID.
+- **Decisions where you are.** A parked payment arrives within seconds as a Time Sensitive
+  notification with Deny on it, and as a Live Activity in the Dynamic Island with the amount,
+  recipient and time left. Approve opens the request with the recipient checks (exists, can hold
+  USDC, first payment, larger than usual, lookalike of someone you paid) and takes Face ID. The
+  push comes from the site's relay, which delivers every agent's signed instruction and so sees
+  each parked request as it happens; the phone registers for it with a claim signed by its own
+  brake key, so only a phone that is on the account can be told about it.
 - **Native NEAR, no wallet app.** Borsh transactions signed with CryptoKit's Ed25519 and sent over
   JSON-RPC. The unit tests check the bytes and hash against near-api-js.
 

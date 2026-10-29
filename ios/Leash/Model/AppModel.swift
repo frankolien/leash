@@ -95,6 +95,7 @@ final class AppModel {
             snapshot = SnapshotCache.load(account: linked.account, network: linked.network)
             phase = .linked(linked)
             await refresh()
+            await PhoneAlerts.register(site: site)
         } catch Pairing.Failure.cancelled {
         } catch {
             linkProblem = error.localizedDescription
@@ -110,6 +111,7 @@ final class AppModel {
     /// Takes this phone's keys off the account, signed with its own full key, then forgets them. A
     /// phone without one can only forget; its keys stay until removed in Settings on the web.
     func unlink() async {
+        await PhoneAlerts.forget(site: site)
         if let client, ownerKey != nil {
             busy = "unlink"
             defer { busy = nil }
@@ -302,7 +304,7 @@ final class AppModel {
         guard let token = snapshot?.token ?? linked?.network.usdc else { return nil }
         var made: AgentKeyFile?
         _ = await decide("create", confirm: "Add \(name) as an agent", signer: .owner, success: "\(name) is on a leash") { c, k in
-            made = try await c.createAgent(name: name, token: token, daily: daily, perPayment: perPayment, allowlist: allowlist, key: k)
+            made = try await c.createAgent(name: name, token: token, daily: daily, perPayment: perPayment, allowlist: allowlist, relay: self.site.appending(path: "api/relay"), key: k)
         }
         return made
     }

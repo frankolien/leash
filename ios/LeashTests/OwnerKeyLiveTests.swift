@@ -22,7 +22,7 @@ final class OwnerKeyLiveTests: XCTestCase {
         XCTAssertEqual(s.held, held - 500_000)
         XCTAssertEqual(s.log.first?.event, "deposit")
 
-        let made = try await client.createAgent(name: "e2e", token: token, daily: 3_000_000, perPayment: 1_000_000, allowlist: [], key: key)
+        let made = try await client.createAgent(name: "e2e", token: token, daily: 3_000_000, perPayment: 1_000_000, allowlist: [], relay: URL(string: "https://leash.frankolien.com/api/relay")!, key: key)
         let access = try await client.rpc.accessKey(account: client.owner, publicKey: made.public_key)
         XCTAssertEqual(access.receiver, Network.testnet.contract)
         XCTAssertEqual(Set(access.methods), ["pay", "request", "ask_more"])

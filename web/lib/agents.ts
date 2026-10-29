@@ -9,8 +9,9 @@ import type { OwnerSession } from "./session";
 
 export type Limits = { name: string; daily: string; perPayment: string; recipients: string[] };
 
-/// What the agent keeps: the same shape as a key file from `leash grant`.
-export type AgentKey = { name: string; owner: string; public_key: string; private_key: string; contract: string; network: string; token: string };
+/// What the agent keeps: the same shape as a key file from `leash grant`. `relay` is this site's
+/// relay, so the agent signs instructions and never needs NEAR for gas.
+export type AgentKey = { name: string; owner: string; public_key: string; private_key: string; contract: string; network: string; token: string; relay: string };
 
 export function limitsProblem(l: Limits): string | null {
   if (!/^[a-z0-9-]{1,32}$/.test(l.name)) return "Name it with lowercase letters, numbers and -.";
@@ -38,5 +39,5 @@ export async function createAgent(session: OwnerSession, contract: string, token
       expires_at: 0,
     },
   });
-  return { name: limits.name, owner: session.accountId, public_key: publicKey, private_key: pair.toString(), contract, network: session.network, token };
+  return { name: limits.name, owner: session.accountId, public_key: publicKey, private_key: pair.toString(), contract, network: session.network, token, relay: `${location.origin}/api/relay` };
 }

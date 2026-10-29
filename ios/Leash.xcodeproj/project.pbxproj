@@ -19,6 +19,7 @@
 		389DA894954584EC0150065D /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 653DBAC2F6A2C55DB80E65DC /* Shared.swift */; };
 		3A753E4015E3BE4642D3DED1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D189010A09F9DB3B1E8E4E9 /* Theme.swift */; };
 		3DE08DF779A33E2DBEAAA72B /* NearKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0120918EB3924592205A5637 /* NearKey.swift */; };
+		475F40BA8C388F67AF8120EB /* PhoneAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1FF01EF2BC1083C12FE2157 /* PhoneAlerts.swift */; };
 		4BB0C767446128C15DA4973A /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FEB6A8A0DA70787EC84C05B /* Activity.swift */; };
 		4FF5DEED7C057A8AE6697B30 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9471C87703B206D9B22DB069 /* Format.swift */; };
 		5030E2972F8F9A5B7A93FC17 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6ED710A00778E56B2516F4F /* HomeView.swift */; };
@@ -138,6 +139,7 @@
 		CB6EAC8188977DE24585E339 /* LeashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeashApp.swift; sourceTree = "<group>"; };
 		CEAD0F1C4B5EDDC9B6EB5A28 /* ScreensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreensTests.swift; sourceTree = "<group>"; };
 		D106FD854808009BD7705EE1 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
+		D1FF01EF2BC1083C12FE2157 /* PhoneAlerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneAlerts.swift; sourceTree = "<group>"; };
 		E6ED710A00778E56B2516F4F /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		E6FB1A89E15E805E2664FB77 /* RequestActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestActivity.swift; sourceTree = "<group>"; };
 		EA8C04C4966013676DFB0C85 /* Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shortcuts.swift; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 				C6FFCED3D5FF03749D711F6A /* LeashClient.swift */,
 				C730B03149307A3DD8F8645D /* LiveRequests.swift */,
 				B99140712D848E2E4AEE815D /* Pairing.swift */,
+				D1FF01EF2BC1083C12FE2157 /* PhoneAlerts.swift */,
 				ACD85F4D2D276D50CA549D56 /* Safety.swift */,
 				BE19EB96FEB2C20AA3E12632 /* Types.swift */,
 			);
@@ -467,6 +470,7 @@
 				8E9F41A9EDB4372F32C2A688 /* NearRPC.swift in Sources */,
 				C79F411A4A1964F9149FFEF0 /* OnboardingView.swift in Sources */,
 				7BB0336B7BF78579362C450E /* Pairing.swift in Sources */,
+				475F40BA8C388F67AF8120EB /* PhoneAlerts.swift in Sources */,
 				7D9B371F0CD1ABAF287C4163 /* RequestActivity.swift in Sources */,
 				34E2265876CEA9F1411ECEFF /* RequestSheet.swift in Sources */,
 				F30030882E4916F14DF88F42 /* Safety.swift in Sources */,

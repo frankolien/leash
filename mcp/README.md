@@ -45,6 +45,7 @@ Cursor, in `~/.cursor/mcp.json`:
 | --- | --- |
 | `LEASH_KEY` | The agent's key as the dashboard gives it (base64), or the key file's JSON |
 | `LEASH_KEY_FILE` | Instead of `LEASH_KEY`: a path to the key file, such as `~/.leash/claude.json` written by `leash grant` |
+| `LEASH_RELAY_URL` | Where signed instructions go, so the agent needs no NEAR for gas; a key from the dashboard or the app already names its relay, and this overrides it. When the relay cannot be reached the agent's own key sends the transaction |
 | `NEAR_RPC` | Optional RPC override |
 
 The key can only call the Leash contract's `pay`, `request` and `ask_more`, and the contract holds it

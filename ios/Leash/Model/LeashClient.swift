@@ -82,12 +82,12 @@ extension LeashClient {
     }
 
     /// A new agent: its own key on the account, limited to paying through Leash, then its limits.
-    func createAgent(name: String, token: String, daily: Units, perPayment: Units, allowlist: [String], key: NearKey) async throws -> AgentKeyFile {
+    func createAgent(name: String, token: String, daily: Units, perPayment: Units, allowlist: [String], relay: URL, key: NearKey) async throws -> AgentKeyFile {
         let agent = NearKey()
         let add = NearAction.addKey(publicKey: agent.publicKeyData, permission: .functionCall(receiver: contract, methods: ["pay", "request", "ask_more"], allowance: Self.agentAllowance))
         _ = try await rpc.send(actions: [add], to: owner, as: owner, key: key)
         try await act("set_policy", ["public_key": agent.publicKey, "policy": Self.policy(name: name, token: token, daily: daily, perPayment: perPayment, allowlist: allowlist)], key: key)
-        return AgentKeyFile(name: name, owner: owner, public_key: agent.publicKey, private_key: agent.secretKey, contract: contract, network: network.rawValue, token: token)
+        return AgentKeyFile(name: name, owner: owner, public_key: agent.publicKey, private_key: agent.secretKey, contract: contract, network: network.rawValue, token: token, relay: relay.absoluteString)
     }
 
     /// Takes keys off the account, the signing key last since it signs this very transaction.
@@ -116,6 +116,8 @@ struct AgentKeyFile: Codable, Hashable, Identifiable {
     let contract: String
     let network: String
     let token: String
+    /// The site's relay, so the agent signs instructions and never needs NEAR for gas.
+    let relay: String
 
     var id: String { public_key }
 

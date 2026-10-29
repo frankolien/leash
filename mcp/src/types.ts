@@ -8,6 +8,9 @@ export type KeyFile = {
   contract: string;
   network: "testnet" | "mainnet";
   token?: string;
+  /// Where signed instructions go so the agent needs no NEAR for gas; the dashboard that made the
+  /// key writes its own relay here.
+  relay?: string;
 };
 
 export type Preflight = { ok: boolean; reason: string | null; can_request: boolean; remaining_today: string; vault: string };

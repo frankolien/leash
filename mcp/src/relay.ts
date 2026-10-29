@@ -6,9 +6,17 @@ export type SignedMethod = "pay_signed" | "request_signed" | "ask_more_signed" |
 export type Relayed = { result: unknown; tx?: string };
 export type Relay = (method: SignedMethod, args: { intent: string; signature: string }) => Promise<Relayed>;
 
+/// The relay never answered: nothing was sent, so the agent may send it itself.
+export class RelayUnreachable extends Error {}
+
 export function httpRelay(url: string): Relay {
   return async (method, args) => {
-    const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ method, ...args }) });
+    let res: Response;
+    try {
+      res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ method, ...args }) });
+    } catch (error) {
+      throw new RelayUnreachable(`the relay at ${url} could not be reached: ${error instanceof Error ? error.message : String(error)}`);
+    }
     const body = (await res.json().catch(() => ({}))) as Relayed & { error?: string };
     if (!res.ok) throw new Error(body.error ?? `the relay answered ${res.status}`);
     return { result: body.result, tx: body.tx };

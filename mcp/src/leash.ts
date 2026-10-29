@@ -3,7 +3,7 @@
 import { createHash, createPrivateKey, createPublicKey, randomUUID } from "node:crypto";
 import { Account, JsonRpcProvider, KeyPair, KeyPairSigner, actions, baseDecode, baseEncode } from "near-api-js";
 import { RPC } from "./config.js";
-import { httpRelay, type Relay, type Relayed } from "./relay.js";
+import { RelayUnreachable, httpRelay, type Relay, type Relayed } from "./relay.js";
 import { editDistance, skeleton } from "./safety.js";
 import type { KeyFile, Policy, Preflight, Proposal, Raise, Request, Task } from "./types.js";
 
@@ -47,7 +47,8 @@ export class Leash {
 
   constructor(key: KeyFile, options: LeashOptions = {}) {
     this.key = key;
-    this.relay = options.relay ?? (process.env.LEASH_RELAY_URL ? httpRelay(process.env.LEASH_RELAY_URL) : undefined);
+    const relayUrl = process.env.LEASH_RELAY_URL ?? key.relay;
+    this.relay = options.relay ?? (relayUrl ? httpRelay(relayUrl) : undefined);
     this.site = options.site ?? process.env.LEASH_SITE_URL;
     this.provider = new JsonRpcProvider({ url: process.env.NEAR_RPC ?? RPC[key.network] });
     this.account = new Account(key.owner, this.provider, KeyPairSigner.fromSecretKey(key.private_key as `ed25519:${string}`));
@@ -100,11 +101,16 @@ export class Leash {
   }
 
   /// Runs an agent method: signed and relayed when there is a relay, otherwise sent by the agent's
-  /// own key. Either way the contract applies this key's policy and answers the same.
+  /// own key. Either way the contract applies this key's policy and answers the same. A relay that
+  /// cannot be reached at all is stepped around the same way, since nothing was sent through it.
   async act(action: Action, args: Record<string, unknown>, signer?: KeyPair): Promise<Relayed> {
     if (this.relay) {
       const payment_id = (args.payment_id as string | undefined) ?? randomUUID();
-      return this.relay(`${action}_signed`, this.sign(action, { ...args, payment_id }, signer));
+      try {
+        return await this.relay(`${action}_signed`, this.sign(action, { ...args, payment_id }, signer));
+      } catch (error) {
+        if (!(error instanceof RelayUnreachable) || signer) throw error;
+      }
     }
     // A task's child key is no access key on the owner's account, so only a relay can deliver it.
     if (signer) throw new Error("paying from a task needs a relay; set LEASH_RELAY_URL");

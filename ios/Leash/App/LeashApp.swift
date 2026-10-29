@@ -111,7 +111,8 @@ extension View {
 }
 
 /// Shows alerts while the app is open too, opens the request a tapped alert names, denies from
-/// the alert itself, and checks for waiting requests when iOS lends the app background time.
+/// the alert itself, hands the site this phone's push token, and checks for waiting requests when
+/// a push or iOS itself wakes the app in the background.
 final class AlertDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     static let refreshTask = "com.frankolien.leash.refresh"
 
@@ -130,7 +131,25 @@ final class AlertDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCe
         return true
     }
 
-    /// iOS decides when this runs, often rarely; the server's pushes are what make alerts prompt.
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Task { @MainActor in await PhoneAlerts.received(deviceToken, site: AppModel().site) }
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        // Without a token the app still alerts for itself while it runs.
+    }
+
+    /// A push also wakes the app for a moment, so the Live Activity and the widget catch up before
+    /// the owner even looks at the phone.
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler done: @escaping (UIBackgroundFetchResult) -> Void) {
+        _ = Alerts.shared.alreadyShown(userInfo)
+        Task { @MainActor in
+            await AppModel().refresh()
+            done(.newData)
+        }
+    }
+
+    /// iOS decides when this runs, often rarely; the site's pushes are what make alerts prompt.
     static func schedule() {
         let request = BGAppRefreshTaskRequest(identifier: refreshTask)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
@@ -138,7 +157,8 @@ final class AlertDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCe
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        [.banner, .sound, .list]
+        if notification.request.trigger is UNPushNotificationTrigger, Alerts.shared.alreadyShown(notification.request.content.userInfo) { return [] }
+        return [.banner, .sound, .list]
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
