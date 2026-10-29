@@ -12,11 +12,24 @@ nothing else: the key can only call the Leash contract, and the contract enforce
 | `leash_pay` | Pay within policy. Returns the contract's answer, accepted or the reason |
 | `leash_request` | Park a payment over the limit for the owner to approve. It expires after the owner's window, an hour by default |
 | `leash_ask_more` | Ask the owner for a wider policy in one sentence; nothing changes until they act |
+| `leash_fetch` | Fetch a URL that charges per request (x402). A 402 that takes Leash payments is paid from the budget, under the owner's limits, and the content comes back with the transaction |
+| `leash_open_task`, `leash_close_task` | Set aside part of the budget for one job, for a sub-agent or yourself; payments with that task's label can never pass it |
 | `leash_history` | This key's own payments, refusals, requests and proposals from the on-chain log |
 
 Every tool answers `{ "status": ... }` with one of `ok`, `accepted`, `refused`, `parked`, `proposed`,
 `error`, so an agent never guesses the shape. The descriptions carry the rules: preflight when unsure,
 never call `leash_pay` twice for one payment, a parked request is not a payment, a refusal costs nothing.
+
+### Paying for APIs
+
+`leash_fetch` speaks x402 version 2. A server that wants paying answers 402 with a `PAYMENT-REQUIRED`
+header; if one of its accepted ways is a Leash payment on this agent's network and token (`scheme`
+`exact`, `network` `near:testnet` or `near:mainnet`, `extra.assetTransferMethod` `leash`), the tool
+signs a pay intent for exactly that recipient and amount, repeats the request with it in
+`PAYMENT-SIGNATURE`, and the server's facilitator delivers it to the Leash contract. The tool refuses,
+before sending anything, a price over `max_usdc` (1.00 unless given) or over the owner's limits.
+Try it: `https://leash.frankolien.com/api/paid/sample` costs one cent. The server side, and how a
+server accepts Leash payments, is in `docs/07-x402.md` in the Leash repo.
 
 ## Set up
 

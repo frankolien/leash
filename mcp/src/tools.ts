@@ -1,6 +1,7 @@
 // The tools an agent sees. Each description carries the same rules. Payments, parked requests
 // and the budget come back with a card that Claude and ChatGPT draw in the chat.
 
+import { randomUUID } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { CARD_META, registerCard } from "./card.js";
@@ -9,6 +10,10 @@ import { modeOf, reply } from "./envelope.js";
 import type { Leash } from "./leash.js";
 import type { Ask, LogEntry, PayOutcome, Policy, Task } from "./types.js";
 import { toUnits, toUsdc, whenNs } from "./units.js";
+import { choose, decodeHeader, encodeHeader, paymentPayload, type PaymentRequired, type Settlement } from "./x402.js";
+
+// What comes back from a paid resource, enough for an agent to read, never a whole file.
+const BODY_LIMIT = 20_000;
 
 const READ = { readOnlyHint: true, openWorldHint: false };
 
@@ -246,6 +251,79 @@ export function registerTools(server: McpServer, leash: Leash) {
   );
 
   server.registerTool(
+    "leash_fetch",
+    {
+      description: `Fetch a URL that charges per request (x402). A plain URL comes back as is. One that answers 402 names its price; if it takes Leash payments on this account's network, the price is paid from your budget under the owner's limits and the request is repeated, and the content comes back with the on-chain transaction. The owner sees the payment in their log with the URL as its memo. A price over max_usdc, or over the owner's limits, is refused and costs nothing. ${GUIDANCE}`,
+      inputSchema: {
+        url: z.string().url().describe("The resource to fetch, http or https"),
+        method: z.enum(["GET", "POST"]).optional().describe("GET if left out"),
+        body: z.string().optional().describe("The request body, for POST"),
+        headers: z.record(z.string()).optional().describe("Extra request headers, like accept or content-type"),
+        max_usdc: z.string().optional().describe("The most you are willing to pay for this one request, in USDC; 1.00 if left out"),
+        task: z.string().optional().describe("Pay from an open task's budget, by its label"),
+      },
+      annotations: { title: "Fetch a paid URL", destructiveHint: true, idempotentHint: false, openWorldHint: true },
+      _meta: CARD_META,
+    },
+    async ({ url, method, body, headers, max_usdc, task }) => {
+      const target = new URL(url);
+      if (target.protocol !== "https:" && target.protocol !== "http:") return reply({ status: "error", reason: "only http and https URLs can be fetched" });
+      const init: RequestInit = { method: method ?? "GET", headers: { ...(headers ?? {}) }, body };
+      let first: Response;
+      try {
+        first = await fetch(target, init);
+      } catch (error) {
+        return reply({ status: "error", reason: `${target.host} could not be reached: ${error instanceof Error ? error.message : String(error)}` });
+      }
+      if (first.status !== 402) return reply({ status: "ok", paid: false, http_status: first.status, ...(await bodyOf(first)) });
+      const required = decodeHeader<PaymentRequired>(first.headers.get("payment-required"));
+      if (!required) return reply({ status: "error", reason: "the server asked for payment but its PAYMENT-REQUIRED header is missing or unreadable; it may speak x402 version 1, which this agent does not" });
+      const policy = await leash.policy();
+      if (!policy) return reply({ status: "error", reason: "no policy for this key; ask the owner to connect this agent again" });
+      const chosen = choose(required, leash.key.network, policy.token);
+      const offered = (required.accepts ?? []).map((r) => ({ network: r.network, scheme: r.scheme, method: r.extra?.assetTransferMethod ?? null, asset: r.asset, amount: r.amount }));
+      if ("refusal" in chosen) return reply({ status: "refused", reason: chosen.refusal, resource: required.resource?.url ?? url, server_accepts: offered });
+      const { accepted } = chosen;
+      const usdc = toUsdc(accepted.amount);
+      const ceiling = max_usdc ?? "1.00";
+      if (BigInt(accepted.amount) > toUnits(ceiling)) {
+        return reply({ status: "refused", reason: `the resource costs ${usdc} USDC, over the ${ceiling} USDC allowed for this call`, resource: required.resource?.url ?? url, usdc, next: "if the owner would want it, call again with a higher max_usdc" });
+      }
+      const from = task ? await leash.taskByLabel(task) : undefined;
+      if (task && !from) return reply({ status: "error", reason: `no open task called "${task}"; leash_status lists them` });
+      if (!from) {
+        const verdict = await leash.check(accepted.payTo, BigInt(accepted.amount));
+        if (!verdict.ok) {
+          return reply(
+            { status: "refused", reason: verdict.reason, resource: required.resource?.url ?? url, usdc, to: accepted.payTo, can_park_request: verdict.can_request, next: "a parked request cannot buy this now; tell the owner what the resource costs and why" },
+            { kind: "refused", agent: policy.name, usdc, to: accepted.payTo, reason: verdict.reason, remaining_usdc: toUsdc(verdict.remaining_today), daily_usdc: toUsdc(policy.daily_cap) },
+          );
+        }
+      }
+      const memo = `x402 ${required.resource?.url ?? url}`.slice(0, 120);
+      const signed = leash.sign("pay", { to: accepted.payTo, amount: accepted.amount, memo, payment_id: randomUUID() }, from?.key);
+      let second: Response;
+      try {
+        second = await fetch(target, { ...init, headers: { ...(headers ?? {}), "payment-signature": encodeHeader(paymentPayload(required, accepted, signed)) } });
+      } catch (error) {
+        return reply({ status: "error", reason: `${target.host} could not be reached with the payment: ${error instanceof Error ? error.message : String(error)}; nothing was paid` });
+      }
+      const settlement = decodeHeader<Settlement>(second.headers.get("payment-response"));
+      const content = await bodyOf(second);
+      if (second.status === 402 || (settlement && !settlement.success)) {
+        const reason = settlement?.errorReason ?? decodeHeader<PaymentRequired>(second.headers.get("payment-required"))?.error ?? "the server did not accept the payment";
+        return reply({ status: "refused", reason, resource: required.resource?.url ?? url, usdc, to: accepted.payTo, http_status: second.status, ...content });
+      }
+      const after = await leash.check(leash.key.owner, 1n).catch(() => undefined);
+      const tx = settlement?.transaction ? leash.explorer(settlement.transaction) : null;
+      return reply(
+        { status: "accepted", paid: true, usdc, to: accepted.payTo, resource: required.resource?.url ?? url, transaction: tx, http_status: second.status, ...content, next: "the payment settled on chain; do not pay for this response again" },
+        { kind: "paid", agent: policy.name, usdc, to: accepted.payTo, reason: required.resource?.description ?? required.resource?.url ?? url, remaining_usdc: after ? toUsdc(after.remaining_today) : null, daily_usdc: toUsdc(policy.daily_cap), tx_url: tx },
+      );
+    },
+  );
+
+  server.registerTool(
     "leash_history",
     {
       description: `This agent's own recent payments, refusals, parked requests and proposals, newest first, from the on-chain log. Use it to know what you already did before doing it again. ${GUIDANCE}`,
@@ -274,6 +352,13 @@ function plainReason(reason: string | null): string {
     "cooldown not elapsed": "Too soon after its last payment",
   };
   return reason ? (map[reason] ?? reason) : "Needs your approval";
+}
+
+/// The response as text an agent can read, cut at BODY_LIMIT and saying so.
+async function bodyOf(res: Response): Promise<{ content_type: string | null; body: string; truncated?: true }> {
+  const text = await res.text().catch(() => "");
+  const content_type = res.headers.get("content-type");
+  return text.length > BODY_LIMIT ? { content_type, body: text.slice(0, BODY_LIMIT), truncated: true } : { content_type, body: text };
 }
 
 function live(t: Task): boolean {
