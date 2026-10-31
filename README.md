@@ -108,8 +108,8 @@ requests.
 
 ```bash
 cargo install cargo-near             # the sandbox tests build the contract with it
-cd contract && cargo test           # 15 unit tests and 3 sandbox tests against a real node
-cd ../cli && npm install && npm test   # amount and ttl parsing
+cd contract && cargo test           # 38 unit tests and 4 sandbox tests against a real node
+cd ../cli && npm install && npm test   # 3 tests: amount and ttl parsing
 cd ../mcp && npm install && npm test   # 19 tests: lookalike detection, signed intents, task keys, x402
 cd ../web && npm install && npm test   # 63 tests: the dashboard's logic, payment safety, phone alerts, the x402 facilitator
 ```
@@ -118,15 +118,17 @@ The sandbox tests deploy the contract and a mock USDC to a local NEAR node and r
 two payments land, a third is refused over the daily cap, a parked request is approved, a failed
 transfer is refunded by the callback, and an owner without storage credit cannot add state.
 
-**3. The dashboard.** `cd web && npm install && npm run dev`, then open
-`http://localhost:3000/frankolien.testnet`. Anyone can read any owner's dashboard: the vault, each
-agent's budget, the week's spending and the on-chain activity. Signing in as the owner (a NEAR
-testnet wallet, or Google, Apple or email when a Privy app id is configured) turns on approve, deny,
-pause, revoke, add money and new agent. A payment above an agent's limit opens a panel on the right.
+**3. The dashboard.** Open `https://leash.frankolien.com/frankolien.testnet` (or run it yourself:
+`cd web && npm install && npm run dev`, then `http://localhost:3000/frankolien.testnet`). Anyone can
+read any owner's dashboard: the vault, each agent's budget, the week's spending and the on-chain
+activity. Signing in as the owner (Google, Apple, email or a NEAR testnet wallet) turns on approve,
+deny, pause, revoke, add money and new agent. A payment above an agent's limit opens a panel on the right.
 
-**4. An agent paying.** Sign in, create an agent in the dashboard (New agent: Claude Code). The
-panel hands you one line with the agent's key inside; paste it in a terminal (Cursor gets an Add to
-Cursor button instead):
+**4. An agent paying.** Sign in at `https://leash.frankolien.com` with Google, Apple or email: a
+testnet account is made for you and its first fees are paid. Press Get $5 of test USDC (or use
+Circle's faucet, linked beside it, if the tap is empty), then Add to vault. Then create an agent (New agent: Claude Code; it starts at $5 a
+day, $2 per payment, any recipient). The panel hands you one line with the agent's key inside;
+paste it in a terminal (Cursor gets an Add to Cursor button instead):
 
 ```bash
 claude mcp add --scope user leash -e LEASH_KEY=<key from the dashboard> -- npx -y leash-near-mcp
@@ -136,15 +138,16 @@ From a checkout instead of npm: `cd mcp && npm install && npm run build`, then u
 `node "$PWD/dist/index.js"` in place of `npx -y leash-near-mcp`.
 
 Ask Claude Code to pay `vendor.testnet` $1: it pays, and the dashboard shows it within ten seconds.
-Ask for $5: it is over the agent's limit, so it parks a request and the approval panel opens.
+Ask for $3: it is over the $2 per-payment limit, so it parks a request and the approval panel
+opens. Approve it and the $3 is paid.
 Ask it to pay `vend0r.testnet`: the preflight warns that it imitates `vendor.testnet` and does not exist, and if the agent parks it anyway, the approval panel shows the same warnings. Revoke the agent and ask again: NEAR rejects the call with `AccessKeyDoesNotExist`.
 
 **5. An agent paying for an API.** Ask Claude Code to fetch `https://leash.frankolien.com/api/paid/sample`.
 The server answers 402 with a price of one cent (x402, version 2); the agent pays it from its budget
 with `leash_fetch`, repeats the request, and shows you the content and the transaction. The
-dashboard's activity shows the payment with the URL as its memo. Give the agent a 10 cent
-per-payment limit and ask again with `max_usdc` 0.001, or point it at an agent whose recipients do
-not include the server's account: it is refused before anything is sent, and the refusal says why.
+dashboard's activity shows the payment with the URL as its memo. To see a refusal, ask again with
+`max_usdc` 0.001, below the price, or give the agent a recipient list without `vendor.testnet`, the
+account the sample pays: it is refused before anything is sent, and the refusal says why.
 How a server charges this way, in one function, is in `docs/07-x402.md`; the facilitator is the
 site itself (`/api/x402/supported`, `/verify`, `/settle`).
 
