@@ -19,7 +19,7 @@ struct ActivityView: View {
             .padding(.bottom, 32)
         }
         .scrollIndicators(.hidden)
-        .background(Ink.ground)
+        .groundBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.large)
         .toolbarVisibility(.visible, for: .navigationBar)
@@ -51,14 +51,14 @@ struct FeedList: View {
     }
 }
 
-/// One thing that happened: who, with a badge for how it ended, what, and the money if any moved.
+/// One thing that happened: who, what, and the money if any moved.
 struct FeedRow: View {
     let entry: LogEntry
     let line: FeedLine
 
     var body: some View {
         HStack(spacing: 14) {
-            Avatar(actor: line.actor, badge: line.badge)
+            Avatar(actor: line.actor)
             VStack(alignment: .leading, spacing: 3) {
                 Text(line.title).font(.system(size: 16, weight: .semibold)).lineLimit(1)
                 if let detail = line.detail {

@@ -1,26 +1,45 @@
 import SwiftUI
 
-/// PayBox's restraint, measured from its app, in both of its looks. Light: a white ground, #F6F6F6
-/// cards, #EBEBEB pills and circles with a hairline edge, true black ink. Dark: the web dashboard's
+/// Two looks, both quiet. Light: Tether's warm off-white, a ground that deepens from #FAFAF9 to
+/// #F1F0EE down the screen (sampled from its app), with warm grey cards and pills and true black
+/// ink. Dark: the web dashboard's
 /// near-black ground, #171717 cards, #242424 controls and white ink. Colour only where it means
 /// something. `inverse` is what sits on an `text`-filled shape, like a primary pill's label.
 enum Ink {
-    static let ground = adaptive(0xFFFFFF, 0x0B0B0B)
-    static let surface = adaptive(0xF6F6F6, 0x171717)
-    static let raised = adaptive(0xEBEBEB, 0x242424)
-    static let edge = adaptive(0xDDDDDD, 0x2B2B2B)
-    static let line = adaptive(0xE6E6E6, 0x222222)
+    static let ground = adaptive(0xF6F6F4, 0x0B0B0B)
+    /// The ground's bottom edge, for bars pinned to the bottom so no seam shows.
+    static let groundEnd = adaptive(0xF1F0EE, 0x0B0B0B)
+    static let surface = adaptive(0xEDECE9, 0x171717)
+    static let raised = adaptive(0xE7E6E2, 0x242424)
+    static let edge = adaptive(0xDCDBD6, 0x2B2B2B)
+    static let line = adaptive(0xE4E3DF, 0x222222)
     static let text = adaptive(0x000000, 0xFFFFFF)
     static let inverse = adaptive(0xFFFFFF, 0x000000)
     static let muted = adaptive(0x7B7B7B, 0x858585)
     static let faint = adaptive(0xA6A6A6, 0x5E5E5E)
-    static let disc = adaptive(0xDEDEDE, 0x3A3A3A)
+    static let disc = adaptive(0xDDDCD7, 0x3A3A3A)
     static let danger = adaptive(0xE5484D, 0xF2726B)
     static let good = adaptive(0x1F9D55, 0x6AD09D)
 
     private static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
         Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) })
     }
+}
+
+/// Behind every screen: Tether's gradient in light, flat near-black in dark.
+struct Ground: View {
+    @Environment(\.colorScheme) private var scheme
+    var body: some View {
+        if scheme == .dark {
+            Color(hex: 0x0B0B0B)
+        } else {
+            LinearGradient(colors: [Color(hex: 0xFAFAF9), Color(hex: 0xF1F0EE)], startPoint: .top, endPoint: .bottom)
+        }
+    }
+}
+
+extension View {
+    func groundBackground() -> some View { background { Ground().ignoresSafeArea() } }
 }
 
 /// The owner's choice in Settings. System follows the phone.
@@ -232,45 +251,20 @@ struct BigAmount: View {
     }
 }
 
-/// Who an activity line is about, with a small badge on the corner saying how it ended: a green
-/// check for money that moved as asked, red for stopped, black for waiting or neutral.
+/// Who an activity line is about: the agent's mark, or the Leash mark for the owner.
 struct Avatar: View {
     let actor: FeedLine.Actor
-    var badge: FeedLine.Badge?
     var size: CGFloat = 46
 
     var body: some View {
-        Group {
-            switch actor {
-            case .agent(let name): AgentMark(name: name, size: size)
-            case .owner:
-                ZStack {
-                    Circle().fill(Ink.raised)
-                    Image("mark").resizable().renderingMode(.template).foregroundStyle(Ink.text).frame(width: size * 0.42, height: size * 0.42)
-                }
-                .frame(width: size, height: size)
+        switch actor {
+        case .agent(let name): AgentMark(name: name, size: size)
+        case .owner:
+            ZStack {
+                Circle().fill(Ink.raised)
+                Image("mark").resizable().renderingMode(.template).foregroundStyle(Ink.text).frame(width: size * 0.42, height: size * 0.42)
             }
-        }
-        .overlay(alignment: .bottomTrailing) {
-            if let badge {
-                Image(systemName: badge.symbol)
-                    .font(.system(size: size * 0.2, weight: .heavy))
-                    .foregroundStyle(Ink.inverse)
-                    .frame(width: size * 0.42, height: size * 0.42)
-                    .background(Circle().fill(badge.tone.color))
-                    .overlay(Circle().stroke(Ink.ground, lineWidth: 2.5))
-                    .offset(x: 3, y: 3)
-            }
-        }
-    }
-}
-
-extension FeedLine.Tone {
-    var color: Color {
-        switch self {
-        case .good: Ink.good
-        case .bad: Ink.danger
-        case .neutral: Ink.text
+            .frame(width: size, height: size)
         }
     }
 }

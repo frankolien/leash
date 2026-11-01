@@ -107,7 +107,7 @@ struct MainView: View {
         NavigationStack {
             root()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(Ink.ground)
+                .groundBackground()
                 .toolbarVisibility(.hidden, for: .navigationBar)
                 .navigationDestination(for: Agent.ID.self) { AgentDetailView(key: $0) }
         }

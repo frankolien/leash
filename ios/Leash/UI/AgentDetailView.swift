@@ -32,7 +32,7 @@ struct AgentDetailView: View {
             }
         }
         .scrollIndicators(.hidden)
-        .background(Ink.ground)
+        .groundBackground()
         .toolbarVisibility(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -321,7 +321,7 @@ struct EditLimitsSheet: View {
             .padding(.bottom, 12)
         }
         .padding(.horizontal, 20)
-        .background(Ink.ground)
+        .groundBackground()
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .onAppear {

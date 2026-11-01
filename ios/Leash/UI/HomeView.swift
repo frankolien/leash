@@ -203,14 +203,14 @@ struct WaitingCard: View {
         Button(action: open) {
             HStack(spacing: 14) {
                 if let r = s.requests.first {
-                    Avatar(actor: .agent(s.name(of: r.key)), badge: .init(symbol: "hourglass", tone: .neutral))
+                    Avatar(actor: .agent(s.name(of: r.key)))
                     VStack(alignment: .leading, spacing: 3) {
                         Text("\(s.name(of: r.key)) wants to pay \(Money.usd(units(r.amount)))").font(.system(size: 16, weight: .semibold)).lineLimit(1)
                         Text(s.waiting > 1 ? "\(r.to) and \(s.waiting - 1) more" : "\(r.to) · \(untilText(r.expires_at.nanoDate)) left")
                             .font(.system(size: 14)).foregroundStyle(Ink.inverse.opacity(0.6)).lineLimit(1)
                     }
                 } else if let p = s.proposals.first {
-                    Avatar(actor: .agent(s.name(of: p.key)), badge: .init(symbol: "arrow.up", tone: .neutral))
+                    Avatar(actor: .agent(s.name(of: p.key)))
                     VStack(alignment: .leading, spacing: 3) {
                         Text("\(s.name(of: p.key)) asks for more").font(.system(size: 16, weight: .semibold)).lineLimit(1)
                         Text(p.note).font(.system(size: 14)).foregroundStyle(Ink.inverse.opacity(0.6)).lineLimit(1)

@@ -80,7 +80,7 @@ struct RequestSheet: View {
             .disabled(busy)
             .padding(.horizontal, 20).padding(.vertical, 12)
         }
-        .background(Ink.ground)
+        .groundBackground()
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .task {
@@ -181,7 +181,7 @@ struct AskSheet: View {
             .disabled(model.busy != nil)
             .padding(.horizontal, 20).padding(.vertical, 12)
         }
-        .background(Ink.ground)
+        .groundBackground()
         .presentationDragIndicator(.visible)
         .onAppear {
             if let secs = proposal.ask?.for_secs, secs > 0 { hours = secs <= 3600 ? 1 : secs <= 86_400 ? 24 : 168 }

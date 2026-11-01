@@ -21,7 +21,7 @@ struct ConnectSheet: View {
                 }
                 .padding(.horizontal, 20).padding(.bottom, 24)
             }
-            .background(Ink.ground)
+            .groundBackground()
             .navigationTitle("Connect an agent")
             .navigationBarTitleDisplayMode(.large)
         }
@@ -126,11 +126,11 @@ struct NewAgentForm: View {
                     .buttonStyle(.pill(.primary))
                     .disabled(problem != nil || working)
                     .padding(.horizontal, 20).padding(.bottom, 8)
-                    .background(Ink.ground)
+                    .background(Ink.groundEnd)
                 }
             }
         }
-        .background(Ink.ground)
+        .groundBackground()
         .navigationTitle(made == nil ? kind.label : "\(made!.name) is ready")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(made != nil)
@@ -165,7 +165,7 @@ struct AgentMadeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 HStack(spacing: 14) {
-                    Avatar(actor: .agent(file.name), badge: .init(symbol: "checkmark", tone: .good), size: 56)
+                    Avatar(actor: .agent(file.name), size: 56)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("\(file.name) is on a leash").font(.system(size: 22, weight: .bold)).tracking(-0.5)
                         Text("Its key is made and its limits are set.").font(.system(size: 14)).foregroundStyle(Ink.muted)
@@ -198,7 +198,7 @@ struct AgentMadeView: View {
             .padding(20)
         }
         .safeAreaInset(edge: .bottom) {
-            Button("Done") { nav.sheet = nil }.buttonStyle(.pill(.secondary)).padding(.horizontal, 20).padding(.bottom, 8).background(Ink.ground)
+            Button("Done") { nav.sheet = nil }.buttonStyle(.pill(.secondary)).padding(.horizontal, 20).padding(.bottom, 8).background(Ink.groundEnd)
         }
         .sensoryFeedback(.success, trigger: copied)
     }
@@ -231,7 +231,7 @@ struct ChatGptSteps: View {
             }
             .padding(20)
         }
-        .background(Ink.ground)
+        .groundBackground()
         .navigationTitle("ChatGPT")
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.success, trigger: copied)

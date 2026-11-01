@@ -31,7 +31,7 @@ struct AccountView: View {
                 }
             }
             .scrollIndicators(.hidden)
-            .background(Ink.ground)
+            .groundBackground()
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { nav.sheet = nil }.fontWeight(.semibold) } }
@@ -290,7 +290,7 @@ struct MoveMoneySheet: View {
             }
         }
         .padding(.horizontal, 20).padding(.bottom, 12)
-        .background(Ink.ground)
+        .groundBackground()
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .sensoryFeedback(.impact(weight: .light), trigger: entry.text)
@@ -437,7 +437,7 @@ struct AddMoneySheet: View {
             }
         }
         .padding(20)
-        .background(Ink.ground)
+        .groundBackground()
         .presentationDragIndicator(.visible)
         .sensoryFeedback(.success, trigger: copied)
         .sheet(isPresented: $faucet) { SafariView(url: URL(string: "https://faucet.circle.com")!).ignoresSafeArea() }

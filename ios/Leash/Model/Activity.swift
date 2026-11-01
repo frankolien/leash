@@ -1,18 +1,15 @@
 import Foundation
 
 /// How each on-chain event reads in the activity feed: who it was about, what happened in a few
-/// words, the detail under it, and a small badge on the avatar saying how it ended. A refusal is
-/// Leash doing its job, and reads as one. Mirrors the web's lib/activity.ts.
+/// words, the detail under it, and the money if any moved. A refusal is Leash doing its job, and
+/// reads as one. Mirrors the web's lib/activity.ts.
 struct FeedLine: Hashable {
     enum Actor: Hashable { case agent(String), owner }
-    enum Tone: Hashable { case good, bad, neutral }
-    struct Badge: Hashable { let symbol: String; let tone: Tone }
     enum Flow: Hashable { case out, into, held, rate }
 
     let actor: Actor
     let title: String
     let detail: String?
-    let badge: Badge
     let amount: Units?
     let flow: Flow
 }
@@ -22,32 +19,32 @@ func feedLine(_ e: LogEntry, who: String, firstGrant: Bool = true) -> FeedLine {
     let to = e.to ?? "someone"
     let amount = e.amount.map(units)
     let agent = FeedLine.Actor.agent(who)
-    func line(_ actor: FeedLine.Actor, _ title: String, _ detail: String?, _ symbol: String, _ tone: FeedLine.Tone, flow: FeedLine.Flow = .held, amount: Units? = nil) -> FeedLine {
-        FeedLine(actor: actor, title: title, detail: detail, badge: .init(symbol: symbol, tone: tone), amount: amount, flow: flow)
+    func line(_ actor: FeedLine.Actor, _ title: String, _ detail: String?, flow: FeedLine.Flow = .held, amount: Units? = nil) -> FeedLine {
+        FeedLine(actor: actor, title: title, detail: detail, amount: amount, flow: flow)
     }
     switch e.event {
-    case "pay": return line(agent, "Paid \(to)", "\(who), on its own", "checkmark", .good, flow: .out, amount: amount)
-    case "request_approved": return line(agent, "You approved \(who)", "Paid \(to)", "checkmark", .good, flow: .out, amount: amount)
-    case "pay_failed": return line(agent, "Payment to \(to) failed", "Refunded to the vault", "arrow.uturn.backward", .bad, flow: .into, amount: amount)
-    case "pay_refused": return line(agent, "Stopped \(who)", (e.detail ?? "over its limits").capitalizedFirst + ". Nothing moved.", "xmark", .bad)
-    case "request_parked": return line(agent, "\(who) asked to pay", "To \(to)", "hourglass", .neutral, amount: amount)
-    case "request_denied": return line(agent, "You denied \(who)", "Nothing moved", "xmark", .bad)
-    case "request_expired": return line(agent, "\(who)'s request expired", "Nothing moved", "clock", .neutral)
-    case "proposal_made": return line(agent, "\(who) asked for more", e.detail, "arrow.up", .neutral)
-    case "proposal_dismissed": return line(agent, "You turned down \(who)", "Its limits stay as they were", "xmark", .bad)
-    case "raise_granted": return line(agent, "You raised \(who)'s limits", "For a while", "arrow.up", .good, flow: .rate, amount: amount)
-    case "raise_ended": return line(agent, "\(who)'s raise ended", "Back to its usual limits", "arrow.down", .neutral)
+    case "pay": return line(agent, "Paid \(to)", "\(who), on its own", flow: .out, amount: amount)
+    case "request_approved": return line(agent, "You approved \(who)", "Paid \(to)", flow: .out, amount: amount)
+    case "pay_failed": return line(agent, "Payment to \(to) failed", "Refunded to the vault", flow: .into, amount: amount)
+    case "pay_refused": return line(agent, "Stopped \(who)", (e.detail ?? "over its limits").capitalizedFirst + ". Nothing moved.")
+    case "request_parked": return line(agent, "\(who) asked to pay", "To \(to)", amount: amount)
+    case "request_denied": return line(agent, "You denied \(who)", "Nothing moved")
+    case "request_expired": return line(agent, "\(who)'s request expired", "Nothing moved")
+    case "proposal_made": return line(agent, "\(who) asked for more", e.detail)
+    case "proposal_dismissed": return line(agent, "You turned down \(who)", "Its limits stay as they were")
+    case "raise_granted": return line(agent, "You raised \(who)'s limits", "For a while", flow: .rate, amount: amount)
+    case "raise_ended": return line(agent, "\(who)'s raise ended", "Back to its usual limits")
     case "policy_set": return firstGrant
-        ? line(agent, "You added \(who)", "Can now pay from the vault", "plus", .good, flow: .rate, amount: amount)
-        : line(agent, "You changed \(who)'s limits", nil, "slider.horizontal.3", .neutral, flow: .rate, amount: amount)
-    case "policy_revoked": return line(agent, "You revoked \(who)", "Its key can no longer pay", "minus", .bad)
-    case "paused": return line(.owner, "You paused every agent", "Nothing could be paid", "pause.fill", .bad)
-    case "resumed": return line(.owner, "You resumed your agents", nil, "play.fill", .good)
-    case "deposit": return line(.owner, "Added to the vault", "From your account", "arrow.down", .good, flow: .into, amount: amount)
-    case "withdraw": return line(.owner, "Moved to your account", "From the vault", "arrow.up", .neutral, flow: .out, amount: amount)
-    case "task_opened": return line(agent, "\(who) opened a task", e.detail, "plus", .neutral, amount: amount)
-    case "task_closed": return line(agent, "\(who) closed a task", e.detail, "checkmark", .neutral)
-    default: return line(agent, e.event.replacingOccurrences(of: "_", with: " ").capitalizedFirst, e.detail, "circle", .neutral)
+        ? line(agent, "You added \(who)", "Can now pay from the vault", flow: .rate, amount: amount)
+        : line(agent, "You changed \(who)'s limits", nil, flow: .rate, amount: amount)
+    case "policy_revoked": return line(agent, "You revoked \(who)", "Its key can no longer pay")
+    case "paused": return line(.owner, "You paused every agent", "Nothing could be paid")
+    case "resumed": return line(.owner, "You resumed your agents", nil)
+    case "deposit": return line(.owner, "Added to the vault", "From your account", flow: .into, amount: amount)
+    case "withdraw": return line(.owner, "Moved to your account", "From the vault", flow: .out, amount: amount)
+    case "task_opened": return line(agent, "\(who) opened a task", e.detail, amount: amount)
+    case "task_closed": return line(agent, "\(who) closed a task", e.detail)
+    default: return line(agent, e.event.replacingOccurrences(of: "_", with: " ").capitalizedFirst, e.detail)
     }
 }
 
