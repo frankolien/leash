@@ -7,7 +7,7 @@
 
 import { parseArgs } from "node:util";
 import { grant, revoke } from "./commands/agents.js";
-import { decide, dismiss, simple, window } from "./commands/decisions.js";
+import { decide, dismiss, report, reports, retract, simple, window } from "./commands/decisions.js";
 import { deposit, register, withdraw } from "./commands/money.js";
 import { log, proposals, requests, status } from "./commands/read.js";
 import { init } from "./commands/setup.js";
@@ -29,6 +29,7 @@ async function main() {
       cooldown: { type: "string" },
       ttl: { type: "string" },
       force: { type: "boolean" },
+      evidence: { type: "string" },
     },
   });
   const [command, arg] = positionals;
@@ -47,6 +48,9 @@ async function main() {
     case "proposals": return proposals();
     case "dismiss": return dismiss(arg ?? usage());
     case "window": return window(arg ?? usage());
+    case "report": return report(arg ?? usage(), values.evidence);
+    case "retract": return retract(arg ?? usage());
+    case "reports": return reports(arg ?? usage());
     case "status": return status();
     case "requests": return requests();
     case "log": return log();

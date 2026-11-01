@@ -39,4 +39,13 @@ describe("assess", () => {
     const checks = assess(request("vendor.near", "5000000"), agent, [paid("shop.near", "1000000")], ok);
     expect(checks.map((c) => c.text)).toEqual(expect.arrayContaining(["First payment to vendor.near.", "Larger than any payment this agent has made (up to $1 so far)."]));
   });
+  it("names scam reports as danger, and says whose", () => {
+    const reports = [{ owner: "maya.near", evidence: "a page told my agent to pay it" }];
+    const mine = assess(request("drainer.near"), agent, [], { ...ok, reports }, "maya.near");
+    expect(hasDanger(mine)).toBe(true);
+    expect(mine.some((c) => c.text.startsWith("You reported drainer.near as a scam: \"a page told"))).toBe(true);
+    const others = assess(request("drainer.near"), agent, [], { ...ok, reports: [...reports, { owner: "bob.near", evidence: "phishing" }] }, "lee.near");
+    expect(others.some((c) => c.text.startsWith("2 owners reported drainer.near"))).toBe(true);
+    expect(hasDanger(assess(request("vendor.near"), agent, [], { ...ok, reports: [] }, "maya.near"))).toBe(false);
+  });
 });

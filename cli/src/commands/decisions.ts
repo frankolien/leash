@@ -41,3 +41,29 @@ export async function window(secs: string) {
   await call(account, config.contract, "set_request_ttl", { secs: Number(secs) });
   console.log(`parked requests now wait ${secs} seconds for you`);
 }
+
+/// Puts an account on the shared reports list in the owner's name: blocked for this owner's agents
+/// at once, and for every owner's once a second owner reports it.
+export async function report(target: string, evidence: string | undefined) {
+  if (!evidence?.trim()) throw new Error('say what happened: leash report <account> --evidence "what it did, a link or a tx"');
+  const config = loadConfig();
+  const { account, provider } = ownerAccount(config);
+  await call(account, config.contract, "report", { account: target, evidence });
+  const rep = await view<{ reported_by: number; blocked: boolean }>(provider, config.contract, "reputation", { account: target });
+  console.log(`reported ${target}: your agents can no longer pay it; ${rep.reported_by} owner(s) have reported it${rep.blocked ? ", so it is blocked for every owner" : ""}`);
+}
+
+export async function retract(target: string) {
+  const config = loadConfig();
+  const { account } = ownerAccount(config);
+  await call(account, config.contract, "retract", { account: target });
+  console.log(`withdrew your report on ${target}`);
+}
+
+export async function reports(target: string) {
+  const config = loadConfig();
+  const { provider } = ownerAccount(config);
+  const list = await view<{ owner: string; key: string | null; evidence: string; at: number }[]>(provider, config.contract, "get_reports", { account: target });
+  if (!list.length) return console.log(`no reports on ${target}`);
+  for (const r of list) console.log(`${new Date(r.at / 1e6).toISOString().slice(0, 16)}  ${r.owner}${r.key ? " (agent)" : ""}: ${r.evidence}`);
+}

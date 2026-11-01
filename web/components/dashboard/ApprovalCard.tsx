@@ -16,7 +16,7 @@ import styles from "./dashboard.module.css";
 export default function ApprovalCard(props: { request: Request; agent: Agent | undefined; log: LogEntry[]; network: Network; names: Names; now: number; busy: string | null; onApprove: () => void; onDeny: () => void }) {
   const { request: r, agent, log, network, names, now, busy, onApprove, onDeny } = props;
   const facts = useRecipientFacts(network, r.token, r.to);
-  const checks = assess(r, agent, log, facts);
+  const checks = assess(r, agent, log, facts, r.owner);
   const danger = hasDanger(checks);
   const who = agentLabel(r.key, names);
   const expires = msOf(r.expires_at);

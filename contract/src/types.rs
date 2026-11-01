@@ -25,6 +25,7 @@ pub(crate) enum StorageKey {
     Asks,
     Tasks,
     TaskOf,
+    Reports,
 }
 
 /// What an agent key may do. Amounts are in the token's smallest unit; times are seconds.
@@ -220,4 +221,29 @@ pub struct TaskInput {
     pub child: PublicKey,
     #[serde(default)]
     pub allow: Vec<AccountId>,
+}
+
+/// One owner's report that an account scams agents, with the evidence a reader can check.
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug, PartialEq)]
+pub struct Report {
+    /// The owner who reported, directly or through one of their agents.
+    pub owner: AccountId,
+    /// The agent key that reported, when it was an agent.
+    pub key: Option<PublicKey>,
+    /// A sentence, a link or a transaction hash.
+    pub evidence: String,
+    pub at: u64,
+}
+
+/// What the shared reports say about an account, for one owner or for everyone.
+#[near(serializers = [json])]
+#[derive(Clone, Debug, PartialEq)]
+pub struct Reputation {
+    /// Distinct owners who reported it.
+    pub reported_by: u32,
+    /// Whether the asking owner reported it themselves.
+    pub by_you: bool,
+    /// Whether payments to it are refused: for the asking owner, or for every owner when none is given.
+    pub blocked: bool,
 }

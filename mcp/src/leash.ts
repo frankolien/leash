@@ -4,7 +4,7 @@ import { createHash, createPrivateKey, createPublicKey, randomUUID } from "node:
 import { Account, JsonRpcProvider, KeyPair, KeyPairSigner, actions, baseDecode, baseEncode } from "near-api-js";
 import { RPC } from "./config.js";
 import { RelayUnreachable, httpRelay, type Relay, type Relayed } from "./relay.js";
-import { editDistance, skeleton } from "./safety.js";
+import { assess, lookalike, type Facts, type Report, type Reputation, type Signal, type Verdict } from "./counterparty.js";
 import type { KeyFile, Policy, Preflight, Proposal, Raise, Request, Task } from "./types.js";
 
 export type LeashOptions = {
@@ -15,7 +15,9 @@ export type LeashOptions = {
   site?: string;
 };
 
-type Action = "pay" | "request" | "ask_more" | "open_task" | "close_task";
+type Action = "pay" | "request" | "ask_more" | "open_task" | "close_task" | "report";
+const INDEXER = { testnet: "https://api-testnet.nearblocks.io/v1", mainnet: "https://api.nearblocks.io/v1" } as const;
+const EMPTY_CODE = "11111111111111111111111111111111";
 const ED25519_PKCS8 = Buffer.from("302e020100300506032b657004220420", "hex");
 // Labels map to child keys deterministically; a closed task's key is never reused, so a label can be
 // opened again this many times.
@@ -69,35 +71,49 @@ export class Leash {
     return verdict;
   }
 
-  async warnings(to: string, policy: Policy | undefined): Promise<string[]> {
-    const out: string[] = [];
-    try {
-      const view = await this.provider.viewAccount({ accountId: to });
-      if (view.code_hash && view.code_hash !== "11111111111111111111111111111111") {
-        out.push(`${to} is a contract, not a person; make sure that is intended`);
-      }
-    } catch {
-      out.push(`${to} does not exist on ${this.key.network}; the transfer would fail`);
-    }
-    if (policy) {
-      try {
-        const registered = await this.view<{ total: string } | null>("storage_balance_of", { account_id: to }, policy.token);
-        if (!registered) out.push(`${to} is not registered on the token; the transfer would fail until they register`);
-      } catch {
-        out.push(`could not check whether ${to} is registered on ${policy.token}`);
-      }
-      // Trusted names are the allowlist plus every account the owner's agents have paid.
-      const log = (await this.view<{ event: string; to: string | null }[]>("get_log", { owner: this.key.owner }).catch(() => [])) ?? [];
-      const paid = log.filter((e) => (e.event === "pay" || e.event === "request_approved") && e.to).map((e) => e.to as string);
-      for (const name of new Set([...policy.allowlist, ...paid])) {
-        if (name === to) continue;
-        if (skeleton(name) === skeleton(to) || editDistance(name, to) <= 2) {
-          out.push(`${to} looks like ${name}, which the owner trusts, but it is a different account; do not pay it without asking`);
-          break;
-        }
-      }
-    }
-    return out;
+  /// The counterparty check: what is known about `to`, and the verdict it adds up to.
+  async counterparty(to: string, policy: Policy | undefined): Promise<{ verdict: Verdict; signals: Signal[] }> {
+    return assess(await this.facts(to, policy));
+  }
+
+  async facts(to: string, policy: Policy | undefined): Promise<Facts> {
+    const [account, registered, reputation, reports, log, indexed] = await Promise.all([
+      this.provider.viewAccount({ accountId: to }).then((v) => ({ exists: true, isContract: !!v.code_hash && v.code_hash !== EMPTY_CODE }), (e: unknown) => ({ exists: /does not exist|UNKNOWN_ACCOUNT/i.test(String(e)) ? false : null, isContract: false })),
+      policy
+        ? this.view<{ total: string } | null>("storage_balance_of", { account_id: to }, policy.token).then((r) => !!r, () => null)
+        : Promise.resolve(null),
+      // A contract older than the reports list has neither view; that reads as no reports.
+      this.view<Reputation>("reputation", { account: to, owner: this.key.owner }).then((r) => r ?? null, () => null),
+      this.view<Report[]>("get_reports", { account: to }).then((r) => r ?? [], () => []),
+      this.view<{ event: string; to: string | null; key: string | null }[]>("get_log", { owner: this.key.owner }).then((r) => r ?? [], () => []),
+      this.indexed(to),
+    ]);
+    const moved = log.filter((e) => (e.event === "pay" || e.event === "request_approved") && e.to);
+    const trusted = new Set([...(policy?.allowlist ?? []), ...moved.map((e) => e.to as string)]);
+    return {
+      to,
+      exists: account.exists,
+      isContract: account.isContract,
+      registered: account.exists === false ? false : registered,
+      createdAt: indexed.createdAt,
+      deployedAt: account.isContract ? indexed.deployedAt : null,
+      reputation,
+      reports,
+      paidBefore: moved.filter((e) => e.to === to && e.key === this.key.public_key).length,
+      lookalikeOf: lookalike(to, trusted),
+    };
+  }
+
+  /// Age and last deploy from NearBlocks, best effort: a slow or missing answer is "unknown", never
+  /// a reason to hold a payment.
+  private async indexed(to: string): Promise<{ createdAt: number | null; deployedAt: number | null }> {
+    const base = process.env.LEASH_INDEXER_URL ?? INDEXER[this.key.network];
+    const get = (path: string) => fetch(`${base}${path}`, { signal: AbortSignal.timeout(4_000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const ns = (v: unknown) => (typeof v === "string" || typeof v === "number" ? Number(BigInt(v) / 1_000_000n) : null);
+    const [account, deployments] = await Promise.all([get(`/account/${encodeURIComponent(to)}`), get(`/account/${encodeURIComponent(to)}/contract/deployments`)]);
+    const created = ns(account?.account?.[0]?.created?.block_timestamp);
+    const deploys = ((deployments?.deployments ?? []) as { block_timestamp?: string }[]).map((d) => ns(d.block_timestamp)).filter((t): t is number => t !== null);
+    return { createdAt: created, deployedAt: deploys.length ? Math.max(...deploys) : null };
   }
 
   /// Runs an agent method: signed and relayed when there is a relay, otherwise sent by the agent's
@@ -112,8 +128,10 @@ export class Leash {
         if (!(error instanceof RelayUnreachable) || signer) throw error;
       }
     }
-    // A task's child key is no access key on the owner's account, so only a relay can deliver it.
+    // A task's child key is no access key on the owner's account, and no agent key may call
+    // `report` itself, so only a relay can deliver those.
     if (signer) throw new Error("paying from a task needs a relay; set LEASH_RELAY_URL");
+    if (action === "report") throw new Error("reporting goes through the Leash relay; set LEASH_RELAY_URL");
     const direct = action === "pay" ? args : Object.fromEntries(Object.entries(args).filter(([k]) => k !== "payment_id"));
     const out = await this.account.signAndSendTransaction({
       receiverId: this.key.contract,

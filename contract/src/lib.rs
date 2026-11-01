@@ -10,8 +10,8 @@
 //!
 //! Layout: `types` holds every struct the API speaks; `owner` the methods only the owner's key may
 //! call; `agent` the two methods an agent key may call; `token` the NEP-141 callback and the transfer
-//! settlement; `views` the read side; `internals` the policy check, the ledger moves and the storage
-//! billing that the other modules share.
+//! settlement; `reports` the shared list of accounts caught scamming agents; `views` the read side;
+//! `internals` the policy check, the ledger moves and the storage billing that the other modules share.
 
 use near_sdk::serde_json::json;
 use near_sdk::store::{IterableMap, LookupMap};
@@ -20,6 +20,7 @@ use near_sdk::{log, near, AccountId, Gas, PanicOnDefault, PublicKey};
 mod agent;
 mod internals;
 mod owner;
+mod reports;
 mod tasks;
 mod token;
 mod types;
@@ -28,6 +29,8 @@ mod views;
 mod tests;
 #[cfg(test)]
 mod tests_signed;
+#[cfg(test)]
+mod tests_reports;
 #[cfg(test)]
 mod tests_tasks;
 
@@ -54,6 +57,11 @@ const MIN_TASK_SECS: u64 = 60;
 const MAX_TASK_SECS: u64 = 7 * 86_400;
 // Open tasks per parent key, so one agent cannot run up the owner's storage.
 const TASK_LIMIT: usize = 10;
+// Owners who must report an account before it is blocked for everyone; one owner's report blocks it
+// only for themselves.
+const REPORTS_TO_BLOCK_ALL: usize = 2;
+// Reports kept per account: past the threshold more add evidence, not protection.
+const REPORT_LIMIT: usize = 20;
 const EVENT_STANDARD: &str = "leash";
 const EVENT_VERSION: &str = "1.0.0";
 
@@ -81,11 +89,13 @@ pub struct Leash {
     next_task: u64,
     /// Which task a child key spends from.
     task_of: LookupMap<(AccountId, PublicKey), u64>,
+    /// Reports per reported account, at most one per owner.
+    reports: LookupMap<AccountId, Vec<Report>>,
 }
 
-/// The state before tasks, read once by `migrate`.
+/// The state before reports, read once by `migrate`.
 #[near(serializers = [borsh])]
-struct LeashV2 {
+struct LeashV3 {
     policies: LookupMap<(AccountId, PublicKey), Policy>,
     keys: LookupMap<AccountId, Vec<PublicKey>>,
     vaults: LookupMap<(AccountId, AccountId), u128>,
@@ -100,6 +110,9 @@ struct LeashV2 {
     seen: LookupMap<(AccountId, PublicKey), Vec<(String, u64)>>,
     raises: LookupMap<(AccountId, PublicKey), Raise>,
     asks: LookupMap<u64, Ask>,
+    tasks: IterableMap<u64, Task>,
+    next_task: u64,
+    task_of: LookupMap<(AccountId, PublicKey), u64>,
 }
 
 #[near]
@@ -124,14 +137,15 @@ impl Leash {
             tasks: IterableMap::new(StorageKey::Tasks),
             next_task: 1,
             task_of: LookupMap::new(StorageKey::TaskOf),
+            reports: LookupMap::new(StorageKey::Reports),
         }
     }
 
-    /// Carries a v2 deployment's state over unchanged and adds the task collections.
+    /// Carries a v3 deployment's state over unchanged and adds the reports.
     #[private]
     #[init(ignore_state)]
     pub fn migrate() -> Self {
-        let old: LeashV2 = near_sdk::env::state_read().expect("no v2 state to migrate");
+        let old: LeashV3 = near_sdk::env::state_read().expect("no v3 state to migrate");
         Self {
             policies: old.policies,
             keys: old.keys,
@@ -147,9 +161,10 @@ impl Leash {
             seen: old.seen,
             raises: old.raises,
             asks: old.asks,
-            tasks: IterableMap::new(StorageKey::Tasks),
-            next_task: 1,
-            task_of: LookupMap::new(StorageKey::TaskOf),
+            tasks: old.tasks,
+            next_task: old.next_task,
+            task_of: old.task_of,
+            reports: LookupMap::new(StorageKey::Reports),
         }
     }
 }

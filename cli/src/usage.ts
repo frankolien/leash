@@ -13,6 +13,8 @@ export function usage(): never {
   approve   <id> [--force] | deny <id>  Decide a parked request; approve refuses an unregistered recipient unless forced
   register  <account>                   Pay an account's registration on the token so it can receive USDC
   proposals | dismiss <id>              What agents asked for beyond their policy, and clearing a note
+  report    <account> --evidence "<what it did>"  Put a scammer on the shared list: blocked for your agents now,
+            for every owner's once two owners report it. retract <account> withdraws; reports <account> lists them
   window    <secs>                      How long a parked request waits for you (default 3600)
   status | requests | log               What the agents can do, want to do, and did
 `);

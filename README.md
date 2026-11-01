@@ -35,6 +35,11 @@ flowchart LR
 4. **Anyone can sign in.** Owners sign in with Google, Apple or email (an embedded wallet is made
    for them, and a sponsor covers the first fees) or with any NEAR wallet. One shared contract
    serves every owner, so a new owner costs a small storage credit, not a deployment.
+5. **The agent checks who it pays, and scams are shared.** Before signing, the agent's tools answer
+   allow, warn or block on the recipient: reported as a scam, missing, unable to hold USDC, a
+   lookalike, brand new, or a contract whose code just changed. A warn goes to the owner instead.
+   Any owner or agent can report a scammer with evidence; the contract then refuses to pay it for
+   that owner, and for every owner once two have reported it. Details in `docs/08-security.md`.
 
 ## On your iPhone
 
@@ -108,15 +113,19 @@ requests.
 
 ```bash
 cargo install cargo-near             # the sandbox tests build the contract with it
-cd contract && cargo test           # 38 unit tests and 4 sandbox tests against a real node
+cd contract && cargo test           # 48 unit tests and 4 sandbox tests against a real node
 cd ../cli && npm install && npm test   # 3 tests: amount and ttl parsing
-cd ../mcp && npm install && npm test   # 19 tests: lookalike detection, signed intents, task keys, x402
-cd ../web && npm install && npm test   # 63 tests: the dashboard's logic, payment safety, phone alerts, the x402 facilitator
+cd ../mcp && npm install && npm test   # 25 tests: the counterparty check, signed intents, task keys, x402
+cd ../web && npm install && npm test   # 64 tests: the dashboard's logic, payment safety, phone alerts, the x402 facilitator
 ```
 
 The sandbox tests deploy the contract and a mock USDC to a local NEAR node and run the whole story:
 two payments land, a third is refused over the daily cap, a parked request is approved, a failed
-transfer is refunded by the callback, and an owner without storage credit cannot add state.
+transfer is refunded by the callback, and an owner without storage credit cannot add state. With
+`LEASH_PREV_WASM` pointing at the code live on testnet (`near contract download-wasm regular
+leash.frankolien.testnet save-to-file live.wasm network-config testnet now`), a fourth replays the
+upgrade from it: state and open tasks survive, then an agent reports a scammer and the contract
+refuses to pay it.
 
 **3. The dashboard.** Open `https://leash.frankolien.com/frankolien.testnet` (or run it yourself:
 `cd web && npm install && npm run dev`, then `http://localhost:3000/frankolien.testnet`). Anyone can
@@ -151,14 +160,32 @@ account the sample pays: it is refused before anything is sent, and the refusal 
 How a server charges this way, in one function, is in `docs/07-x402.md`; the facilitator is the
 site itself (`/api/x402/supported`, `/verify`, `/settle`).
 
+**6. A prompt-injected agent, stopped.** With the key from step 4:
+
+```bash
+cd mcp && npm install && npm run build
+LEASH_KEY=<key from the dashboard> node demo/attack.mjs
+```
+
+The agent reads an invoice with instructions hidden in an HTML comment and obeys them all: pay a
+scammer $50, then in $0.50 pieces, pay a lookalike of the real vendor, use its key to move USDC
+directly, add a full-access key, raise its own limit. See each one stopped, and by what: the
+counterparty check before signing, the contract on chain (with explorer links), or NEAR refusing
+the key. It ends with the owner's on-chain log and an unchanged vault. A captured run, and what the
+agent's key can and cannot do, are in `docs/08-security.md`.
+
 Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `grant`, `approve`,
-`revoke`, `pause`, `status`, `log` (`node cli/dist/index.js` with no arguments lists them).
+`revoke`, `pause`, `report`, `status`, `log` (`node cli/dist/index.js` with no arguments lists them).
 
 ## Security model
 
 | Threat | What stops it |
 | --- | --- |
-| A prompt-injected agent tries to drain funds | The daily and per-payment limits in the contract; the key cannot call anything but `pay`, `request`, `ask_more` |
+| A prompt-injected agent tries to drain funds | The daily and per-payment limits in the contract; the key cannot call anything but `pay`, `request`, `ask_more`. `mcp/demo/attack.mjs` runs the attack on testnet |
+| A known scam account | The shared reports list: blocked for the reporting owner at once, for every owner once two report it, even if it is on the allowlist |
+| A counterparty that is brand new, or a contract whose code just changed | The counterparty check warns, so the agent parks the payment for the owner instead of paying |
+| The agent uses its key outside Leash: moves USDC, adds a key, raises its own limit | NEAR refuses the transaction: the key is a function-call key for three methods on one contract, with no deposit allowed |
+| Someone reports an honest account to cut it off | One owner's report blocks it only for that owner; reports cost the reporter storage and can be withdrawn |
 | The agent pays an unexpected account | The per-agent allowlist; above-limit payments wait for the owner |
 | A lookalike recipient (`vend0r.near` for `vendor.near`) or one that cannot receive USDC | Before paying, the agent's preflight warns; before approving, the owner sees the same checks against every account they have paid, and the button reads Approve anyway |
 | A leaked agent key | Same limits as the agent; revoke deletes the key, and NEAR refuses it before the contract runs |
@@ -173,11 +200,11 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | Path | What |
 | --- | --- |
 | `contract/` | The Leash contract, Rust with near-sdk 5.29. Unit tests and near-workspaces sandbox tests. |
-| `mcp/` | The MCP server any agent can run: status, preflight, pay, request, ask for more, fetch a paid URL (x402), tasks, history. |
+| `mcp/` | The MCP server any agent can run: status, preflight with the counterparty check, pay, request, ask for more, fetch a paid URL (x402), report a scammer, tasks, history. |
 | `cli/` | The owner's CLI. |
 | `web/` | The landing page and the owner's dashboard: Next.js 16, reads the chain over RPC, signs through the owner's session. |
 | `ios/` | The owner's iPhone app (SwiftUI): approvals, the brake, a widget, a Control, a Live Activity. XcodeGen `project.yml`. |
-| `docs/` | Design, plan, dashboard design, accounts and sign-in, the demo film, paying for APIs (x402). |
+| `docs/` | Design, plan, dashboard design, accounts and sign-in, the demo film, paying for APIs (x402), security and the attack demo. |
 
 ## Code map
 
@@ -188,10 +215,12 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | `contract/src/owner.rs` | What the owner's key may do: policies, kill switch, decisions, vault |
 | `contract/src/agent.rs` | What an agent key may do: pay, request, ask for more |
 | `contract/src/token.rs` | The NEP-141 callback and the settlement of every transfer |
+| `contract/src/reports.rs` | The shared scam list: report, report by signed instruction, retract, reputation |
 | `contract/src/views.rs` | The read side |
 | `contract/src/internals.rs` | The policy check, the ledger moves, the log, the storage billing |
 | `contract/tests/` | Sandbox tests against a real node with a mock USDC |
-| `mcp/src/` | `tools` (the tools), `leash` (policy, verdicts, warnings, signed intents, calls), `x402` (paid requests), `relay`, `safety` (lookalikes), `envelope`, `key`, `units` |
+| `mcp/src/` | `tools` (the tools), `leash` (policy, verdicts, counterparty facts, signed intents, calls), `counterparty` (allow, warn or block), `x402` (paid requests), `relay`, `safety` (lookalikes), `envelope`, `key`, `units` |
+| `mcp/demo/` | The attack demo and the poisoned invoice it reads |
 | `web/lib/server/x402.ts`, `web/app/api/x402/`, `web/app/api/paid/` | The x402 facilitator for Leash payments (`supported`, `verify`, `settle`), the paywall a route calls, and the one-cent sample |
 | `web/lib/server/relay.ts`, `alerts.ts`, `apns.ts` | The relay that delivers signed intents and pays their gas, and the push to the owner's phones |
 | `cli/src/` | The owner's commands: `config`, `units`, `chain`, and `commands/` (setup, money, agents, decisions, read) |
@@ -218,6 +247,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 - [x] iPhone app: native NEAR signing, decision and brake keys, approvals with Face ID, Live Activity, widget, Control Center brake, Siri
 - [x] Push notifications: the relay tells the owner's iPhone within seconds of a parked request or a raise
 - [x] Paying for APIs per request (x402 v2): a Leash transfer method on `near:*`, the facilitator, a paywall for any route, and `leash_fetch` for agents
+- [x] Counterparty check (allow, warn, block) before every payment, a shared scam list in the contract, and an attack demo
 - [ ] Cross-chain payouts: an agent pays a Solana or Base address from the vault through NEAR Intents (mainnet)
 - [ ] Mainnet deployment
 - [ ] Countersign: a NEAR AI Cloud model signs off on payments inside a TEE (stretch)

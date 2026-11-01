@@ -46,6 +46,7 @@ impl Leash {
         self.asks.flush();
         self.tasks.flush();
         self.task_of.flush();
+        self.reports.flush();
         self.settle(owner, before, env::storage_usage());
     }
 
@@ -122,6 +123,11 @@ impl Leash {
         }
         if amount == 0 {
             return refuse("amount is zero", false, remaining, vault);
+        }
+        // Before the allowlist, so a trusted name that turns out to scam is caught too. The owner can
+        // still approve a parked request after reading the evidence.
+        if self.blocked(owner, to) {
+            return refuse("recipient reported as a scam", true, remaining, vault);
         }
         let raise = self.raise_of(owner, key);
         let (_, per_payment_cap) = self.caps(owner, key, policy);

@@ -8,12 +8,13 @@ nothing else: the key can only call the Leash contract, and the contract enforce
 | Tool | What it does |
 | --- | --- |
 | `leash_status` | The policy for this key: token, caps, remaining today, pending requests, vault balance |
-| `leash_preflight` | Would a payment pass? Asks the contract, then adds heuristics: recipient exists, is registered for the token, has history, is not a lookalike of an allowlisted name |
-| `leash_pay` | Pay within policy. Returns the contract's answer, accepted or the reason |
+| `leash_preflight` | Would a payment pass? The contract's answer, plus a counterparty check that answers allow, warn or block: reported as a scam, exists, can hold the token, lookalike of a trusted name, account age, freshly changed contract code, prior payments |
+| `leash_pay` | Pay within policy. Runs the counterparty check first: a block is never signed, a warn is left for the owner through `leash_request`. Returns the contract's answer, accepted or the reason |
 | `leash_request` | Park a payment over the limit for the owner to approve. It expires after the owner's window, an hour by default |
 | `leash_ask_more` | Ask the owner for a wider policy in one sentence; nothing changes until they act |
 | `leash_fetch` | Fetch a URL that charges per request (x402). A 402 that takes Leash payments is paid from the budget, under the owner's limits, and the content comes back with the transaction |
 | `leash_open_task`, `leash_close_task` | Set aside part of the budget for one job, for a sub-agent or yourself; payments with that task's label can never pass it |
+| `leash_report` | Report an account that tried to scam the agent, with evidence. The contract then refuses to pay it for this owner, and for every owner once two owners have reported it |
 | `leash_history` | This key's own payments, refusals, requests and proposals from the on-chain log |
 
 Every tool answers `{ "status": ... }` with one of `ok`, `accepted`, `refused`, `parked`, `proposed`,

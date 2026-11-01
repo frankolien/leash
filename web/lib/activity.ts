@@ -19,6 +19,8 @@ export function describe(e: LogEntry, who: string): Described {
     case "request_denied": return { tone: "", icon: "minus", title: `You denied ${who}'s request` };
     case "request_expired": return { tone: "", icon: "clock", title: `${who}'s request expired` };
     case "proposal_made": return { tone: "warn", icon: "ask", title: `${who} asks for more` };
+    case "reported": return { tone: "bad", icon: "refused", title: `${e.key ? who : "You"} reported ${e.to} as a scam${e.detail ? ` · ${e.detail}` : ""}` };
+    case "report_retracted": return { tone: "", icon: "minus", title: `You withdrew your report on ${e.to}` };
     case "proposal_dismissed": return { tone: "", icon: "minus", title: `You dismissed ${who}'s proposal` };
     case "policy_set": return { tone: "", icon: "key", title: `You granted ${who}` };
     case "policy_revoked": return { tone: "bad", icon: "key", title: `You revoked ${who}` };
