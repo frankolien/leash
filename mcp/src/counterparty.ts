@@ -70,7 +70,8 @@ export function assess(f: Facts, now = Date.now()): { verdict: Verdict; signals:
 
   const rep = f.reputation;
   if (rep?.blocked) {
-    const who = rep.by_you ? "by this owner" : `by ${rep.reported_by} owners`;
+    const others = rep.reported_by - (rep.by_you ? 1 : 0);
+    const who = rep.by_you ? (others > 0 ? `by this owner and ${others} other${others === 1 ? "" : "s"}` : "by this owner") : `by ${rep.reported_by} owners`;
     push("reports", "block", `${f.to} was reported as a scam ${who}: ${evidence(f.reports)}. The contract refuses to pay it`);
   } else if (rep && rep.reported_by > 0) {
     push("reports", "warn", `another owner reported ${f.to} as a scam: ${evidence(f.reports)}`);

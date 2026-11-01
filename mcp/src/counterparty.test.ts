@@ -35,6 +35,8 @@ test("a scam report blocks when the contract blocks, and warns when one stranger
   const blocked = assess({ ...known, reputation: { reported_by: 2, by_you: false, blocked: true }, reports }, NOW);
   assert.equal(blocked.verdict, "block");
   assert.match(concerns(blocked.signals)[0], /reported as a scam by 2 owners: "phishing link/);
+  const mineToo = assess({ ...known, reputation: { reported_by: 2, by_you: true, blocked: true }, reports }, NOW);
+  assert.match(concerns(mineToo.signals)[0], /by this owner and 1 other:/);
   const once = assess({ ...known, reputation: { reported_by: 1, by_you: false, blocked: false }, reports }, NOW);
   assert.equal(once.verdict, "warn");
 });
