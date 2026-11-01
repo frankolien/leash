@@ -14,6 +14,7 @@ import { Invitation, Questions } from "./Closing";
 import sections from "./sections.module.css";
 import FilmSequence from "./FilmSequence";
 import HowItHolds from "./HowItHolds";
+import Preloader from "./Preloader";
 import SetupDialog from "@/components/setup/SetupDialog";
 import Stories from "./Stories";
 import WorksWith from "./WorksWith";
@@ -32,6 +33,7 @@ export default function Landing() {
   const handleFilm = useCallback((over: boolean) => setOnFilm(over), []);
   return (
     <>
+      <Preloader />
       <Atmosphere />
       <a href="#how" className="skip">Skip to how it works</a>
       <SiteHeader
