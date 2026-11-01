@@ -29,7 +29,7 @@ header; if one of its accepted ways is a Leash payment on this agent's network a
 signs a pay intent for exactly that recipient and amount, repeats the request with it in
 `PAYMENT-SIGNATURE`, and the server's facilitator delivers it to the Leash contract. The tool refuses,
 before sending anything, a price over `max_usdc` (1.00 unless given) or over the owner's limits.
-Try it: `https://leash.frankolien.com/api/paid/sample` costs one cent. The server side, and how a
+Try it: `https://leash.frankolien.com/api/paid` lists services an agent can buy this way (Wikipedia search, any web page as text, token prices), and `https://leash.frankolien.com/api/paid/sample` costs one cent. The server side, and how a
 server accepts Leash payments, is in `docs/07-x402.md` in the Leash repo.
 
 ## Set up

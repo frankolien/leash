@@ -144,7 +144,8 @@ export type Terms = {
 /// The paywall in front of a route. Without a payment it answers 402 naming the terms; with one it
 /// settles first and then lets the route serve, so the resource is never given away. The money moves
 /// before the content, which the protocol calls the upfront flow.
-export async function paywall(request: Request, terms: Terms): Promise<{ settled: Settlement; headers: Record<string, string> } | { response: Response }> {
+/// What a route charges, as the 402 states it, and the 402 itself.
+function offer(request: Request, terms: Terms): { response: Response } | { accepts: Requirements; required: PaymentRequired; demand: (error: string) => Response } {
   const payTo = terms.payTo ?? process.env.X402_PAY_TO ?? process.env.SPONSOR_ACCOUNT_ID;
   if (!payTo) return { response: Response.json({ error: "this resource has nowhere to be paid" }, { status: 500, headers: PAID_CORS }) };
   const url = new URL(request.url);
@@ -155,23 +156,69 @@ export async function paywall(request: Request, terms: Terms): Promise<{ settled
     resource: { url: `${url.origin}${url.pathname}`, description: terms.description, mimeType: "application/json", serviceName: "Leash" },
     accepts: [accepts],
   };
-  const demand = (error: string, status = 402) =>
-    Response.json({ error, ...required }, { status, headers: { ...PAID_CORS, "payment-required": encodeHeader({ ...required, error }) } });
+  const demand = (error: string) => Response.json({ error, ...required }, { status: 402, headers: { ...PAID_CORS, "payment-required": encodeHeader({ ...required, error }) } });
+  return { accepts, required, demand };
+}
+
+function refusedSettlement(required: PaymentRequired, settled: Settlement & { errorMessage?: string }, headers: Record<string, string>): Response {
+  const error = settled.errorMessage ?? settled.errorReason ?? "payment failed";
+  return Response.json({ error, ...required }, { status: 402, headers: { ...headers, "payment-required": encodeHeader({ ...required, error }) } });
+}
+
+export async function paywall(request: Request, terms: Terms): Promise<{ settled: Settlement; headers: Record<string, string> } | { response: Response }> {
+  const o = offer(request, terms);
+  if ("response" in o) return o;
   const header = request.headers.get("payment-signature");
-  if (!header) return { response: demand("Payment required") };
+  if (!header) return { response: o.demand("Payment required") };
   const payload = decodeHeader<PaymentPayload>(header);
-  if (!payload) return { response: demand("the PAYMENT-SIGNATURE header is not base64 JSON") };
-  const settled = await facilitate("settle", { x402Version: X402_VERSION, paymentPayload: payload, paymentRequirements: accepts });
+  if (!payload) return { response: o.demand("the PAYMENT-SIGNATURE header is not base64 JSON") };
+  const settled = await facilitate("settle", { x402Version: X402_VERSION, paymentPayload: payload, paymentRequirements: o.accepts });
   const headers = { ...PAID_CORS, "payment-response": encodeHeader(settled) };
-  if (!settled.success) return { response: Response.json({ error: settled.errorMessage ?? settled.errorReason ?? "payment failed", ...required }, { status: 402, headers: { ...headers, "payment-required": encodeHeader({ ...required, error: settled.errorMessage ?? settled.errorReason }) } }) };
+  if (!settled.success) return { response: refusedSettlement(o.required, settled, headers) };
   return { settled, headers };
+}
+
+/// A paid route's work could not be done; the message is safe to show the caller.
+export class Unavailable extends Error {}
+
+export function explorerTx(tx: string | undefined): string | null {
+  if (!tx) return null;
+  return `${DEFAULT_NETWORK === "mainnet" ? "https://nearblocks.io/txns/" : "https://testnet.nearblocks.io/txns/"}${tx}`;
+}
+
+/// Charges only for work that was done. An unpaid request gets the 402 at once and costs nothing to
+/// serve; a payment is verified before the work runs, so a forged one buys no work either; and it
+/// is settled only after `work` returned an answer, so a failed lookup is never charged.
+export async function sell(request: Request, terms: Terms, work: () => Promise<Record<string, unknown>>): Promise<Response> {
+  const o = offer(request, terms);
+  if ("response" in o) return o.response;
+  const header = request.headers.get("payment-signature");
+  if (!header) return o.demand("Payment required");
+  const paymentPayload = decodeHeader<PaymentPayload>(header);
+  if (!paymentPayload) return o.demand("the PAYMENT-SIGNATURE header is not base64 JSON");
+  const body: FacilitatorBody = { x402Version: X402_VERSION, paymentPayload, paymentRequirements: o.accepts };
+  const verdict = await facilitate("verify", body);
+  if (!verdict.isValid) return o.demand(verdict.invalidMessage ?? verdict.invalidReason ?? "payment refused");
+  let result: Record<string, unknown>;
+  try {
+    result = await work();
+  } catch (error) {
+    const reason = error instanceof Unavailable ? error.message : "the lookup failed";
+    return Response.json({ error: `${reason}; nothing was charged` }, { status: 502, headers: PAID_CORS });
+  }
+  const settled = await facilitate("settle", body);
+  const headers = { ...PAID_CORS, "payment-response": encodeHeader(settled) };
+  if (!settled.success) return refusedSettlement(o.required, settled, headers);
+  return Response.json({ ...result, paid: { usdc: (Number(terms.amount) / 1e6).toString(), payer: settled.payer, transaction: explorerTx(settled.transaction) } }, { headers });
 }
 
 /// The facilitator this server trusts: its own by default, over HTTP like any other so another
 /// resource server can point X402_FACILITATOR_URL here and use the same code.
-async function facilitate(route: "settle", body: FacilitatorBody): Promise<Settlement & { errorMessage?: string }> {
+async function facilitate(route: "verify", body: FacilitatorBody): Promise<Verdict>;
+async function facilitate(route: "settle", body: FacilitatorBody): Promise<Settlement & { errorMessage?: string }>;
+async function facilitate(route: "verify" | "settle", body: FacilitatorBody): Promise<Verdict | (Settlement & { errorMessage?: string })> {
   const base = process.env.X402_FACILITATOR_URL;
-  if (!base) return settle(body);
+  if (!base) return route === "verify" ? verify(body) : settle(body);
   const res = await fetch(`${base.replace(/\/$/, "")}/${route}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-  return (await res.json()) as Settlement & { errorMessage?: string };
+  return (await res.json()) as Verdict | (Settlement & { errorMessage?: string });
 }

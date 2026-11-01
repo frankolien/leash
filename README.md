@@ -116,7 +116,7 @@ cargo install cargo-near             # the sandbox tests build the contract with
 cd contract && cargo test           # 48 unit tests and 4 sandbox tests against a real node
 cd ../cli && npm install && npm test   # 3 tests: amount and ttl parsing
 cd ../mcp && npm install && npm test   # 25 tests: the counterparty check, signed intents, task keys, x402
-cd ../web && npm install && npm test   # 64 tests: the dashboard's logic, payment safety, phone alerts, the x402 facilitator
+cd ../web && npm install && npm test   # 73 tests: the dashboard's logic, payment safety, phone alerts, the x402 facilitator
 ```
 
 The sandbox tests deploy the contract and a mock USDC to a local NEAR node and run the whole story:
@@ -151,7 +151,10 @@ Ask for $3: it is over the $2 per-payment limit, so it parks a request and the a
 opens. Approve it and the $3 is paid.
 Ask it to pay `vend0r.testnet`: the preflight warns that it imitates `vendor.testnet` and does not exist, and if the agent parks it anyway, the approval panel shows the same warnings. Revoke the agent and ask again: NEAR rejects the call with `AccessKeyDoesNotExist`.
 
-**5. An agent paying for an API.** Ask Claude Code to fetch `https://leash.frankolien.com/api/paid/sample`.
+**5. An agent paying for an API.** `https://leash.frankolien.com/api/paid` lists what an agent can
+buy: a Wikipedia search for $0.02, any public web page as text for $0.01, a token price for $0.01.
+Ask Claude Code to search Wikipedia for NEAR through `https://leash.frankolien.com/api/paid/search?q=NEAR`,
+or to fetch `https://leash.frankolien.com/api/paid/sample`.
 The server answers 402 with a price of one cent (x402, version 2); the agent pays it from its budget
 with `leash_fetch`, repeats the request, and shows you the content and the transaction. The
 dashboard's activity shows the payment with the URL as its memo. To see a refusal, ask again with
@@ -221,7 +224,8 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | `contract/tests/` | Sandbox tests against a real node with a mock USDC |
 | `mcp/src/` | `tools` (the tools), `leash` (policy, verdicts, counterparty facts, signed intents, calls), `counterparty` (allow, warn or block), `x402` (paid requests), `relay`, `safety` (lookalikes), `envelope`, `key`, `units` |
 | `mcp/demo/` | The attack demo and the poisoned invoice it reads |
-| `web/lib/server/x402.ts`, `web/app/api/x402/`, `web/app/api/paid/` | The x402 facilitator for Leash payments (`supported`, `verify`, `settle`), the paywall a route calls, and the one-cent sample |
+| `web/lib/server/x402.ts`, `web/app/api/x402/`, `web/app/api/paid/` | The x402 facilitator for Leash payments (`supported`, `verify`, `settle`), `paywall` and `sell` (charges only for work that succeeded), the one-cent sample and three paid services |
+| `web/lib/server/paid.ts`, `webpage.ts` | What the paid services do: Wikipedia search, token prices, and reading a public page safely (public addresses only, every redirect checked, size and time caps) |
 | `web/lib/server/relay.ts`, `alerts.ts`, `apns.ts` | The relay that delivers signed intents and pays their gas, and the push to the owner's phones |
 | `cli/src/` | The owner's commands: `config`, `units`, `chain`, and `commands/` (setup, money, agents, decisions, read) |
 | `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `insights` (today's spend, the week, request facts, recipients), `types` |

@@ -289,7 +289,7 @@ export function registerTools(server: McpServer, leash: Leash) {
   server.registerTool(
     "leash_fetch",
     {
-      description: `Fetch a URL that charges per request (x402). A plain URL comes back as is. One that answers 402 names its price; if it takes Leash payments on this account's network, the price is paid from your budget under the owner's limits and the request is repeated, and the content comes back with the on-chain transaction. The owner sees the payment in their log with the URL as its memo. A price over max_usdc, or over the owner's limits, is refused and costs nothing. ${GUIDANCE}`,
+      description: `Fetch a URL that charges per request (x402). A plain URL comes back as is. https://leash.frankolien.com/api/paid lists services you can buy this way: Wikipedia search, any web page as text, token prices. One that answers 402 names its price; if it takes Leash payments on this account's network, the price is paid from your budget under the owner's limits and the request is repeated, and the content comes back with the on-chain transaction. The owner sees the payment in their log with the URL as its memo. A price over max_usdc, or over the owner's limits, is refused and costs nothing. ${GUIDANCE}`,
       inputSchema: {
         url: z.string().url().describe("The resource to fetch, http or https"),
         method: z.enum(["GET", "POST"]).optional().describe("GET if left out"),
@@ -359,8 +359,18 @@ export function registerTools(server: McpServer, leash: Leash) {
         const reason = settlement?.errorReason ?? decodeHeader<PaymentRequired>(second.headers.get("payment-required"))?.error ?? "the server did not accept the payment";
         return reply({ status: "refused", reason, resource: required.resource?.url ?? url, usdc, to: accepted.payTo, http_status: second.status, ...content });
       }
+      // No settlement means no payment this tool can vouch for. The server still holds the signed
+      // intent until it expires, ten minutes after signing, so the owner's log has the last word.
+      if (!settlement) {
+        const error = !second.ok && typeof content.body === "string" ? (() => { try { return (JSON.parse(content.body) as { error?: string }).error; } catch { return undefined; } })() : undefined;
+        return reply(
+          second.ok
+            ? { status: "ok", paid: "unconfirmed", usdc, to: accepted.payTo, resource: required.resource?.url ?? url, http_status: second.status, ...content, next: "the server answered without saying it was paid; leash_history shows whether the payment landed" }
+            : { status: "error", paid: false, reason: error ?? `the server answered ${second.status} without taking the payment`, resource: required.resource?.url ?? url, usdc, to: accepted.payTo, http_status: second.status, ...content, next: "nothing moved; the server could still deliver the signed payment within ten minutes, so check leash_history before paying for this again" },
+        );
+      }
       const after = await leash.check(leash.key.owner, 1n).catch(() => undefined);
-      const tx = settlement?.transaction ? leash.explorer(settlement.transaction) : null;
+      const tx = settlement.transaction ? leash.explorer(settlement.transaction) : null;
       return reply(
         { status: "accepted", paid: true, usdc, to: accepted.payTo, resource: required.resource?.url ?? url, transaction: tx, http_status: second.status, ...content, next: "the payment settled on chain; do not pay for this response again" },
         { kind: "paid", agent: policy.name, usdc, to: accepted.payTo, reason: required.resource?.description ?? required.resource?.url ?? url, remaining_usdc: after ? toUsdc(after.remaining_today) : null, daily_usdc: toUsdc(policy.daily_cap), tx_url: tx },

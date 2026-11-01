@@ -9,7 +9,7 @@ vi.mock("./relay", () => ({
 }));
 
 import { relayIntent } from "./relay";
-import { paywall, settle, supported, verify } from "./x402";
+import { Unavailable, paywall, sell, settle, supported, verify } from "./x402";
 
 const pair = KeyPair.fromRandom("ed25519");
 const key = pair.getPublicKey().toString();
@@ -134,3 +134,43 @@ describe("paywall", () => {
     expect(decodeHeader<Settlement>(out.response.headers.get("payment-response"))).toMatchObject({ success: false, errorReason: "insufficient_funds" });
   });
 });
+
+describe("sell", () => {
+  const terms = { amount: "10000", description: "a test lookup", payTo: "vendor.testnet" };
+  const paidRequest = (payload: PaymentPayload) => new Request("https://leash.test/api/paid/search?q=near", { headers: { "payment-signature": encodeHeader(payload) } });
+
+  it("answers an unpaid request with the 402 and does no work", async () => {
+    const work = vi.fn(async () => ({ ok: true }));
+    const res = await sell(new Request("https://leash.test/api/paid/search?q=near"), terms, work);
+    expect(res.status).toBe(402);
+    expect(decodeHeader<PaymentRequired>(res.headers.get("payment-required")!)?.accepts[0].payTo).toBe("vendor.testnet");
+    expect(work).not.toHaveBeenCalled();
+  });
+  it("does no work for a forged payment", async () => {
+    chainAnswers({ ok: true });
+    const forged = intentFor();
+    forged.signature = Buffer.from(KeyPair.fromRandom("ed25519").sign(new TextEncoder().encode(`leash-intent:${forged.intent}`)).signature).toString("base64");
+    const work = vi.fn(async () => ({ ok: true }));
+    expect((await sell(paidRequest(payloadFor(forged)), terms, work)).status).toBe(402);
+    expect(work).not.toHaveBeenCalled();
+    expect(relayIntent).not.toHaveBeenCalled();
+  });
+  it("charges nothing when the work fails", async () => {
+    chainAnswers({ ok: true });
+    const res = await sell(paidRequest(payloadFor()), terms, async () => { throw new Unavailable("Wikipedia did not answer"); });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "Wikipedia did not answer; nothing was charged" });
+    expect(relayIntent).not.toHaveBeenCalled();
+  });
+  it("settles after the work answered, and returns the answer with the payment", async () => {
+    chainAnswers({ ok: true });
+    const order: string[] = [];
+    vi.mocked(relayIntent).mockImplementation(async () => { order.push("settle"); return { result: { accepted: true, reason: null, remaining_today: "1990000" }, tx: "TX1" }; });
+    const res = await sell(paidRequest(payloadFor()), terms, async () => { order.push("work"); return { results: ["NEAR"] }; });
+    expect(res.status).toBe(200);
+    expect(order).toEqual(["work", "settle"]);
+    expect(await res.json()).toMatchObject({ results: ["NEAR"], paid: { usdc: "0.01", payer: "olien.testnet", transaction: "https://testnet.nearblocks.io/txns/TX1" } });
+    expect(decodeHeader<Settlement>(res.headers.get("payment-response")!)?.success).toBe(true);
+  });
+});
+
