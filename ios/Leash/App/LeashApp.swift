@@ -19,12 +19,17 @@ struct LeashApp: App {
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var phase
+    @AppStorage("leash.appearance") private var appearance: Appearance = .system
+
+    /// Onboarding is always dark; the app follows the owner's choice. Set on the window rather than
+    /// with preferredColorScheme, which does not reliably return to the phone's own setting.
+    private var style: UIUserInterfaceStyle { model.phase == .unlinked ? .dark : appearance.style }
 
     var body: some View {
         Group {
             switch model.phase {
-            case .unlinked: OnboardingView().preferredColorScheme(.dark)
-            case .linked: MainView().preferredColorScheme(.light)
+            case .unlinked: OnboardingView()
+            case .linked: MainView()
             }
         }
         .overlay(alignment: .top) {
@@ -38,6 +43,11 @@ struct RootView: View {
             }
         }
         .animation(.spring(duration: 0.35), value: model.notice)
+        .onChange(of: style, initial: true) { _, style in
+            for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+                scene.windows.forEach { $0.overrideUserInterfaceStyle = style }
+            }
+        }
         .sensoryFeedback(trigger: model.notice) { _, new in new.map { $0.failed ? .error : .success } }
         .onChange(of: phase, initial: true) { _, now in
             if now == .active, model.linked != nil { model.startRefreshing() } else { model.stopRefreshing() }

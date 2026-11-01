@@ -11,6 +11,7 @@ struct AccountView: View {
     @State private var confirmUnlink = false
     @State private var alerts: UNAuthorizationStatus?
     @State private var keys: [(publicKey: String, permission: KeyPermission)]?
+    @AppStorage("leash.appearance") private var appearance: Appearance = .system
     @State private var copied = false
 
     var body: some View {
@@ -22,6 +23,7 @@ struct AccountView: View {
                         thisPhone
                         keyList(s)
                         alertsRow
+                        appearanceRow
                         unlink
                     }
                     .padding(.horizontal, 20)
@@ -169,6 +171,25 @@ struct AccountView: View {
         }
     }
 
+    private var appearanceRow: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            SectionHeader(title: "Appearance")
+            HStack(spacing: 4) {
+                ForEach(Appearance.allCases) { option in
+                    Button { withAnimation(.snappy) { appearance = option } } label: {
+                        Text(option.label).font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(appearance == option ? Ink.inverse : Ink.muted)
+                            .frame(maxWidth: .infinity).frame(height: 38)
+                            .background(Capsule().fill(appearance == option ? Ink.text : .clear))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(4)
+            .background(Capsule().fill(Ink.raised))
+        }
+    }
+
     private var unlink: some View {
         VStack(spacing: 8) {
             Button(role: .destructive) { confirmUnlink = true } label: {
@@ -258,7 +279,7 @@ struct MoveMoneySheet: View {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    if working { ProgressView().tint(.white) }
+                    if working { ProgressView().tint(Ink.inverse) }
                     Text("Continue")
                 }
             }

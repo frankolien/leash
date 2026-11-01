@@ -1,19 +1,53 @@
 import SwiftUI
 
-/// PayBox's restraint, measured from its app: a white ground, #F6F6F6 cards, #EBEBEB pills and
-/// circles with a hairline edge. Ink is true black, not PayBox's #191919, which reads grey on a
-/// phone. Colour only where it means something.
+/// PayBox's restraint, measured from its app, in both of its looks. Light: a white ground, #F6F6F6
+/// cards, #EBEBEB pills and circles with a hairline edge, true black ink. Dark: the web dashboard's
+/// near-black ground, #171717 cards, #242424 controls and white ink. Colour only where it means
+/// something. `inverse` is what sits on an `text`-filled shape, like a primary pill's label.
 enum Ink {
-    static let ground = Color.white
-    static let surface = Color(hex: 0xF6F6F6)
-    static let raised = Color(hex: 0xEBEBEB)
-    static let edge = Color(hex: 0xDDDDDD)
-    static let line = Color(hex: 0xE6E6E6)
-    static let text = Color.black
-    static let muted = Color(hex: 0x7B7B7B)
-    static let faint = Color(hex: 0xA6A6A6)
-    static let danger = Color(hex: 0xE5484D)
-    static let good = Color(hex: 0x1F9D55)
+    static let ground = adaptive(0xFFFFFF, 0x0B0B0B)
+    static let surface = adaptive(0xF6F6F6, 0x171717)
+    static let raised = adaptive(0xEBEBEB, 0x242424)
+    static let edge = adaptive(0xDDDDDD, 0x2B2B2B)
+    static let line = adaptive(0xE6E6E6, 0x222222)
+    static let text = adaptive(0x000000, 0xFFFFFF)
+    static let inverse = adaptive(0xFFFFFF, 0x000000)
+    static let muted = adaptive(0x7B7B7B, 0x858585)
+    static let faint = adaptive(0xA6A6A6, 0x5E5E5E)
+    static let disc = adaptive(0xDEDEDE, 0x3A3A3A)
+    static let danger = adaptive(0xE5484D, 0xF2726B)
+    static let good = adaptive(0x1F9D55, 0x6AD09D)
+
+    private static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
+        Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) })
+    }
+}
+
+/// The owner's choice in Settings. System follows the phone.
+enum Appearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: String { rawValue }
+    var scheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+    var label: String { rawValue.capitalized }
+    var style: UIUserInterfaceStyle {
+        switch self {
+        case .system: .unspecified
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+}
+
+extension UIColor {
+    convenience init(hex: UInt32) {
+        self.init(red: CGFloat((hex >> 16) & 0xff) / 255, green: CGFloat((hex >> 8) & 0xff) / 255, blue: CGFloat(hex & 0xff) / 255, alpha: 1)
+    }
 }
 
 extension Color {
@@ -37,7 +71,7 @@ struct PillButtonStyle: ButtonStyle {
                 switch kind {
                 case .primary: Capsule().fill(Ink.text)
                 case .secondary, .danger: Capsule().fill(Ink.raised)
-                case .light: Capsule().fill(Color.white)
+                case .light: Capsule().fill(Ink.inverse)
                 case .glass: Capsule().fill(.ultraThinMaterial).environment(\.colorScheme, .dark)
                 }
             }
@@ -48,8 +82,9 @@ struct PillButtonStyle: ButtonStyle {
 
     private var foreground: Color {
         switch kind {
-        case .primary, .glass: .white
-        case .light: .black
+        case .primary: Ink.inverse
+        case .glass: .white
+        case .light: Ink.text
         case .secondary: Ink.text
         case .danger: Ink.danger
         }
@@ -172,17 +207,24 @@ struct BigAmount: View {
     let units: Units
     var size: CGFloat = 50
     var hidden = false
+    /// Home's centred balance: a light-weight figure between a faint dollar sign and faint cents.
+    var display = false
     var body: some View {
         let text = Money.usd(units)
         let cut = text.lastIndex(of: ".") ?? text.endIndex
+        let start = text.hasPrefix("$") ? text.index(after: text.startIndex) : text.startIndex
         Group {
             if hidden {
                 Text("$••••")
+            } else if display {
+                Text("$ ").font(.system(size: size * 0.55, weight: .regular)).foregroundColor(Ink.muted)
+                    + Text(text[start..<cut])
+                    + Text(text[cut...]).font(.system(size: size * 0.6, weight: .regular)).foregroundColor(Ink.faint)
             } else {
                 Text(text[..<cut]) + Text(text[cut...]).font(.system(size: size * 0.62, weight: .semibold)).foregroundColor(Ink.faint)
             }
         }
-        .font(.system(size: size, weight: .bold)).tracking(-size * 0.035)
+        .font(.system(size: size, weight: display ? .regular : .bold)).tracking(display ? -size * 0.02 : -size * 0.035)
         .monospacedDigit()
         .lineLimit(1)
         .minimumScaleFactor(0.5)
@@ -213,7 +255,7 @@ struct Avatar: View {
             if let badge {
                 Image(systemName: badge.symbol)
                     .font(.system(size: size * 0.2, weight: .heavy))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Ink.inverse)
                     .frame(width: size * 0.42, height: size * 0.42)
                     .background(Circle().fill(badge.tone.color))
                     .overlay(Circle().stroke(Ink.ground, lineWidth: 2.5))
@@ -268,7 +310,7 @@ struct Toast: View {
         HStack(spacing: 10) {
             Image(systemName: notice.failed ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
                 .foregroundStyle(notice.failed ? Ink.danger : Ink.good)
-            Text(notice.text).font(.subheadline.weight(.medium)).foregroundStyle(.white).lineLimit(3)
+            Text(notice.text).font(.subheadline.weight(.medium)).foregroundStyle(Ink.inverse).lineLimit(3)
         }
         .padding(.horizontal, 18).padding(.vertical, 14)
         .background(Capsule().fill(Ink.text))

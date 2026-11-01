@@ -21,14 +21,16 @@ final class Navigator {
     }
 }
 
-/// Home, laid out like PayBox's: the account and settings on top, the vault balance and how it
-/// moved, two actions, anything waiting on the owner, then what happened lately.
+/// Home, laid out like the web dashboard on a phone: the account and the brake on top, the vault
+/// balance centred with how it moved, the chart, two actions, anything waiting on the owner, then
+/// what happened lately. Settings sit in the account menu.
 struct OverviewView: View {
     @Environment(AppModel.self) private var model
     @Environment(Navigator.self) private var nav
     @AppStorage("leash.hideBalance") private var hidden = false
     @AppStorage("leash.chartDays") private var days = 7
     @State private var scrub: Date?
+    @State private var confirmPause = false
 
     var body: some View {
         let s = model.snapshot
@@ -39,8 +41,7 @@ struct OverviewView: View {
                 HStack {
                     accountMenu
                     Spacer()
-                    Button { nav.sheet = .settings } label: { RoundIcon(system: "gearshape") }
-                        .accessibilityLabel("Settings")
+                    brake(s)
                 }
                 .padding(.top, 8)
 
@@ -54,24 +55,26 @@ struct OverviewView: View {
                         .accessibilityLabel(hidden ? "Show balance" : "Hide balance")
                     }
                 }
-                .padding(.top, 28)
-                BigAmount(units: picked?.balance ?? s?.vault ?? 0, size: 52, hidden: hidden && picked == nil)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 34)
+                BigAmount(units: picked?.balance ?? s?.vault ?? 0, size: 76, hidden: hidden && picked == nil, display: true)
                     .redacted(reason: s == nil ? .placeholder : [])
-                    .padding(.top, 2)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 4)
                     .animation(.snappy(duration: 0.2), value: picked?.balance)
-                change(history).padding(.top, 6)
+                change(history).frame(maxWidth: .infinity).padding(.top, 12)
 
                 if history.count > 1 {
                     BalanceChart(points: history, selected: $scrub)
-                        .frame(height: 150)
-                        .padding(.top, 22)
+                        .frame(height: 170)
+                        .padding(.top, 26)
                         .opacity(hidden ? 0 : 1)
-                    rangePicker.padding(.top, 14)
+                    rangeRow(history).padding(.top, 12)
                 }
 
                 HStack(spacing: 8) {
                     Button("Top up") { nav.sheet = .topUp }.buttonStyle(.pill(.primary))
-                    Button("Receive USDC") { nav.sheet = .receive }.buttonStyle(.pill(.primary))
+                    Button("Receive USDC") { nav.sheet = .receive }.buttonStyle(.pill(.secondary))
                 }
                 .padding(.top, 24)
 
@@ -98,37 +101,66 @@ struct OverviewView: View {
         .refreshable { await model.refresh() }
     }
 
-    /// How the vault moved over the range shown.
+    /// How the vault moved over the range shown, as a chip under the balance.
     @ViewBuilder private func change(_ history: [(day: Date, balance: Units)]) -> some View {
         if let first = history.first, let last = history.last, !hidden {
             let delta = last.balance - first.balance
+            let range = days == 7 ? "this week" : "this month"
             HStack(spacing: 6) {
                 if delta != 0 {
                     Image(systemName: delta > 0 ? "arrow.up.right" : "arrow.down.right").font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(delta > 0 ? Ink.good : Ink.muted)
+                    Text(Money.usd(abs(delta))).fontWeight(.semibold).foregroundStyle(delta > 0 ? Ink.good : Ink.text)
+                    Text(delta > 0 ? "added \(range)" : "out \(range)").foregroundStyle(Ink.muted)
+                } else {
+                    Text("No change \(range)").foregroundStyle(Ink.muted)
                 }
-                Text(delta == 0 ? "No change" : Money.usd(abs(delta)))
-                    .fontWeight(.semibold)
-                Text(days == 7 ? "this week" : "this month").foregroundStyle(Ink.muted)
             }
             .font(.system(size: 15))
-            .foregroundStyle(delta > 0 ? Ink.good : Ink.text)
             .monospacedDigit()
+            .padding(.horizontal, 14).frame(height: 36)
+            .background(Capsule().fill(Ink.surface))
         }
     }
 
-    private var rangePicker: some View {
-        HStack(spacing: 4) {
-            ForEach([(7, "1W"), (30, "1M")], id: \.0) { value, label in
-                Button { withAnimation(.snappy) { days = value } } label: {
-                    Text(label).font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(days == value ? Ink.ground : Ink.muted)
-                        .frame(width: 44, height: 28)
-                        .background(Capsule().fill(days == value ? Ink.text : .clear))
+    /// The range's first and last day either side of the 1W / 1M switch.
+    private func rangeRow(_ history: [(day: Date, balance: Units)]) -> some View {
+        HStack {
+            Text(history.first.map { Self.edge($0.day) } ?? "").frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 4) {
+                ForEach([(7, "1W"), (30, "1M")], id: \.0) { value, label in
+                    Button { withAnimation(.snappy) { days = value } } label: {
+                        Text(label).font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(days == value ? Ink.inverse : Ink.muted)
+                            .frame(width: 50, height: 32)
+                            .background(Capsule().fill(days == value ? Ink.text : .clear))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
+            .padding(4)
+            .background(Capsule().fill(Ink.surface))
+            Text(history.last.map { Self.edge($0.day) } ?? "").frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+        .font(.system(size: 14))
+        .foregroundStyle(Ink.muted)
+    }
+
+    static func edge(_ day: Date) -> String { day.formatted(.dateTime.day().month(.abbreviated)) }
+
+    /// The brake, labelled, where the thumb finds it first. Resuming when everything is paused.
+    @ViewBuilder private func brake(_ s: Snapshot?) -> some View {
+        if s?.paused == true {
+            Button { Task { await model.resume() } } label: { Label("Resume", systemImage: "play.fill").labelStyle(PillLabel()) }
+                .buttonStyle(.pill(.primary, compact: true))
+        } else {
+            Button { confirmPause = true } label: { Label("Pause all", systemImage: "pause.fill").labelStyle(PillLabel()) }
+                .buttonStyle(.pill(.secondary, compact: true))
+                .disabled(s == nil)
+                .confirmationDialog("Pause every agent?", isPresented: $confirmPause, titleVisibility: .visible) {
+                    Button("Pause all agents", role: .destructive) { Task { await model.pauseAll() } }
+                } message: { Text("No agent can pay until you resume. Requests already waiting stay waiting.") }
+        }
     }
 
     static func dayLabel(_ day: Date) -> String {
@@ -141,10 +173,11 @@ struct OverviewView: View {
                 Button { UIPasteboard.general.string = linked.account } label: { Label("Copy account name", systemImage: "doc.on.doc") }
                 Button { nav.sheet = .receive } label: { Label("Show QR code", systemImage: "qrcode") }
             }
+            Button { nav.sheet = .settings } label: { Label("Settings", systemImage: "gearshape") }
         } label: {
             HStack(spacing: 10) {
                 ZStack {
-                    Circle().fill(Color(hex: 0xDEDEDE))
+                    Circle().fill(Ink.disc)
                     Image("mark").resizable().foregroundStyle(Ink.text).frame(width: 19, height: 19)
                 }
                 .frame(width: 35, height: 35)
@@ -174,24 +207,23 @@ struct WaitingCard: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("\(s.name(of: r.key)) wants to pay \(Money.usd(units(r.amount)))").font(.system(size: 16, weight: .semibold)).lineLimit(1)
                         Text(s.waiting > 1 ? "\(r.to) and \(s.waiting - 1) more" : "\(r.to) · \(untilText(r.expires_at.nanoDate)) left")
-                            .font(.system(size: 14)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                            .font(.system(size: 14)).foregroundStyle(Ink.inverse.opacity(0.6)).lineLimit(1)
                     }
                 } else if let p = s.proposals.first {
                     Avatar(actor: .agent(s.name(of: p.key)), badge: .init(symbol: "arrow.up", tone: .neutral))
                     VStack(alignment: .leading, spacing: 3) {
                         Text("\(s.name(of: p.key)) asks for more").font(.system(size: 16, weight: .semibold)).lineLimit(1)
-                        Text(p.note).font(.system(size: 14)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                        Text(p.note).font(.system(size: 14)).foregroundStyle(Ink.inverse.opacity(0.6)).lineLimit(1)
                     }
                 }
                 Spacer(minLength: 6)
                 Text("Review").font(.system(size: 14, weight: .semibold)).foregroundStyle(Ink.text)
                     .padding(.horizontal, 14).frame(height: 34)
-                    .background(Capsule().fill(.white))
+                    .background(Capsule().fill(Ink.inverse))
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Ink.inverse)
             .padding(.horizontal, 16).padding(.vertical, 16)
             .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Ink.text))
-            .environment(\.colorScheme, .dark)
         }
         .buttonStyle(PressStyle())
     }
@@ -356,7 +388,7 @@ struct PausedCard: View {
     @Environment(AppModel.self) private var model
     var body: some View {
         RowCard(title: "Every agent is paused", subtitle: "Nothing can be paid until you resume.") {
-            ZStack { Circle().fill(Ink.text); Image(systemName: "pause.fill").foregroundStyle(.white) }.frame(width: 46, height: 46)
+            ZStack { Circle().fill(Ink.text); Image(systemName: "pause.fill").foregroundStyle(Ink.inverse) }.frame(width: 46, height: 46)
         } trailing: {
             Button("Resume") { Task { await model.resume() } }.buttonStyle(.pill(.primary, compact: true))
         }

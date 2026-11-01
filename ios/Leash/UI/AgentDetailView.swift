@@ -112,7 +112,7 @@ struct AgentDetailView: View {
                     if d.spent > 0 {
                         BarMark(x: .value("Day", d.day, unit: .day), yStart: .value("Track", 0), yEnd: .value("Spent", max(top * 0.08, Double(d.spent) / Double(Money.unit))), width: .fixed(16))
                             .cornerRadius(8)
-                            .foregroundStyle(i == days.count - 1 ? Ink.text : Color(hex: 0x9A9A9A))
+                            .foregroundStyle(i == days.count - 1 ? Ink.text : Ink.muted)
                     }
                 }
             }
@@ -155,7 +155,7 @@ struct AgentDetailView: View {
 
     private func raised(_ a: Agent, _ raise: Raise) -> some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemName: "arrow.up").font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
+            Image(systemName: "arrow.up").font(.system(size: 15, weight: .bold)).foregroundStyle(Ink.inverse)
                 .frame(width: 40, height: 40).background(Circle().fill(Ink.good))
             VStack(alignment: .leading, spacing: 6) {
                 Text("Raised for a while").font(.system(size: 16, weight: .semibold))
@@ -312,7 +312,7 @@ struct EditLimitsSheet: View {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    if model.busy == "limits-\(agent.key)" { ProgressView().tint(.white) } else { Image(systemName: "faceid") }
+                    if model.busy == "limits-\(agent.key)" { ProgressView().tint(Ink.inverse) } else { Image(systemName: "faceid") }
                     Text("Save limits")
                 }
             }

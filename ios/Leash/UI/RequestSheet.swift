@@ -62,7 +62,7 @@ struct RequestSheet: View {
                     Task { if await model.approve(request) { dismiss() } }
                 } label: {
                     HStack(spacing: 8) {
-                        if model.busy == "approve-\(request.id)" { ProgressView().tint(.white) } else { Image(systemName: "faceid") }
+                        if model.busy == "approve-\(request.id)" { ProgressView().tint(Ink.inverse) } else { Image(systemName: "faceid") }
                         Text(danger ? "Approve anyway" : "Approve \(Money.usd(units(request.amount)))")
                     }
                 }
@@ -170,7 +170,7 @@ struct AskSheet: View {
                         Task { if await model.grant(proposal, forSecs: hours * 3600) { dismiss() } }
                     } label: {
                         HStack(spacing: 8) {
-                            if model.busy == "grant-\(proposal.id)" { ProgressView().tint(.white) } else { Image(systemName: "faceid") }
+                            if model.busy == "grant-\(proposal.id)" { ProgressView().tint(Ink.inverse) } else { Image(systemName: "faceid") }
                             Text("Grant for \(hours == 1 ? "1 hour" : hours == 24 ? "1 day" : "7 days")")
                         }
                     }

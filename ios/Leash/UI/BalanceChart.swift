@@ -1,8 +1,9 @@
 import Charts
 import SwiftUI
 
-/// The vault over the last week or month, drawn like the web dashboard's chart: one black line, a
-/// fading fill under it, a dot on today. Dragging across it reads out a day's balance above.
+/// The vault over the last week or month, drawn like the web dashboard's chart: one line in the
+/// ink colour, a fading fill under it, a dot on today; the dates sit below, beside the range switch.
+/// Dragging across it reads out a day's balance above.
 struct BalanceChart: View {
     let points: [(day: Date, balance: Units)]
     @Binding var selected: Date?
@@ -17,7 +18,7 @@ struct BalanceChart: View {
             ForEach(Array(points.enumerated()), id: \.offset) { _, p in
                 AreaMark(x: .value("Day", p.day, unit: .day), yStart: .value("Floor", floor), yEnd: .value("Balance", Double(p.balance) / Double(Money.unit)))
                     .interpolationMethod(.monotone)
-                    .foregroundStyle(LinearGradient(colors: [Ink.text.opacity(0.12), Ink.text.opacity(0)], startPoint: .top, endPoint: .bottom))
+                    .foregroundStyle(LinearGradient(colors: [Ink.text.opacity(0.16), Ink.text.opacity(0)], startPoint: .top, endPoint: .bottom))
                 LineMark(x: .value("Day", p.day, unit: .day), y: .value("Balance", Double(p.balance) / Double(Money.unit)))
                     .interpolationMethod(.monotone)
                     .lineStyle(StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
@@ -38,13 +39,7 @@ struct BalanceChart: View {
             }
         }
         .chartYScale(domain: floor...(top * 1.08))
-        .chartXAxis {
-            AxisMarks(values: .stride(by: .day, count: points.count > 10 ? 7 : 1)) { _ in
-                AxisValueLabel(format: points.count > 10 ? .dateTime.day().month(.abbreviated) : .dateTime.weekday(.narrow))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Ink.faint)
-            }
-        }
+        .chartXAxis(.hidden)
         .chartYAxis(.hidden)
         .chartXSelection(value: $selected)
         .sensoryFeedback(.selection, trigger: selected.flatMap { point(at: $0)?.day })

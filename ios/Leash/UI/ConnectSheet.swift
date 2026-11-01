@@ -119,7 +119,7 @@ struct NewAgentForm: View {
                         }
                     } label: {
                         HStack(spacing: 8) {
-                            if working { ProgressView().tint(.white) }
+                            if working { ProgressView().tint(Ink.inverse) }
                             Text("Create \(agentName)")
                         }
                     }
@@ -239,7 +239,7 @@ struct ChatGptSteps: View {
 
     private func step(_ n: Int, _ title: String, _ line: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
-            Text("\(n)").font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
+            Text("\(n)").font(.system(size: 15, weight: .bold)).foregroundStyle(Ink.inverse)
                 .frame(width: 30, height: 30).background(Circle().fill(Ink.text))
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.system(size: 17, weight: .semibold))
