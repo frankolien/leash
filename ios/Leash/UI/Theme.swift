@@ -90,7 +90,7 @@ struct PillButtonStyle: ButtonStyle {
                 switch kind {
                 case .primary: Capsule().fill(Ink.text)
                 case .secondary, .danger: Capsule().fill(Ink.raised)
-                case .light: Capsule().fill(Ink.inverse)
+                case .light: Capsule().fill(Color.white)
                 case .glass: Capsule().fill(.ultraThinMaterial).environment(\.colorScheme, .dark)
                 }
             }
@@ -103,7 +103,7 @@ struct PillButtonStyle: ButtonStyle {
         switch kind {
         case .primary: Ink.inverse
         case .glass: .white
-        case .light: Ink.text
+        case .light: .black
         case .secondary: Ink.text
         case .danger: Ink.danger
         }
