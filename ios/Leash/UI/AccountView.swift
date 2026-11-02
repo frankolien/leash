@@ -3,8 +3,8 @@ import SafariServices
 import SwiftUI
 import UserNotifications
 
-/// The account this phone runs: its money, what this iPhone may do, every key on the account, alerts,
-/// and the way out.
+/// Settings, kept short: the account, then one row each for its keys, alerts, appearance and
+/// withdrawing, and the way out. The keys open on their own page.
 struct AccountView: View {
     @Environment(AppModel.self) private var model
     @Environment(Navigator.self) private var nav
@@ -19,11 +19,18 @@ struct AccountView: View {
             ScrollView {
                 if let s = model.snapshot, let linked = model.linked {
                     VStack(alignment: .leading, spacing: 30) {
-                        account(s, linked)
-                        thisPhone
-                        keyList(s)
-                        alertsRow
-                        appearanceRow
+                        account(linked)
+                        VStack(spacing: 4) {
+                            NavigationLink { KeysView(snapshot: s, keys: keys) } label: {
+                                SettingsRow(system: "key", title: "Keys on your account", value: keys.map { "\($0.count)" }, chevron: true)
+                            }
+                            alertsRow
+                            appearanceRow
+                            Button { nav.sheet = .withdraw } label: {
+                                SettingsRow(system: "arrow.down.to.line", title: "Withdraw", value: Money.usd(s.vault), chevron: true)
+                            }
+                        }
+                        .buttonStyle(.plain)
                         unlink
                     }
                     .padding(.horizontal, 20)
@@ -44,40 +51,118 @@ struct AccountView: View {
         .sensoryFeedback(.success, trigger: copied)
     }
 
-    private func account(_ s: Snapshot, _ linked: LinkedAccount) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(spacing: 14) {
-                Avatar(actor: .owner, size: 52)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(shortAccount(linked.account)).font(.system(size: 20, weight: .bold)).lineLimit(1).truncationMode(.middle)
-                    Text("NEAR \(linked.network.rawValue)").font(.system(size: 14)).foregroundStyle(Ink.muted)
-                }
-                Spacer()
-                Button {
-                    UIPasteboard.general.string = linked.account
-                    copied.toggle()
-                } label: { RoundIcon(system: "doc.on.doc", size: 40) }
-                .accessibilityLabel("Copy account name")
+    private func account(_ linked: LinkedAccount) -> some View {
+        HStack(spacing: 14) {
+            Avatar(actor: .owner, size: 52)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(shortAccount(linked.account)).font(.system(size: 20, weight: .bold)).lineLimit(1).truncationMode(.middle)
+                Text("NEAR \(linked.network.rawValue)").font(.system(size: 14)).foregroundStyle(Ink.muted)
             }
-            HStack(spacing: 10) {
-                balance("In the vault", s.vault)
-                balance("In your account", s.held)
-            }
-            HStack(spacing: 10) {
-                Button("Add to vault") { nav.sheet = .topUp }.buttonStyle(.pill(.secondary))
-                Button("Withdraw") { nav.sheet = .withdraw }.buttonStyle(.pill(.secondary))
-            }
+            Spacer()
+            Button {
+                UIPasteboard.general.string = linked.account
+                copied.toggle()
+            } label: { RoundIcon(system: copied ? "checkmark" : "doc.on.doc", size: 40) }
+            .accessibilityLabel("Copy account name")
         }
     }
 
-    private func balance(_ label: String, _ amount: Units) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.system(size: 13)).foregroundStyle(Ink.muted)
-            Text(Money.usd(amount)).font(.system(size: 20, weight: .bold)).monospacedDigit()
+    @ViewBuilder private var alertsRow: some View {
+        let status = alerts == .authorized ? "On" : alerts == .denied ? "Off" : "Not asked yet"
+        if alerts == .authorized {
+            SettingsRow(system: "bell", title: "Alerts", value: status)
+        } else {
+            Button {
+                Task {
+                    if alerts == .denied { await UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!) }
+                    else { await Alerts.shared.requestPermission(); await readAlerts() }
+                }
+            } label: { SettingsRow(system: "bell", title: "Alerts", value: status, action: "Turn on") }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Ink.surface))
+    }
+
+    private var appearanceRow: some View {
+        Menu {
+            Picker("Appearance", selection: $appearance) {
+                ForEach(Appearance.allCases) { Text($0.label).tag($0) }
+            }
+        } label: {
+            SettingsRow(system: "circle.lefthalf.filled", title: "Appearance", value: appearance.label, chevron: true, symbol: "chevron.up.chevron.down")
+        }
+    }
+
+    private var unlink: some View {
+        VStack(spacing: 8) {
+            Button(role: .destructive) { confirmUnlink = true } label: {
+                HStack(spacing: 8) {
+                    if model.busy == "unlink" { ProgressView().tint(Ink.danger) }
+                    Text("Unlink this iPhone")
+                }
+            }
+            .buttonStyle(.pill(.danger))
+            .disabled(model.busy != nil)
+            Text(model.ownerKey != nil ? "Takes this iPhone's keys off your account, then forgets them here." : "Forgets the keys on this iPhone. Remove them from your account in Settings on the web.")
+                .font(.system(size: 13)).foregroundStyle(Ink.faint).multilineTextAlignment(.center)
+        }
+        .padding(.top, 8)
+        .confirmationDialog("Unlink this iPhone?", isPresented: $confirmUnlink, titleVisibility: .visible) {
+            Button("Unlink", role: .destructive) { Task { await model.unlink() } }
+        }
+    }
+
+    private func readAlerts() async {
+        alerts = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+    }
+}
+
+/// One line in Settings: an icon, the setting, its value, and a chevron or a button when it goes
+/// somewhere.
+struct SettingsRow: View {
+    let system: String
+    let title: String
+    var value: String? = nil
+    var chevron = false
+    var action: String? = nil
+    var symbol = "chevron.right"
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: system).font(.system(size: 16)).foregroundStyle(Ink.text)
+                .frame(width: 42, height: 42).background(Circle().fill(Ink.surface))
+            Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(Ink.text)
+            Spacer(minLength: 8)
+            if let value { Text(value).font(.system(size: 15)).foregroundStyle(Ink.muted).monospacedDigit().lineLimit(1) }
+            if let action {
+                Text(action).font(.system(size: 14, weight: .semibold)).foregroundStyle(Ink.inverse)
+                    .padding(.horizontal, 14).frame(height: 32).background(Capsule().fill(Ink.text))
+            } else if chevron {
+                Image(systemName: symbol).font(.system(size: 13, weight: .semibold)).foregroundStyle(Ink.faint)
+            }
+        }
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
+    }
+}
+
+/// Every key on the account, this iPhone's first, with what this iPhone may do.
+struct KeysView: View {
+    @Environment(AppModel.self) private var model
+    let snapshot: Snapshot
+    let keys: [(publicKey: String, permission: KeyPermission)]?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                thisPhone
+                keyList(snapshot)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 32)
+        }
+        .scrollIndicators(.hidden)
+        .groundBackground()
+        .navigationTitle("Keys")
+        .navigationBarTitleDisplayMode(.large)
     }
 
     private var thisPhone: some View {
@@ -101,7 +186,7 @@ struct AccountView: View {
 
     @ViewBuilder private func keyList(_ s: Snapshot) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            SectionHeader(title: "Keys on your account") { if let keys { Text("\(keys.count)") } }
+            SectionHeader(title: "On your account") { if let keys { Text("\(keys.count)") } }
             if let keys {
                 // This iPhone's first, then the sign-in, then agents by name.
                 let order = { (k: (publicKey: String, permission: KeyPermission)) -> String in
@@ -146,71 +231,6 @@ struct AccountView: View {
             if methods.sorted() == ["deny", "pause"] { return ("Another phone", "The brake: pause and deny", "pause.circle", nil) }
             return ("Limited key", methods.joined(separator: ", "), "key", nil)
         }
-    }
-
-    private var alertsRow: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SectionHeader(title: "Alerts")
-            HStack(spacing: 14) {
-                Image(systemName: "bell.badge").font(.system(size: 16)).frame(width: 42, height: 42).background(Circle().fill(Ink.surface))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("When an agent waits on you").font(.system(size: 16, weight: .semibold))
-                    Text(alerts == .authorized ? "On" : alerts == .denied ? "Off in Settings" : "Not asked yet").font(.system(size: 13)).foregroundStyle(Ink.muted)
-                }
-                Spacer()
-                if alerts != .authorized {
-                    Button("Turn on") {
-                        Task {
-                            if alerts == .denied { await UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!) }
-                            else { await Alerts.shared.requestPermission(); await readAlerts() }
-                        }
-                    }
-                    .buttonStyle(.pill(.primary, compact: true))
-                }
-            }
-        }
-    }
-
-    private var appearanceRow: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SectionHeader(title: "Appearance")
-            HStack(spacing: 4) {
-                ForEach(Appearance.allCases) { option in
-                    Button { withAnimation(.snappy) { appearance = option } } label: {
-                        Text(option.label).font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(appearance == option ? Ink.inverse : Ink.muted)
-                            .frame(maxWidth: .infinity).frame(height: 38)
-                            .background(Capsule().fill(appearance == option ? Ink.text : .clear))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(4)
-            .background(Capsule().fill(Ink.raised))
-        }
-    }
-
-    private var unlink: some View {
-        VStack(spacing: 8) {
-            Button(role: .destructive) { confirmUnlink = true } label: {
-                HStack(spacing: 8) {
-                    if model.busy == "unlink" { ProgressView().tint(Ink.danger) }
-                    Text("Unlink this iPhone")
-                }
-            }
-            .buttonStyle(.pill(.danger))
-            .disabled(model.busy != nil)
-            Text(model.ownerKey != nil ? "Takes this iPhone's keys off your account, then forgets them here." : "Forgets the keys on this iPhone. Remove them from your account in Settings on the web.")
-                .font(.system(size: 13)).foregroundStyle(Ink.faint).multilineTextAlignment(.center)
-        }
-        .padding(.top, 8)
-        .confirmationDialog("Unlink this iPhone?", isPresented: $confirmUnlink, titleVisibility: .visible) {
-            Button("Unlink", role: .destructive) { Task { await model.unlink() } }
-        }
-    }
-
-    private func readAlerts() async {
-        alerts = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }
 }
 

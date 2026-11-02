@@ -21,16 +21,15 @@ final class Navigator {
     }
 }
 
-/// Home, laid out like the web dashboard on a phone: the account and the brake on top, the vault
-/// balance centred with how it moved, the chart, two actions, anything waiting on the owner, then
-/// what happened lately. Settings sit in the account menu.
+/// Home, laid out like the web dashboard on a phone: the account and its network on the left, Settings
+/// on the right, the vault balance centred with how it moved, the chart, two actions, anything
+/// waiting on the owner, then what happened lately. The brake lives on Agents.
 struct OverviewView: View {
     @Environment(AppModel.self) private var model
     @Environment(Navigator.self) private var nav
     @AppStorage("leash.hideBalance") private var hidden = false
     @AppStorage("leash.chartDays") private var days = 7
     @State private var scrub: Date?
-    @State private var confirmPause = false
 
     var body: some View {
         let s = model.snapshot
@@ -41,7 +40,7 @@ struct OverviewView: View {
                 HStack {
                     accountMenu
                     Spacer()
-                    brake(s)
+                    Button { nav.sheet = .settings } label: { RoundIcon(system: "gearshape") }.accessibilityLabel("Settings")
                 }
                 .padding(.top, 8)
 
@@ -148,32 +147,19 @@ struct OverviewView: View {
 
     static func edge(_ day: Date) -> String { day.formatted(.dateTime.day().month(.abbreviated)) }
 
-    /// The brake, labelled, where the thumb finds it first. Resuming when everything is paused.
-    @ViewBuilder private func brake(_ s: Snapshot?) -> some View {
-        if s?.paused == true {
-            Button { Task { await model.resume() } } label: { Label("Resume", systemImage: "play.fill").labelStyle(PillLabel()) }
-                .buttonStyle(.pill(.primary, compact: true))
-        } else {
-            Button { confirmPause = true } label: { Label("Pause all", systemImage: "pause.fill").labelStyle(PillLabel()) }
-                .buttonStyle(.pill(.secondary, compact: true))
-                .disabled(s == nil)
-                .confirmationDialog("Pause every agent?", isPresented: $confirmPause, titleVisibility: .visible) {
-                    Button("Pause all agents", role: .destructive) { Task { await model.pauseAll() } }
-                } message: { Text("No agent can pay until you resume. Requests already waiting stay waiting.") }
-        }
-    }
-
     static func dayLabel(_ day: Date) -> String {
         Calendar.current.isDateInToday(day) ? "Now" : "End of " + day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
     }
 
+    /// The account, with the network it is on. Tapping it picks the network.
     private var accountMenu: some View {
         Menu {
-            if let linked = model.linked {
-                Button { UIPasteboard.general.string = linked.account } label: { Label("Copy account name", systemImage: "doc.on.doc") }
-                Button { nav.sheet = .receive } label: { Label("Show QR code", systemImage: "qrcode") }
+            Section("NEAR network") {
+                let current = model.linked?.network ?? .testnet
+                Button {} label: { if current == .testnet { Label("Testnet", systemImage: "checkmark") } else { Text("Testnet") } }
+                // Leash's contract is only on testnet so far; this opens once it is on mainnet.
+                Button {} label: { Text("Mainnet"); Text("Not live yet") }.disabled(true)
             }
-            Button { nav.sheet = .settings } label: { Label("Settings", systemImage: "gearshape") }
         } label: {
             HStack(spacing: 10) {
                 ZStack {
