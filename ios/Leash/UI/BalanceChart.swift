@@ -50,3 +50,31 @@ struct BalanceChart: View {
         return points.first { Calendar.current.isDate($0.day, inSameDayAs: day) }
     }
 }
+
+/// Where the chart goes before the vault has moved: a short grey line that only suggests one, and
+/// a word on why. The real chart takes its place on the next refresh after money moves.
+struct EmptyChart: View {
+    let title: String
+    let line: String
+
+    var body: some View {
+        ZStack {
+            GeometryReader { geo in
+                let w = geo.size.width, h = geo.size.height
+                Path { p in
+                    p.move(to: CGPoint(x: 0, y: h * 0.72))
+                    p.addCurve(to: CGPoint(x: w * 0.5, y: h * 0.5), control1: CGPoint(x: w * 0.2, y: h * 0.78), control2: CGPoint(x: w * 0.3, y: h * 0.42))
+                    p.addCurve(to: CGPoint(x: w, y: h * 0.3), control1: CGPoint(x: w * 0.7, y: h * 0.58), control2: CGPoint(x: w * 0.82, y: h * 0.26))
+                }
+                .stroke(Ink.disc, style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+            }
+            VStack(spacing: 4) {
+                Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(Ink.muted)
+                Text(line).font(.system(size: 13)).foregroundStyle(Ink.faint)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(Capsule().fill(Ink.ground.opacity(0.9)))
+        }
+        .accessibilityElement(children: .combine)
+    }
+}

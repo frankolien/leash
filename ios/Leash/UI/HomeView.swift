@@ -61,15 +61,21 @@ struct OverviewView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, 4)
                     .animation(.snappy(duration: 0.2), value: picked?.balance)
-                change(history).frame(maxWidth: .infinity).padding(.top, 12)
+                let fresh = s?.log.isEmpty ?? true
+                if !fresh { change(history).frame(maxWidth: .infinity).padding(.top, 12) }
 
-                if history.count > 1 {
+                if history.count > 1 && Set(history.map(\.balance)).count > 1 {
                     BalanceChart(points: history, selected: $scrub)
                         .frame(height: 170)
                         .padding(.top, 26)
                         .opacity(hidden ? 0 : 1)
-                    rangeRow(history).padding(.top, 12)
+                } else if s != nil {
+                    EmptyChart(title: fresh ? "No transactions yet" : "No transactions \(days == 7 ? "this week" : "this month")",
+                               line: fresh ? "Your chart starts with your first top up." : "Nothing moved in or out of the vault.")
+                        .frame(height: 96)
+                        .padding(.top, 22)
                 }
+                if !fresh && history.count > 1 { rangeRow(history).padding(.top, 12) }
 
                 HStack(spacing: 8) {
                     Button("Top up") { nav.sheet = .topUp }.buttonStyle(.pill(.primary))
