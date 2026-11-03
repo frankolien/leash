@@ -82,7 +82,7 @@ Verify without an iPhone:
 ```bash
 cd ios && xcodegen generate   # or open Leash.xcodeproj as committed
 xcodebuild test -project Leash.xcodeproj -scheme Leash \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:LeashTests
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:LeashTests   # any iPhone from xcrun simctl list devices
 xcrun simctl push booted com.frankolien.leash demo/parked.apns   # a waiting-payment alert
 ```
 
