@@ -108,8 +108,10 @@ near contract call-function as-read-only leash.frankolien.testnet get_policies \
 ```
 
 See: the `claude` agent with a $3 daily limit, a $2 per-payment limit and two allowed recipients,
-and `codex` at $1. The log (`get_log`) shows real payments, a refusal ("vault too low") and parked
-requests.
+and `codex` at $1. The log (`get_log`) shows real payments, refusals ("over per-payment cap",
+"recipient reported as a scam", "facts are not signed by the relay") and parked requests.
+`get_facts_key` shows the relay key the contract trusts for facts about a stranger, and
+`https://leash.frankolien.com/api/facts/vendor.testnet` shows the facts it signs.
 
 **2. The tests.**
 
