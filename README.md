@@ -174,9 +174,9 @@ LEASH_KEY=<key from the dashboard> node demo/attack.mjs
 
 The agent reads an invoice with instructions hidden in an HTML comment and obeys them all: pay a
 scammer $50, then in $0.50 pieces, pay a lookalike of the real vendor, use its key to move USDC
-directly, add a full-access key, raise its own limit. See each one stopped, and by what: the
-counterparty check before signing, the contract on chain (with explorer links), or NEAR refusing
-the key. It ends with the owner's on-chain log and an unchanged vault. A captured run, and what the
+directly, add a full-access key, raise its own limit, and pass a brand-new account off as an old
+one by writing the relay's facts itself. See each one stopped, and by what: the counterparty check
+before signing, the contract on chain (with explorer links), or NEAR refusing the key. It ends with the owner's on-chain log and an unchanged vault. A captured run, and what the
 agent's key can and cannot do, are in `docs/08-security.md`.
 
 Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `grant`, `approve`,
@@ -256,6 +256,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 - [x] Push notifications: the relay tells the owner's iPhone within seconds of a parked request or a raise
 - [x] Paying for APIs per request (x402 v2): a Leash transfer method on `near:*`, the facilitator, a paywall for any route, and `leash_fetch` for agents
 - [x] Counterparty check (allow, warn, block) before every payment, a shared scam list in the contract, and an attack demo
+- [x] Facts the agent cannot forge: the relay signs a recipient's age and last code change with a key the contract pins, and the contract refuses a first payment to a day-old stranger on its own
 - [ ] Cross-chain payouts: an agent pays a Solana or Base address from the vault through NEAR Intents (mainnet)
 - [ ] Mainnet deployment
-- [ ] Countersign: a NEAR AI Cloud model signs off on payments inside a TEE (stretch)
+- [ ] Facts signed inside a TEE (OutLayer on NEAR) in place of the relay's key: the same contract path, documented in `docs/08-security.md`

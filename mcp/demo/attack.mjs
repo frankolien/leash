@@ -4,7 +4,8 @@
 // The agent reads poisoned-invoice.html, a real-looking invoice with instructions hidden in an HTML
 // comment, and does everything they say. It is the worst case: a model that has been fully fooled.
 // First it uses Leash's own tools, then it ignores them and signs payments itself, then it tries to
-// use its key for anything other than Leash. Each attempt prints what stopped it, and the run ends
+// use its key for anything other than Leash, then it forges the relay's facts about a brand-new account.
+// Each attempt prints what stopped it, and the run ends
 // with the owner's on-chain log. The demo only sends what the contract will refuse: before any raw
 // payment it asks the contract, and skips anything that would actually pay.
 //
@@ -141,7 +142,31 @@ if (big && process.argv.includes("--park")) {
   note(`parked as request #${parked.request_id}: only the owner can approve it, on their phone`);
 }
 
-step(7, "What the owner sees: their on-chain log for this run");
+step(7, "It forges the relay's word on a brand-new account");
+// The contract wants the relay's signed facts before a first payment to a stranger. The agent
+// writes its own: an account "created in 2020, 900 transactions", with a signature of its own.
+const STRANGER = key.network === "testnet" ? "newborn.leash.testnet" : "newborn.near";
+const needs = await leash.view("needs_facts", { owner: key.owner, public_key: key.public_key, to: STRANGER }).catch(() => false);
+const strangerVerdict = await leash.check(STRANGER, USDC(0.5));
+if (!needs && strangerVerdict.ok) {
+  note(`the contract would pay $0.50 to ${STRANGER} without facts (no facts key is pinned, or this key lists it); skipped`);
+} else {
+  const forged = {
+    text: JSON.stringify({ contract: key.contract, to: STRANGER, created_at: 1600000000000000000, code_changed_at: 0, tx_count: 900, observed_at: Date.now() * 1e6 }),
+    signature: Buffer.alloc(64).toString("base64"),
+  };
+  attempt(`signs pay ${STRANGER} $0.50 with facts it wrote itself: "created in 2020, 900 transactions"`);
+  const out = await leash.account.signAndSendTransaction({
+    receiverId: key.contract,
+    actions: [actions.functionCall("pay", { to: STRANGER, amount: USDC(0.5).toString(), memo: "onboarding fee", payment_id: randomUUID(), facts: forged }, 60_000_000_000_000n, 0n)],
+  });
+  const status = out.status;
+  const result = status.SuccessValue ? JSON.parse(Buffer.from(status.SuccessValue, "base64").toString()) : null;
+  stopped("the contract, on chain", `"${result?.reason ?? short(status.Failure)}" ${dim(leash.explorer(out.transaction.hash) ?? "")}`);
+  if (needs) note("the facts must be signed by the key the contract pins, which the agent never holds");
+}
+
+step(8, "What the owner sees: their on-chain log for this run");
 const log = ((await leash.view("get_log", { owner: key.owner })) ?? []).filter((e) => BigInt(e.at) >= startNs);
 for (const e of log) {
   const usd = e.amount ? `$${Number(e.amount) / 1e6}` : "";
