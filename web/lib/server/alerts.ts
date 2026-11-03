@@ -103,6 +103,9 @@ export function explain(reason: string, policy: Policy | undefined): string {
   if (reason === "over daily cap" && policy) return `Over its $${toUsdc(policy.daily_cap)} daily limit`;
   if (reason === "recipient not in allowlist") return "Not someone it may pay on its own";
   if (reason === "cooldown not elapsed") return "Too soon after its last payment";
+  if (reason === "first payment to a stranger") return "Someone it has never paid";
+  if (reason === "recipient account is under a day old") return "The account is under a day old";
+  if (reason === "recipient's contract code changed this week") return "Its code changed this week";
   return reason.charAt(0).toUpperCase() + reason.slice(1);
 }
 

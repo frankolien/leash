@@ -7,7 +7,7 @@ import { Leash, type LeashOptions } from "./leash.js";
 import { registerTools } from "./tools.js";
 import type { KeyFile } from "./types.js";
 
-export const VERSION = "0.5.1";
+export const VERSION = "0.6.0";
 
 /// What an assistant needs to know before its first call: who it works for, that paying is the job
 /// it was connected for, and what keeps that safe. Without it, a cautious model reads leash_pay as

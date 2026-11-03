@@ -6,6 +6,7 @@ import { waitUntil } from "@vercel/functions";
 import type { Relayed, SignedMethod } from "leash-near-mcp";
 import { CONTRACT, DEFAULT_NETWORK } from "@/lib/config";
 import { alertOwner } from "./alerts";
+import { signedFacts } from "./facts";
 import { sponsorAccount } from "./sponsor";
 
 const METHODS: SignedMethod[] = ["pay_signed", "request_signed", "ask_more_signed", "open_task_signed", "close_task_signed", "report_signed"];
@@ -26,7 +27,7 @@ function braked(owner: string): boolean {
 
 export async function relayIntent(method: SignedMethod, args: { intent: string; signature: string }): Promise<Relayed> {
   if (!METHODS.includes(method)) throw new RelayRefusal("unknown method");
-  let parsed: { contract?: string; owner?: string; action?: string };
+  let parsed: { contract?: string; owner?: string; action?: string; to?: string };
   try {
     parsed = JSON.parse(args.intent);
   } catch {
@@ -37,7 +38,10 @@ export async function relayIntent(method: SignedMethod, args: { intent: string; 
   if (!parsed.owner || braked(parsed.owner)) throw new RelayRefusal("too many instructions for this owner; try again later");
   const sponsor = sponsorAccount(DEFAULT_NETWORK);
   const { actions } = await import("near-api-js");
-  const out = await sponsor.signAndSendTransaction({ receiverId: CONTRACT[DEFAULT_NETWORK], actions: [actions.functionCall(method, args, GAS, BigInt(0))] });
+  // A payment carries the relay's signed facts about the recipient; the contract wants them for a
+  // first payment to a stranger and ignores them otherwise.
+  const facts = method === "pay_signed" && parsed.to ? await signedFacts(parsed.to, DEFAULT_NETWORK).catch(() => undefined) : undefined;
+  const out = await sponsor.signAndSendTransaction({ receiverId: CONTRACT[DEFAULT_NETWORK], actions: [actions.functionCall(method, facts ? { ...args, facts } : args, GAS, BigInt(0))] });
   const status = out.status as { SuccessValue?: string; Failure?: unknown };
   if (status.Failure) throw new RelayRefusal(failureText(status.Failure));
   const result = status.SuccessValue ? JSON.parse(Buffer.from(status.SuccessValue, "base64").toString("utf8")) : undefined;

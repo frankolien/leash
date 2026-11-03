@@ -74,6 +74,36 @@ not stop a vendor being paid. On testnet the NearBlocks indexer runs millions of
 has no creation date for newer accounts, so age often reads as unknown there; on mainnet it is
 complete.
 
+### The contract checks the facts too
+
+The check above runs in the agent's software, which is the thing a prompt injection or a bad
+dependency is most likely to alter. So the age and code-change facts also reach the contract in a
+form the agent cannot forge. The relay fetches them from NearBlocks, writes them as one JSON text
+(`contract`, `to`, `created_at`, `code_changed_at`, `tx_count`, `observed_at`, in nanoseconds, zero
+where the indexer has no record) and signs `leash-facts:` plus that text with a key the contract
+pins (`set_facts_key`, callable only by the contract account; `get_facts_key` shows it). A payment
+carries the signed text; the relay attaches it to every `pay_signed` it delivers, and an agent that
+sends its own transactions fetches it from `GET /api/facts/{account}` on the site.
+
+The contract wants the facts only for the **first payment to a stranger**: a recipient this owner has
+never paid, never put on the agent's allowlist, and who is not the owner. `needs_facts` says whether the next
+payment needs them. With no facts, forged facts, facts about another account, or facts observed
+more than an hour ago, the contract refuses and the agent can park the payment for the owner. With
+good facts it refuses on its own when the account was created in the last 24 hours or its code
+changed in the last 7 days; an unknown value passes, since a missing indexer record is not
+evidence. After one payment the recipient is known to that owner and the facts are not asked for
+again, so a busy vendor never waits on the indexer. The contract logs every refusal with its reason.
+
+What this does and does not prove: the agent cannot invent an old account for a scammer made this
+morning, because it never holds the signing key, and the check runs in the contract whether or not
+the agent's software is intact. The remaining trust is in the relay operator, who could sign wrong
+facts; today that is the same sponsor account that pays the agents' gas. The same contract path
+takes facts signed inside a TEE: OutLayer on NEAR (`outlayer.testnet`) runs a pinned WASM in an
+Intel TDX worker whose key is registered after a quote check, and swapping the pinned key for that
+worker's changes nothing else in the contract. It is documented as the upgrade rather than shipped
+here, because the contract would still be trusting a registered key rather than verifying a quote
+per call, and because a judge should be able to run every step of this README from a clone.
+
 ## The shared scam list
 
 Every owner on the shared contract contributes to, and is protected by, one list of reported

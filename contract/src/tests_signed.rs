@@ -76,7 +76,7 @@ fn sign(key: &SigningKey, text: &str) -> Base64VecU8 {
 /// Delivered by a relayer whose own key has no policy, as a meta-transaction or plain call would be.
 fn deliver(leash: &mut Leash, text: &str, sig: Base64VecU8) -> PromiseOrValue<PayOutcome> {
     ctx(relayer(), owner_key(), NOW, 0);
-    leash.pay_signed(text.to_string(), sig)
+    leash.pay_signed(text.to_string(), sig, None)
 }
 
 fn paid(outcome: &PromiseOrValue<PayOutcome>) -> bool {
@@ -133,7 +133,7 @@ fn an_old_instruction_is_worthless() {
     let text = intent(&claude, "pay", USDC, "inv-1");
     let sig = sign(&claude, &text);
     ctx(relayer(), owner_key(), NOW + 61 * 1_000_000_000, 0);
-    let _ = leash.pay_signed(text, sig);
+    let _ = leash.pay_signed(text, sig, None);
 }
 
 #[test]
@@ -173,8 +173,8 @@ fn a_payment_id_dedupes_direct_payments_too() {
     let claude = agent(7);
     let mut leash = funded(&[&claude]);
     ctx(owner(), public(&claude), NOW, 0);
-    assert!(paid(&leash.pay(vendor(), U128(USDC), None, Some("inv-9".into()))));
-    match leash.pay(vendor(), U128(USDC), None, Some("inv-9".into())) {
+    assert!(paid(&leash.pay(vendor(), U128(USDC), None, Some("inv-9".into()), None)));
+    match leash.pay(vendor(), U128(USDC), None, Some("inv-9".into()), None) {
         PromiseOrValue::Value(v) => assert!(v.accepted),
         PromiseOrValue::Promise(_) => panic!("paid twice"),
     }

@@ -18,6 +18,7 @@ use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{log, near, AccountId, Gas, PanicOnDefault, PublicKey};
 
 mod agent;
+mod facts;
 mod internals;
 mod owner;
 mod reports;
@@ -33,6 +34,8 @@ mod tests_signed;
 mod tests_reports;
 #[cfg(test)]
 mod tests_tasks;
+#[cfg(test)]
+mod tests_facts;
 
 pub use types::*;
 
@@ -62,6 +65,11 @@ const TASK_LIMIT: usize = 10;
 const REPORTS_TO_BLOCK_ALL: usize = 2;
 // Reports kept per account: past the threshold more add evidence, not protection.
 const REPORT_LIMIT: usize = 20;
+// The relay's counterparty facts are good for an hour; a stranger under a day old, or whose code
+// changed this week, is not paid without the owner.
+const FACTS_MAX_AGE_NS: u64 = 3_600 * NS_PER_SEC;
+const YOUNG_ACCOUNT_NS: u64 = DAY_NS;
+const FRESH_CODE_NS: u64 = 7 * DAY_NS;
 const EVENT_STANDARD: &str = "leash";
 const EVENT_VERSION: &str = "1.0.0";
 
@@ -91,11 +99,16 @@ pub struct Leash {
     task_of: LookupMap<(AccountId, PublicKey), u64>,
     /// Reports per reported account, at most one per owner.
     reports: LookupMap<AccountId, Vec<Report>>,
+    /// The key whose signed facts about a recipient the contract believes; none means a stranger
+    /// needs no facts.
+    facts_key: Option<PublicKey>,
+    /// When each owner first paid each recipient, so only the first payment needs the facts.
+    first_paid: LookupMap<(AccountId, AccountId), u64>,
 }
 
-/// The state before reports, read once by `migrate`.
+/// The state before signed facts, read once by `migrate`.
 #[near(serializers = [borsh])]
-struct LeashV3 {
+struct LeashV4 {
     policies: LookupMap<(AccountId, PublicKey), Policy>,
     keys: LookupMap<AccountId, Vec<PublicKey>>,
     vaults: LookupMap<(AccountId, AccountId), u128>,
@@ -113,6 +126,7 @@ struct LeashV3 {
     tasks: IterableMap<u64, Task>,
     next_task: u64,
     task_of: LookupMap<(AccountId, PublicKey), u64>,
+    reports: LookupMap<AccountId, Vec<Report>>,
 }
 
 #[near]
@@ -138,14 +152,16 @@ impl Leash {
             next_task: 1,
             task_of: LookupMap::new(StorageKey::TaskOf),
             reports: LookupMap::new(StorageKey::Reports),
+            facts_key: None,
+            first_paid: LookupMap::new(StorageKey::FirstPaid),
         }
     }
 
-    /// Carries a v3 deployment's state over unchanged and adds the reports.
+    /// Carries a v4 deployment's state over unchanged and adds the facts key and first payments.
     #[private]
     #[init(ignore_state)]
     pub fn migrate() -> Self {
-        let old: LeashV3 = near_sdk::env::state_read().expect("no v3 state to migrate");
+        let old: LeashV4 = near_sdk::env::state_read().expect("no v4 state to migrate");
         Self {
             policies: old.policies,
             keys: old.keys,
@@ -164,7 +180,9 @@ impl Leash {
             tasks: old.tasks,
             next_task: old.next_task,
             task_of: old.task_of,
-            reports: LookupMap::new(StorageKey::Reports),
+            reports: old.reports,
+            facts_key: None,
+            first_paid: LookupMap::new(StorageKey::FirstPaid),
         }
     }
 }

@@ -132,12 +132,33 @@ export class Leash {
     // `report` itself, so only a relay can deliver those.
     if (signer) throw new Error("paying from a task needs a relay; set LEASH_RELAY_URL");
     if (action === "report") throw new Error("reporting goes through the Leash relay; set LEASH_RELAY_URL");
-    const direct = action === "pay" ? args : Object.fromEntries(Object.entries(args).filter(([k]) => k !== "payment_id"));
+    let direct = action === "pay" ? args : Object.fromEntries(Object.entries(args).filter(([k]) => k !== "payment_id"));
+    // A first payment to a stranger needs the relay's signed facts about it; without a relay to
+    // attach them, the agent fetches them from the site itself.
+    if (action === "pay" && !direct.facts) {
+      const facts = await this.signedFacts(String(args.to));
+      if (facts) direct = { ...direct, facts };
+    }
     const out = await this.account.signAndSendTransaction({
       receiverId: this.key.contract,
       actions: [actions.functionCall(action, direct, 60_000_000_000_000n, 0n)],
     });
     return { result: lastResult(out), tx: out.transaction.hash };
+  }
+
+  /// The relay's signed facts about a recipient, from the site, or nothing when there is no site
+  /// to ask or it does not answer; the contract then says whether it needed them.
+  async signedFacts(to: string): Promise<{ text: string; signature: string } | undefined> {
+    const base = (this.site ?? process.env.LEASH_RELAY_URL ?? this.key.relay)?.replace(/\/api\/relay\/?$/, "").replace(/\/$/, "");
+    if (!base) return undefined;
+    try {
+      const res = await fetch(`${base}/api/facts/${encodeURIComponent(to)}`, { signal: AbortSignal.timeout(8_000) });
+      if (!res.ok) return undefined;
+      const body = (await res.json()) as { text?: string; signature?: string };
+      return typeof body.text === "string" && typeof body.signature === "string" ? { text: body.text, signature: body.signature } : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   /// The instruction as the exact JSON text the contract will parse, signed over a fixed prefix so

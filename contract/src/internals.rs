@@ -47,6 +47,7 @@ impl Leash {
         self.tasks.flush();
         self.task_of.flush();
         self.reports.flush();
+        self.first_paid.flush();
         self.settle(owner, before, env::storage_usage());
     }
 

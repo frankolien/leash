@@ -13,9 +13,10 @@ impl Leash {
     // ---- agent methods -------------------------------------------------------------------
 
     /// Pay within policy. A refusal is an answer, not a panic, so the attempt is logged and the agent
-    /// learns the reason. A `payment_id` makes a retry safe: the same id never pays twice.
-    pub fn pay(&mut self, to: AccountId, amount: U128, memo: Option<String>, payment_id: Option<String>) -> PromiseOrValue<PayOutcome> {
-        self.pay_for(env::predecessor_account_id(), env::signer_account_pk(), to, amount, memo, payment_id)
+    /// learns the reason. A `payment_id` makes a retry safe: the same id never pays twice. The first
+    /// payment to a recipient the owner never paid or listed needs the relay's signed `facts`.
+    pub fn pay(&mut self, to: AccountId, amount: U128, memo: Option<String>, payment_id: Option<String>, facts: Option<SignedFacts>) -> PromiseOrValue<PayOutcome> {
+        self.pay_for(env::predecessor_account_id(), env::signer_account_pk(), to, amount, memo, payment_id, facts)
     }
 
     /// Park a payment the policy would refuse for the owner to decide. Only a reason the owner can
@@ -31,10 +32,10 @@ impl Leash {
         self.ask_for(env::predecessor_account_id(), env::signer_account_pk(), note, ask)
     }
 
-    pub fn pay_signed(&mut self, intent: String, signature: Base64VecU8) -> PromiseOrValue<PayOutcome> {
+    pub fn pay_signed(&mut self, intent: String, signature: Base64VecU8, facts: Option<SignedFacts>) -> PromiseOrValue<PayOutcome> {
         let i = self.verified(&intent, &signature, "pay");
         let (to, amount) = (i.to.expect("intent has no recipient"), i.amount.expect("intent has no amount"));
-        self.pay_for(i.owner, i.key, to, amount, i.memo, Some(i.payment_id))
+        self.pay_for(i.owner, i.key, to, amount, i.memo, Some(i.payment_id), facts)
     }
 
     pub fn request_signed(&mut self, intent: String, signature: Base64VecU8) -> u64 {
@@ -70,7 +71,7 @@ impl Leash {
         intent
     }
 
-    pub(crate) fn pay_for(&mut self, owner: AccountId, key: PublicKey, to: AccountId, amount: U128, memo: Option<String>, payment_id: Option<String>) -> PromiseOrValue<PayOutcome> {
+    pub(crate) fn pay_for(&mut self, owner: AccountId, key: PublicKey, to: AccountId, amount: U128, memo: Option<String>, payment_id: Option<String>, facts: Option<SignedFacts>) -> PromiseOrValue<PayOutcome> {
         let before = env::storage_usage();
         if let Some(pid) = &payment_id {
             if self.was_seen(&owner, &key, pid) {
@@ -79,8 +80,9 @@ impl Leash {
             }
         }
         let verdict = self.preflight(&owner, &key, &to, amount.0);
-        if !verdict.ok {
-            let reason = verdict.reason.clone().unwrap_or_default();
+        let stranger = if verdict.ok { self.stranger_check(&owner, &key, &to, facts.as_ref()) } else { None };
+        if !verdict.ok || stranger.is_some() {
+            let reason = stranger.or(verdict.reason.clone()).unwrap_or_default();
             self.record(&owner, Some(&key), "pay_refused", Some(&to), Some(amount), Some(&reason));
             emit("pay_refused", json!({ "owner": owner, "key": key, "to": to, "amount": amount, "reason": reason }));
             self.charge(&owner, before);
@@ -109,6 +111,9 @@ impl Leash {
         if let Some(pid) = &payment_id {
             self.remember(&owner, &key, pid);
         }
+        if !self.first_paid.contains_key(&(owner.clone(), to.clone())) {
+            self.first_paid.insert((owner.clone(), to.clone()), now);
+        }
         self.record(&owner, Some(&key), "pay", Some(&to), Some(amount), memo.as_deref());
         emit("pay", json!({ "owner": owner, "key": key, "token": token, "to": to, "amount": amount, "memo": memo, "payment_id": payment_id }));
         self.charge(&owner, before);
@@ -122,7 +127,9 @@ impl Leash {
         let policy = self.policies.get(&(owner.clone(), key.clone())).cloned().expect("policy");
         let id = self.next_request;
         self.next_request += 1;
-        let reason = verdict.reason.unwrap_or_else(|| "within policy".into());
+        // Within policy but refused by `pay` all the same: the owner should see why it waited.
+        let stranger = self.facts_key.is_some() && !self.known(&owner, &key, &to);
+        let reason = verdict.reason.unwrap_or_else(|| if stranger { "first payment to a stranger".into() } else { "within policy".into() });
         self.requests.insert(
             id,
             Request {

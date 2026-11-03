@@ -1,6 +1,6 @@
 //! Every type the contract's API speaks, and the storage keys of its collections.
 
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{Base64VecU8, U128};
 use near_sdk::{ext_contract, near, AccountId, BorshStorageKey, PublicKey};
 
 #[ext_contract(ext_ft)]
@@ -26,6 +26,7 @@ pub(crate) enum StorageKey {
     Tasks,
     TaskOf,
     Reports,
+    FirstPaid,
 }
 
 /// What an agent key may do. Amounts are in the token's smallest unit; times are seconds.
@@ -246,4 +247,25 @@ pub struct Reputation {
     pub by_you: bool,
     /// Whether payments to it are refused: for the asking owner, or for every owner when none is given.
     pub blocked: bool,
+}
+
+/// What the Leash relay found out about a recipient, as the exact JSON text it signed. Times are
+/// nanoseconds; zero means the indexer had no record.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct Facts {
+    pub contract: AccountId,
+    pub to: AccountId,
+    pub created_at: u64,
+    pub code_changed_at: u64,
+    pub tx_count: u64,
+    pub observed_at: u64,
+}
+
+/// The facts and the relay's ed25519 signature over `leash-facts:` and the text.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct SignedFacts {
+    pub text: String,
+    pub signature: Base64VecU8,
 }

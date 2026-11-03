@@ -39,7 +39,9 @@ flowchart LR
    allow, warn or block on the recipient: reported as a scam, missing, unable to hold USDC, a
    lookalike, brand new, or a contract whose code just changed. A warn goes to the owner instead.
    Any owner or agent can report a scammer with evidence; the contract then refuses to pay it for
-   that owner, and for every owner once two have reported it. Details in `docs/08-security.md`.
+   that owner, and for every owner once two have reported it. The age and code-change facts are
+   also signed by the relay with a key the contract pins, so the contract itself refuses a first
+   payment to a day-old stranger even if the agent's software lies. Details in `docs/08-security.md`.
 
 ## On your iPhone
 
@@ -113,10 +115,10 @@ requests.
 
 ```bash
 cargo install cargo-near             # the sandbox tests build the contract with it
-cd contract && cargo test           # 48 unit tests and 4 sandbox tests against a real node
+cd contract && cargo test           # 55 unit tests and 4 sandbox tests against a real node
 cd ../cli && npm install && npm test   # 3 tests: amount and ttl parsing
 cd ../mcp && npm install && npm test   # 25 tests: the counterparty check, signed intents, task keys, x402
-cd ../web && npm install && npm test   # 73 tests: the dashboard's logic, payment safety, phone alerts, the x402 facilitator
+cd ../web && npm install && npm test   # 74 tests: the dashboard's logic, payment safety, phone alerts, the x402 facilitator
 ```
 
 The sandbox tests deploy the contract and a mock USDC to a local NEAR node and run the whole story:
@@ -186,7 +188,8 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | --- | --- |
 | A prompt-injected agent tries to drain funds | The daily and per-payment limits in the contract; the key cannot call anything but `pay`, `request`, `ask_more`. `mcp/demo/attack.mjs` runs the attack on testnet |
 | A known scam account | The shared reports list: blocked for the reporting owner at once, for every owner once two report it, even if it is on the allowlist |
-| A counterparty that is brand new, or a contract whose code just changed | The counterparty check warns, so the agent parks the payment for the owner instead of paying |
+| A counterparty that is brand new, or a contract whose code just changed | The counterparty check warns, so the agent parks the payment for the owner instead of paying. The contract checks too: a first payment to a stranger carries the relay's signed facts, and it refuses a day-old account or code changed this week on its own |
+| The agent's software is altered to skip the check | The facts are signed by a key the agent never holds; without them, or with forged ones, the contract refuses the first payment to a stranger and parks it for the owner |
 | The agent uses its key outside Leash: moves USDC, adds a key, raises its own limit | NEAR refuses the transaction: the key is a function-call key for three methods on one contract, with no deposit allowed |
 | Someone reports an honest account to cut it off | One owner's report blocks it only for that owner; reports cost the reporter storage and can be withdrawn |
 | The agent pays an unexpected account | The per-agent allowlist; above-limit payments wait for the owner |
@@ -219,6 +222,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | `contract/src/agent.rs` | What an agent key may do: pay, request, ask for more |
 | `contract/src/token.rs` | The NEP-141 callback and the settlement of every transfer |
 | `contract/src/reports.rs` | The shared scam list: report, report by signed instruction, retract, reputation |
+| `contract/src/facts.rs` | Signed facts about a stranger: the pinned relay key, the first-payment rule, the age and code-change checks |
 | `contract/src/views.rs` | The read side |
 | `contract/src/internals.rs` | The policy check, the ledger moves, the log, the storage billing |
 | `contract/tests/` | Sandbox tests against a real node with a mock USDC |

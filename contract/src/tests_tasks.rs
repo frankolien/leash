@@ -65,7 +65,7 @@ fn child_pays(leash: &mut Leash, child: &SigningKey, to: AccountId, amount: u128
     .to_string();
     let sig = Base64VecU8(child.sign(&[b"leash-intent:".as_slice(), text.as_bytes()].concat()).to_bytes().to_vec());
     ctx(accounts(3), owner_key(), now, 0);
-    leash.pay_signed(text, sig)
+    leash.pay_signed(text, sig, None)
 }
 
 fn refusal(outcome: PromiseOrValue<PayOutcome>) -> String {

@@ -422,6 +422,10 @@ function plainReason(reason: string | null): string {
     "recipient not in allowlist": "Not on its list of recipients",
     "cooldown not elapsed": "Too soon after its last payment",
     "recipient reported as a scam": "Reported as a scam",
+    "first payment to a stranger needs the relay's signed facts": "First payment to someone new",
+    "first payment to a stranger": "Someone it has never paid",
+    "recipient account is under a day old": "The account is under a day old",
+    "recipient's contract code changed this week": "Its code changed this week",
   };
   return reason ? (map[reason] ?? reason) : "Needs your approval";
 }
