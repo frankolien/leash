@@ -4,7 +4,7 @@ use super::*;
 use ed25519_dalek::{Signer, SigningKey};
 use near_sdk::json_types::{Base64VecU8, U128};
 use near_sdk::test_utils::{accounts, VMContextBuilder};
-use near_sdk::{testing_env, NearToken, PromiseOrValue};
+use near_sdk::{testing_env, NearToken, PromiseError, PromiseOrValue};
 
 const USDC: u128 = 1_000_000;
 const STORAGE_CREDIT: u128 = 1_000_000_000_000_000_000_000_000;
@@ -107,7 +107,14 @@ fn a_stranger_is_refused_without_facts_and_the_refusal_can_be_parked() {
 fn good_facts_pay_and_the_second_payment_needs_none() {
     let mut leash = funded(true);
     let f = facts(&relay(), &stranger(), NOW - 30 * DAY_NS, 0, NOW - 60 * NS_PER_SEC);
+    assert_eq!(pay(&mut leash, stranger(), Some(f.clone())), Ok(()));
+    // A transfer that fails on the token leaves the recipient a stranger.
+    ctx(contract(), owner_key(), 0);
+    leash.on_pay(owner(), agent_key(), token(), stranger(), U128(USDC), true, None, Err(PromiseError::Failed));
+    assert!(leash.needs_facts(owner(), agent_key(), stranger()));
     assert_eq!(pay(&mut leash, stranger(), Some(f)), Ok(()));
+    ctx(contract(), owner_key(), 0);
+    leash.on_pay(owner(), agent_key(), token(), stranger(), U128(USDC), true, None, Ok(()));
     assert!(!leash.needs_facts(owner(), agent_key(), stranger()));
     assert_eq!(pay(&mut leash, stranger(), None), Ok(()));
     assert_eq!(leash.get_vault(owner(), token()).0, 8 * USDC);

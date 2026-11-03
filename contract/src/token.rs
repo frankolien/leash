@@ -39,6 +39,10 @@ impl Leash {
     ) -> PayOutcome {
         match result {
             Ok(()) => {
+                // Only money that arrived makes a recipient known; a failed transfer is no payment.
+                if !self.first_paid.contains_key(&(owner.clone(), to.clone())) {
+                    self.first_paid.insert((owner.clone(), to.clone()), env::block_timestamp());
+                }
                 emit("pay_settled", json!({ "owner": owner, "key": key, "to": to, "amount": amount }));
                 PayOutcome { accepted: true, reason: None, remaining_today: self.remaining(&owner, &key) }
             }

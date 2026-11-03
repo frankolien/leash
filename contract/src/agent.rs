@@ -111,9 +111,6 @@ impl Leash {
         if let Some(pid) = &payment_id {
             self.remember(&owner, &key, pid);
         }
-        if !self.first_paid.contains_key(&(owner.clone(), to.clone())) {
-            self.first_paid.insert((owner.clone(), to.clone()), now);
-        }
         self.record(&owner, Some(&key), "pay", Some(&to), Some(amount), memo.as_deref());
         emit("pay", json!({ "owner": owner, "key": key, "token": token, "to": to, "amount": amount, "memo": memo, "payment_id": payment_id }));
         self.charge(&owner, before);
