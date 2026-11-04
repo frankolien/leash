@@ -1,5 +1,7 @@
 # Leash
 
+[![ci](https://github.com/frankolien/leash/actions/workflows/ci.yml/badge.svg)](https://github.com/frankolien/leash/actions/workflows/ci.yml)
+
 **A spending account for AI agents, enforced on NEAR.** Each agent gets its own key with a daily
 limit, a per-payment limit and a list of accounts it may pay. Inside those limits it pays in USDC on
 its own. Above them, the payment waits for the owner. Revoking the key takes one tap, and NEAR rejects
