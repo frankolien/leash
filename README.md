@@ -8,6 +8,7 @@ the agent's next call before the contract even runs.
 Built for the NEAR Hackathon, November 2026. Tracks: AI Security & Defense, Agent Economy, Open Innovation.
 Everything here was written for it: the first commit is from 25 October 2026, after the 19 October
 announcement, and nothing predates it. No prior codebase or baseline.
+Demo post: https://x.com/frank_olien123/status/2117028321842335927
 
 ## The problem
 
