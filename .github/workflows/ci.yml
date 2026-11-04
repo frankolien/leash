@@ -16,6 +16,8 @@ jobs:
         with: { targets: wasm32-unknown-unknown }
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: contract }
+      # cargo-near builds hidapi for Ledger support, which needs libudev on Ubuntu.
+      - run: sudo apt-get update && sudo apt-get install -y libudev-dev pkg-config
       - run: cargo install cargo-near --locked
       - run: cargo test --lib
       - run: cargo near build non-reproducible-wasm
@@ -32,6 +34,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: "${{ matrix.package }}/package-lock.json" }
+      # The web app depends on the MCP package from this checkout, so it is built first.
+      - if: matrix.package == 'web'
+        run: npm --prefix ../mcp ci && npm --prefix ../mcp run build
       - run: npm ci
       - run: npm run build
       - run: npm test
