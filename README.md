@@ -172,7 +172,10 @@ account the sample pays: it is refused before anything is sent, and the refusal 
 How a server charges this way, in one function, is in `docs/07-x402.md`; the facilitator is the
 site itself (`/api/x402/supported`, `/verify`, `/settle`).
 
-**6. A prompt-injected agent, stopped.** With the key from step 4:
+**6. A prompt-injected agent, stopped.** Without a terminal: open `https://leash.frankolien.com/attack`
+and press Run. A real model reads a poisoned invoice with Leash's tools against a demo owner on
+testnet, then the raw attempts follow; each one is stopped live, with its transaction. With your
+own key from step 4:
 
 ```bash
 cd mcp && npm install && npm run build

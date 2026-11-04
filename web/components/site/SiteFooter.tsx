@@ -10,7 +10,7 @@ export default function SiteFooter() {
         </div>
         <nav aria-label="Footer" className={styles.footerGroups}>
           <div><h2>Product</h2><a href="/#how">How it holds</a><a href="/#stories">What people use it for</a><a href="/#faq">Questions</a></div>
-          <div><h2>Try it</h2><a href="/#open">Open a dashboard</a><a href="/frankolien.testnet">Live testnet dashboard</a></div>
+          <div><h2>Try it</h2><a href="/#open">Open a dashboard</a><a href="/frankolien.testnet">Live testnet dashboard</a><a href="/attack">Attack playground</a></div>
           <div><h2>Built on</h2><a href="https://near.org" rel="noreferrer">NEAR Protocol</a><a href="https://modelcontextprotocol.io" rel="noreferrer">Model Context Protocol</a></div>
         </nav>
       </div>

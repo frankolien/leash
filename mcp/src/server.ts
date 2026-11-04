@@ -31,6 +31,7 @@ export function createLeashServer(key: KeyFile, options: LeashOptions = {}): Mcp
 }
 
 export { parseKey };
+export { Leash } from "./leash.js";
 export type { KeyFile, LeashOptions };
 export type { Relay, Relayed, SignedMethod } from "./relay.js";
 export { METHOD as X402_METHOD, NETWORK as X402_NETWORK, X402_VERSION, decodeHeader, encodeHeader, requirements } from "./x402.js";
