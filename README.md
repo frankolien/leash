@@ -6,6 +6,8 @@ its own. Above them, the payment waits for the owner. Revoking the key takes one
 the agent's next call before the contract even runs.
 
 Built for the NEAR Hackathon, November 2026. Tracks: AI Security & Defense, Agent Economy, Open Innovation.
+Everything here was written for it: the first commit is from 25 October 2026, after the 19 October
+announcement, and nothing predates it. No prior codebase or baseline.
 
 ## The problem
 
@@ -178,8 +180,9 @@ The agent reads an invoice with instructions hidden in an HTML comment and obeys
 scammer $50, then in $0.50 pieces, pay a lookalike of the real vendor, use its key to move USDC
 directly, add a full-access key, raise its own limit, and pass a brand-new account off as an old
 one by writing the relay's facts itself. See each one stopped, and by what: the counterparty check
-before signing, the contract on chain (with explorer links), or NEAR refusing the key. It ends with the owner's on-chain log and an unchanged vault. A captured run, and what the
-agent's key can and cannot do, are in `docs/08-security.md`.
+before signing, the contract on chain (with explorer links), or NEAR refusing the key. It ends with the owner's on-chain log and an unchanged vault. A captured run from 3 November,
+with the transaction hash of every refusal (readable on `archival-rpc.testnet.fastnear.com` or the
+explorer), and what the agent's key can and cannot do, are in `docs/08-security.md`.
 
 Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `grant`, `approve`,
 `revoke`, `pause`, `report`, `status`, `log` (`node cli/dist/index.js` with no arguments lists them).
