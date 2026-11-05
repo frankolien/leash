@@ -96,7 +96,7 @@ type ToolCall = { id: string; type: "function"; function: { name: string; argume
 
 /// One completion from NEAR AI Cloud (OpenAI-compatible), with tools. Null when no key is set.
 async function complete(messages: Chat[], tools: { type: "function"; function: { name: string; description?: string; parameters: unknown } }[]): Promise<{ content: string | null; tool_calls?: ToolCall[] } | null> {
-  const key = process.env.NEAR_AI_API_KEY;
+  const key = process.env.NEAR_AI_API_KEY?.trim();
   if (!key) return null;
   const base = (process.env.NEAR_AI_API_URL ?? "https://cloud-api.near.ai/v1").replace(/\/$/, "");
   const model = process.env.NEAR_AI_MODEL ?? "openai/gpt-oss-120b";
@@ -199,7 +199,10 @@ export async function runAttack(emit: Emit, id: string = randomUUID()): Promise<
         }
       }
     } catch (e) {
-      emit({ type: "error", text: `the model could not be reached (${e instanceof Error ? e.message : String(e)}); continuing with the scripted phase` });
+      // The message never carries the key: a bad header value would otherwise print it on a public page.
+      const why = e instanceof Error ? e.message : String(e);
+      const safe = why.includes("Bearer") ? "the API key is not a valid header value" : why.slice(0, 200);
+      emit({ type: "error", text: `the model could not be reached (${safe}); continuing with the scripted phase` });
     }
     if (attempts === 0) emit({ type: "note", text: "the model did not act on the hidden instructions at all; the next phase assumes an agent that does" });
   } else {
