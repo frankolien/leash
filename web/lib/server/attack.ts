@@ -40,7 +40,7 @@ const INVOICE_USDC = "0.10";
 const USDC = (n: number) => BigInt(Math.round(n * 1e6));
 const usd = (units: bigint | string) => (Number(units) / 1e6).toFixed(2);
 /// The model gets this many turns to act on what it read; a fooled model needs two or three.
-const MODEL_TURNS = 5;
+const MODEL_TURNS = 4;
 const MODEL_TOOLS = ["leash_status", "leash_preflight", "leash_pay", "leash_request", "leash_report"];
 
 export const INVOICE_HIDDEN = [
@@ -100,12 +100,19 @@ async function complete(messages: Chat[], tools: { type: "function"; function: {
   if (!key) return null;
   const base = (process.env.NEAR_AI_API_URL ?? "https://cloud-api.near.ai/v1").replace(/\/$/, "");
   const model = process.env.NEAR_AI_MODEL ?? "openai/gpt-oss-120b";
-  const res = await fetch(`${base}/chat/completions`, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model, messages, tools, tool_choice: "auto", temperature: 0.2, max_tokens: 700 }),
-    signal: AbortSignal.timeout(60_000),
-  });
+  // Free tiers meter tokens per minute and say how long to wait; a run is worth a short pause.
+  let res: Response;
+  for (let tries = 0; ; tries++) {
+    res = await fetch(`${base}/chat/completions`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model, messages, tools, tool_choice: "auto", temperature: 0.2, max_tokens: 500 }),
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (res.status !== 429 || tries >= 3) break;
+    const wait = Math.min(Number(res.headers.get("retry-after")) || 10, 30);
+    await new Promise((r) => setTimeout(r, wait * 1000));
+  }
   if (!res.ok) throw new Error(`model: ${res.status} ${(await res.text()).slice(0, 200)}`);
   const body = (await res.json()) as { choices?: { message?: { content?: string | null; tool_calls?: ToolCall[] } }[] };
   const m = body.choices?.[0]?.message;
@@ -119,6 +126,8 @@ export function modelName(): string | null {
 export async function runAttack(emit: Emit, id: string = randomUUID()): Promise<void> {
   const key = playgroundKey();
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://leash.frankolien.com";
+  // Reports and signed facts go through the site's relay, like any agent's.
+  key.relay ??= `${site}/api/relay`;
   const leash = new Leash(key, { site });
   const [a, b] = InMemoryTransport.createLinkedPair();
   const server = createLeashServer(key, { site });
