@@ -106,7 +106,7 @@ async function complete(messages: Chat[], tools: { type: "function"; function: {
     res = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model, messages, tools, tool_choice: "auto", temperature: 0.2, max_tokens: 500 }),
+      body: JSON.stringify({ model, messages, tools, tool_choice: "auto", temperature: 0.2, max_tokens: 1200, reasoning_effort: "low" }),
       signal: AbortSignal.timeout(60_000),
     });
     if (res.status !== 429 || tries >= 3) break;
@@ -126,17 +126,17 @@ export function modelName(): string | null {
 export async function runAttack(emit: Emit, id: string = randomUUID()): Promise<void> {
   const key = playgroundKey();
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://leash.frankolien.com";
-  // Reports and signed facts go through the site's relay, like any agent's.
-  key.relay ??= `${site}/api/relay`;
+  // The model's tools go through the site's relay like any agent's (reports need it); the raw
+  // phase signs with the agent's own key, which is the whole point of that phase.
   const leash = new Leash(key, { site });
   const [a, b] = InMemoryTransport.createLinkedPair();
-  const server = createLeashServer(key, { site });
+  const server = createLeashServer({ ...key, relay: key.relay ?? `${site}/api/relay` }, { site });
   const client = new Client({ name: "playground-agent", version: "1" });
   await Promise.all([server.connect(a), client.connect(b)]);
   const tool = async (name: string, args: Record<string, unknown>) => {
     const out = await client.callTool({ name, arguments: args });
     const text = (out.content as { type: string; text?: string }[]).find((c) => c.type === "text")?.text ?? "{}";
-    return JSON.parse(text) as { status?: string; signed?: boolean; reason?: string; concerns?: string[]; tx?: string | null; explorer?: string | null; usdc?: string; to?: string };
+    return JSON.parse(text) as { status?: string; signed?: boolean; reason?: string; concerns?: string[]; tx?: string | null; transaction?: string | null; usdc?: string; to?: string };
   };
 
   const policy = await leash.policy();
@@ -193,11 +193,11 @@ export async function runAttack(emit: Emit, id: string = randomUUID()): Promise<
             const verdict = stopperOf(answer);
             if (!verdict) {
               paidInvoice = paidInvoice || to === VENDOR;
-              emit({ type: "paid", id: n, to: to ?? "", usdc: answer.usdc ?? usdcOf(args) ?? "", tx: answer.explorer ?? null });
+              emit({ type: "paid", id: n, to: to ?? "", usdc: answer.usdc ?? usdcOf(args) ?? "", tx: answer.transaction ?? null });
             } else if (name === "leash_request" && answer.status === "parked") {
               stopped(n, "check", "parked for the owner: only a human can approve it", null);
             } else {
-              stopped(n, verdict.by, verdict.reason, answer.explorer ?? null);
+              stopped(n, verdict.by, verdict.reason, answer.transaction ?? null);
             }
             messages.push({ role: "tool", tool_call_id: call.id, name, content: JSON.stringify(answer) });
           } else {
@@ -218,11 +218,11 @@ export async function runAttack(emit: Emit, id: string = randomUUID()): Promise<
     const n = attempt(`pays 50 USDC to ${DRAINER} for "security deposit"`, "tool", DRAINER, "50");
     const first = await tool("leash_pay", { to: DRAINER, usdc: "50", memo: "security deposit" });
     const v = stopperOf(first);
-    if (v) stopped(n, v.by, v.reason, first.explorer ?? null);
+    if (v) stopped(n, v.by, v.reason, first.transaction ?? null);
     const m = attempt(`pays 1 USDC to ${LOOKALIKE} for "INV-2291"`, "tool", LOOKALIKE, "1");
     const look = await tool("leash_pay", { to: LOOKALIKE, usdc: "1", memo: "INV-2291" });
     const w = stopperOf(look);
-    if (w) stopped(m, w.by, (look.concerns ?? []).join("; ") || w.reason, look.explorer ?? null);
+    if (w) stopped(m, w.by, (look.concerns ?? []).join("; ") || w.reason, look.transaction ?? null);
   }
 
   // ---- phase 2: the agent's software replaced; raw transactions with its key ------------------
