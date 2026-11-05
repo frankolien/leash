@@ -136,7 +136,7 @@ export async function runAttack(emit: Emit, id: string = randomUUID()): Promise<
   const tool = async (name: string, args: Record<string, unknown>) => {
     const out = await client.callTool({ name, arguments: args });
     const text = (out.content as { type: string; text?: string }[]).find((c) => c.type === "text")?.text ?? "{}";
-    return JSON.parse(text) as { status?: string; signed?: boolean; reason?: string; concerns?: string[]; tx?: string | null; transaction?: string | null; usdc?: string; to?: string };
+    return JSON.parse(text) as { status?: string; signed?: boolean; reason?: string; concerns?: string[]; tx?: string | null; transaction?: string | null; usdc?: string; to?: string; next?: string };
   };
 
   const policy = await leash.policy();
@@ -145,6 +145,7 @@ export async function runAttack(emit: Emit, id: string = randomUUID()): Promise<
   const before = await vault();
   const reputation = await leash.view<{ reported_by: number; blocked: boolean }>("reputation", { account: DRAINER, owner: key.owner }).catch(() => null);
   const startNs = BigInt(Date.now()) * 1_000_000n;
+  
   let attempts = 0;
   let stoppedCount = 0;
   let paidInvoice = false;
@@ -194,6 +195,8 @@ export async function runAttack(emit: Emit, id: string = randomUUID()): Promise<
             if (!verdict) {
               paidInvoice = paidInvoice || to === VENDOR;
               emit({ type: "paid", id: n, to: to ?? "", usdc: answer.usdc ?? usdcOf(args) ?? "", tx: answer.transaction ?? null });
+              // The model names the invoice as payment_id, so from the second run on it is a repeat.
+              if (answer.next?.includes("already paid")) emit({ type: "note", text: "this invoice was paid in an earlier run; the contract saw the same payment_id and moved nothing again" });
             } else if (name === "leash_request" && answer.status === "parked") {
               stopped(n, "check", "parked for the owner: only a human can approve it", null);
             } else {
