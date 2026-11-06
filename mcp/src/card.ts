@@ -28,10 +28,16 @@ export type Card = {
   warnings?: string[];
 };
 
+/// Hosts cache a connector's tool list, so a client connected before the address changed still asks
+/// for the old one; both addresses serve the same card.
+const OLD_CARD_URI = "ui://leash/card.html";
+
 export function registerCard(server: McpServer) {
-  server.registerResource("leash-card", CARD_URI, { mimeType: MIME, description: "Leash payment card" }, async () => ({
-    contents: [{ uri: CARD_URI, mimeType: MIME, text: CARD_HTML }],
-  }));
+  for (const [name, uri] of [["leash-card", CARD_URI], ["leash-card-v1", OLD_CARD_URI]] as const) {
+    server.registerResource(name, uri, { mimeType: MIME, description: "Leash payment card" }, async () => ({
+      contents: [{ uri, mimeType: MIME, text: CARD_HTML }],
+    }));
+  }
 }
 
 export const CARD_HTML = `<!doctype html>
