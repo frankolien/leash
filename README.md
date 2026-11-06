@@ -143,6 +143,28 @@ flowchart LR
 - **Native NEAR, no wallet app.** Borsh transactions signed with CryptoKit's Ed25519 and sent over
   JSON-RPC. The unit tests check the bytes and hash against near-api-js.
 
+What that looks like on a real phone (6 Nov 2026, `olien.testnet`, agent `claude-3` with a $2
+per-payment limit asked to pay `vendor.testnet` $5 through the hosted Claude connector):
+
+<table>
+<tr>
+<td><img src="docs/images/iphone/lock-screen.jpg" width="200" alt="Lock Screen: a Time Sensitive alert with the amount, the recipient, why it waits, and Deny and Review buttons"></td>
+<td><img src="docs/images/iphone/approval.png" width="200" alt="The approval sheet: $5.00 to vendor.testnet, why it waits, the agent's limits, what is left today, and the recipient checks above an Approve with Face ID button"></td>
+<td><img src="docs/images/iphone/home.png" width="200" alt="Home: the vault balance, a card saying claude-3 wants to pay, and the activity feed"></td>
+<td><img src="docs/images/iphone/agent.png" width="200" alt="An agent's page: spent today against its daily limit, this week's bars, and its limits"></td>
+</tr>
+<tr>
+<td align="center">Lock Screen</td><td align="center">Approve with Face ID</td><td align="center">Home</td><td align="center">One agent</td>
+</tr>
+</table>
+
+<img src="docs/images/iphone/dynamic-island.jpg" width="620" alt="The Live Activity in the Dynamic Island: claude-3, $5.00 to vendor.testnet, over per-payment cap, 58:56 left, Deny and Review">
+
+The whole loop, unedited: the alert, Review, Face ID, and the vault moving from $25 to $20 while
+the toast says "Paid vendor.testnet $5.00".
+
+<img src="docs/images/iphone/approve-loop.gif" width="240" alt="Screen recording: approving the parked $5 payment on the phone">
+
 Verify without an iPhone:
 
 ```bash
