@@ -40,7 +40,7 @@ export const CARD_HTML = `<!doctype html>
 :root{--bg:#ffffff;--card:#f6f6f4;--text:#111;--muted:#6b6b6b;--line:#e4e4e0;--bar:#111;--bad:#c4372f;--chip:#ececea}
 :root[data-theme=dark]{--bg:#0b0b0b;--card:#171717;--text:#fff;--muted:#8a8a8a;--line:#2b2b2b;--bar:#fff;--bad:#f2726b;--chip:#242424}
 *{box-sizing:border-box}html,body{margin:0;background:transparent;color:var(--text);font:15px/1.4 Inter,-apple-system,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-.card{display:flex;flex-direction:column;gap:14px;padding:18px 20px;border-radius:20px;background:var(--card);border:1px solid var(--line);max-width:460px}
+.card{display:flex;flex-direction:column;gap:14px;padding:18px 20px;border-radius:20px;background:var(--card);border:1px solid var(--line);width:100%}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;font-weight:500}
 .brand{display:inline-flex;align-items:center;gap:7px}.brand i{width:14px;height:14px;border-radius:50%;border:2.5px solid currentColor;position:relative}.brand i::after{content:"";position:absolute;inset:2px;border-radius:50%;background:currentColor}
 .state{padding:3px 10px;border-radius:999px;background:var(--chip);color:var(--text);font-weight:600}.state.bad{color:var(--bad)}
