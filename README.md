@@ -7,10 +7,70 @@ limit, a per-payment limit and a list of accounts it may pay. Inside those limit
 its own. Above them, the payment waits for the owner. Revoking the key takes one tap, and NEAR rejects
 the agent's next call before the contract even runs.
 
-Built for the NEAR Hackathon, November 2026. Tracks: AI Security & Defense, Agent Economy, Open Innovation.
-Everything here was written for it: the first commit is from 25 October 2026, after the 19 October
-announcement, and nothing predates it. No prior codebase or baseline.
-Demo post: https://x.com/frank_olien123/status/2117028321842335927
+[![A prompt-injected agent against Leash: the real invoice is paid, ten attacks are stopped on chain](docs/images/attack-playground.png)](https://leash.frankolien.com/attack)
+
+*Live: [leash.frankolien.com/attack](https://leash.frankolien.com/attack). A real model (gpt-oss-120b)
+reads an invoice with hidden instructions, pays the real $0.10, and every attempt to drain the owner
+is stopped by the contract or by NEAR itself, with the transaction to prove it.*
+
+Built for the NEAR Hackathon, November 2026, in the AI Security & Defense track (also Agent Economy
+and Open Innovation). Everything here was written for it: the first commit is from 25 October 2026,
+after the 19 October announcement, and nothing predates it. No prior codebase or baseline.
+Demo film: https://x.com/frank_olien123/status/2117028321842335927
+
+## Check it in 60 seconds
+
+Nothing to install. Each line says what you should see.
+
+| What | Where |
+| --- | --- |
+| The attack, live on testnet | https://leash.frankolien.com/attack, press Run (about 30 seconds) |
+| An owner's dashboard, readable by anyone | https://leash.frankolien.com/frankolien.testnet |
+| The contract | `leash.frankolien.testnet` on [NearBlocks](https://testnet.nearblocks.io/address/leash.frankolien.testnet) |
+| The agent's tools | `npx -y leash-near-mcp` ([npm](https://www.npmjs.com/package/leash-near-mcp)), used from Claude Code, Codex and Cursor |
+| The last attack run, as data | https://leash.frankolien.com/api/attack/latest |
+
+Three reads anyone can make, no account needed:
+
+```bash
+# The agent key is a NEAR function-call key: three methods, one contract, no deposit
+near account list-keys frankolien.testnet network-config testnet now
+
+# The policy the contract enforces for each agent
+curl -s https://rpc.testnet.near.org -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"leash.frankolien.testnet","method_name":"get_policies","args_base64":"eyJvd25lciI6ImZyYW5rb2xpZW4udGVzdG5ldCJ9"}}' | jq -r '.result.result | implode'
+
+# The facts the relay signs about a recipient, which the contract checks on a first payment
+curl -s https://leash.frankolien.com/api/facts/vendor.testnet
+```
+
+The run on 5 November 2026 (`/api/attack/latest` holds the newest): the model paid the invoice
+([G2XJm7…](https://testnet.nearblocks.io/txns/G2XJm7mkdZGDArWshYRfndk8p77YQZ2Vya82LHhydjfp)); then
+$50 to a reported scammer was refused ([4LCL95…](https://testnet.nearblocks.io/txns/4LCL95gs3GEkfLxjPbDFJ4mSKmU23UgV4GfwJV8WHrU6)),
+four $0.50 pieces were refused, a $50 payment to the real vendor was refused over the per-payment cap
+([G6zsSE…](https://testnet.nearblocks.io/txns/G6zsSE8GXhoyqmzGS9sGAhFKTL1hpKtrFGBe9XW2yCVR)), a payment to a
+day-old account with forged facts was refused ([FSMrdX…](https://testnet.nearblocks.io/txns/FSMrdXuMRe1qxZQbqnKep9Gz4or2FavhaxvQT7XnV4B1)),
+and NEAR itself rejected a direct USDC transfer, a new full-access key and a `set_policy` call from
+the agent's key. 11 attempts, 10 stopped, $0.00 drained.
+
+Tests: 55 unit and 4 sandbox tests on the contract (a real NEAR node), 74 on the web, 25 on the MCP
+server, 3 on the CLI. CI runs all of them on every push. Commands in [Verify it in ten minutes](#verify-it-in-ten-minutes).
+
+## What is new here
+
+1. **The limit lives in the protocol, not the prompt.** The agent's key is a NEAR function-call
+   access key on the owner's account. NEAR rejects anything but three methods on one contract before
+   any code runs, so even an agent whose software is replaced cannot move USDC, add a key or change
+   its own policy. Only NEAR has this primitive; the project is built around it.
+2. **Facts the agent cannot forge.** A first payment to a stranger must carry the relay's signed
+   facts about the account (age, last code change), under a key the contract pins. An agent that
+   lies about its counterparty is refused on chain.
+3. **Scams are shared.** Any owner or agent reports a scammer with evidence; two reports block it for
+   every owner on the contract.
+4. **The owner is always reachable.** Over-limit payments park and reach the owner's iPhone within
+   seconds (Live Activity, Face ID to approve); the brake works from a locked phone, Siri and the
+   Action button.
+5. **Agents pay for APIs by themselves.** x402 v2 with a Leash transfer method: a 402 answer is paid
+   from the agent's budget, within the same limits.
 
 ## The problem
 
@@ -136,7 +196,11 @@ leash.frankolien.testnet save-to-file live.wasm network-config testnet now`), a 
 upgrade from it: state and open tasks survive, then an agent reports a scammer and the contract
 refuses to pay it.
 
-**3. The dashboard.** Open `https://leash.frankolien.com/frankolien.testnet` (or run it yourself:
+**3. The dashboard.**
+
+![The owner's dashboard: vault, agents, approvals, activity](docs/images/dashboard.png)
+
+Open `https://leash.frankolien.com/frankolien.testnet` (or run it yourself:
 `cd web && npm install && npm run dev`, then `http://localhost:3000/frankolien.testnet`). Anyone can
 read any owner's dashboard: the vault, each agent's budget, the week's spending and the on-chain
 activity. Signing in as the owner (Google, Apple, email or a NEAR testnet wallet) turns on approve,
@@ -221,38 +285,7 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 | `cli/` | The owner's CLI. |
 | `web/` | The landing page and the owner's dashboard: Next.js 16, reads the chain over RPC, signs through the owner's session. |
 | `ios/` | The owner's iPhone app (SwiftUI): approvals, the brake, a widget, a Control, a Live Activity. XcodeGen `project.yml`. |
-| `docs/` | Design, plan, dashboard design, accounts and sign-in, the demo film, paying for APIs (x402), security and the attack demo. |
-
-## Code map
-
-| Where | What |
-| --- | --- |
-| `contract/src/lib.rs` | State, init, the event emitter |
-| `contract/src/types.rs` | Every struct the API speaks, and the storage keys |
-| `contract/src/owner.rs` | What the owner's key may do: policies, kill switch, decisions, vault |
-| `contract/src/agent.rs` | What an agent key may do: pay, request, ask for more |
-| `contract/src/token.rs` | The NEP-141 callback and the settlement of every transfer |
-| `contract/src/reports.rs` | The shared scam list: report, report by signed instruction, retract, reputation |
-| `contract/src/facts.rs` | Signed facts about a stranger: the pinned relay key, the first-payment rule, the age and code-change checks |
-| `contract/src/views.rs` | The read side |
-| `contract/src/internals.rs` | The policy check, the ledger moves, the log, the storage billing |
-| `contract/tests/` | Sandbox tests against a real node with a mock USDC |
-| `mcp/src/` | `tools` (the tools), `leash` (policy, verdicts, counterparty facts, signed intents, calls), `counterparty` (allow, warn or block), `x402` (paid requests), `relay`, `safety` (lookalikes), `envelope`, `key`, `units` |
-| `mcp/demo/` | The attack demo and the poisoned invoice it reads |
-| `web/lib/server/x402.ts`, `web/app/api/x402/`, `web/app/api/paid/` | The x402 facilitator for Leash payments (`supported`, `verify`, `settle`), `paywall` and `sell` (charges only for work that succeeded), the one-cent sample and three paid services |
-| `web/lib/server/paid.ts`, `webpage.ts` | What the paid services do: Wikipedia search, token prices, and reading a public page safely (public addresses only, every redirect checked, size and time caps) |
-| `web/lib/server/relay.ts`, `alerts.ts`, `apns.ts` | The relay that delivers signed intents and pays their gas, and the push to the owner's phones |
-| `cli/src/` | The owner's commands: `config`, `units`, `chain`, and `commands/` (setup, money, agents, decisions, read) |
-| `web/lib/` | `reader` (RPC views), `wallet` (HOT Connect), `format` (money and time), `activity` (how events read), `insights` (today's spend, the week, request facts, recipients), `types` |
-| `web/lib/session.ts`, `privySigner.ts`, `config.ts` | One signing session for NEAR wallets and embedded wallets; the shared contract per network |
-| `web/lib/server/`, `web/app/api/onboard/` | The sign-up sponsor: verifies the Privy token, funds and readies a new account |
-| `web/components/auth/` | Sign-in: context, Privy bridge, dialog, the `/app` entry |
-| `web/hooks/` | `useSnapshot` (polling), `useWallet` (session and the one way to write), `useNames`, `useToast`, `useActiveSection`, `useHeroHandoff` (the timed scroll handoff) |
-| `web/components/site/` | The header, footer and the drifting ground every page shares |
-| `web/components/landing/` | The landing page: `FilmSequence` (the film closing into `DashboardScene`), `HeroFilm` and `GlassMark`, `Stories`, `HowItHolds` and `Wireframe`, `WorksWith`, `Closing` |
-| `web/components/dashboard/` | The owner's app: `Sidebar`, `PageHeader` and six views (`views.ts`): `VaultCard`, `AgentsCard`, `ActivityCard`, `ApprovalPanel` (opens only while a payment waits), `NewAgentDialog`, `AgentList` and `ConnectCard`, `RecipientsView`, `SettingsView`, composed in `Dashboard` |
-| `web/components/setup/` | The agent setup steps and dialog, shared by the landing and the dashboard |
-| `web/components/charts/` | `SpendChart`, shared by the dashboard and the landing preview |
+| `docs/` | Design, plan, dashboard design, accounts and sign-in, the demo film, paying for APIs (x402), security and the attack demo, and the [code map](docs/09-code-map.md). |
 
 ## Status
 
