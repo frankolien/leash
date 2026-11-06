@@ -30,6 +30,7 @@ Nothing to install. Each line says what you should see.
 | The agent's tools | `npx -y leash-near-mcp` ([npm](https://www.npmjs.com/package/leash-near-mcp)), used from Claude Code, Codex and Cursor |
 | The last attack run, as data | https://leash.frankolien.com/api/attack/latest |
 
+
 Three reads anyone can make, no account needed:
 
 ```bash
@@ -302,5 +303,5 @@ Prefer a terminal? The `leash` CLI does all of this: `leash init`, `deposit`, `g
 - [x] Counterparty check (allow, warn, block) before every payment, a shared scam list in the contract, and an attack demo
 - [x] Facts the agent cannot forge: the relay signs a recipient's age and last code change with a key the contract pins, and the contract refuses a first payment to a day-old stranger on its own
 - [ ] Cross-chain payouts: an agent pays a Solana or Base address from the vault through NEAR Intents (mainnet)
-- [ ] Mainnet deployment
+- [ ] Mainnet deployment. The contract has no testnet-only code; deploying is one command and about 4.5 NEAR of storage. It stays on testnet for the hackathon on purpose: the attack playground invites anyone to drain the vault, and that offer only works while the money in it is free.
 - [ ] Facts signed inside a TEE (OutLayer on NEAR) in place of the relay's key: the same contract path, documented in `docs/08-security.md`
